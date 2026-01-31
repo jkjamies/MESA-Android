@@ -1,0 +1,20 @@
+# Gradle files
+.gradle/
+build/
+
+# Android Studio generated files
+.idea/
+*.iml
+
+# Other
+captures/
+*.hprof
+local.properties
+.DS_Store
+.externalNativeBuild/
+.cxx/
+
+# AI Context Files
+CLAUDE.md
+.github/copilot-instructions.md
+.junie/guidelines.md
