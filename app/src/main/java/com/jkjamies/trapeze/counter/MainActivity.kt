@@ -1,22 +1,27 @@
 package com.jkjamies.trapeze.counter
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
-import androidx.compose.ui.Modifier
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
 import com.jkjamies.trapeze.TrapezeContent
+import com.jkjamies.trapeze.counter.common.AppInterop
+import com.jkjamies.trapeze.counter.common.AppInteropEvent
+import com.jkjamies.trapeze.counter.feature.counter.CounterScreen
+import com.jkjamies.trapeze.counter.feature.counter.CounterStateHolder
+import com.jkjamies.trapeze.counter.feature.counter.CounterUi
+import com.jkjamies.trapeze.counter.feature.summary.SummaryScreen
+import com.jkjamies.trapeze.counter.feature.summary.SummaryStateHolder
+import com.jkjamies.trapeze.counter.feature.summary.SummaryUi
 import com.jkjamies.trapeze.counter.theme.TrapezeTheme
+import com.jkjamies.trapeze.navigation.LocalTrapezeNavigator
 import com.jkjamies.trapeze.navigation.TrapezeNavHost
-import com.jkjamies.trapeze.navigation.TrapezeNavigator
-import com.jkjamies.trapeze.TrapezeScreen
-import com.jkjamies.trapeze.TrapezeInterop
-import com.jkjamies.trapeze.TrapezeInteropEvent
-import android.widget.Toast
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -24,17 +29,17 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             TrapezeTheme {
-                Scaffold(modifier = Modifier.Companion.fillMaxSize()) { innerPadding ->
+                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     TrapezeNavHost(
-                        initialScreen = CounterScreen("Enter your email")
+                        initialScreen = CounterScreen(initialCount = 0)
                     ) { screen ->
-                        val navigator = com.jkjamies.trapeze.navigation.LocalTrapezeNavigator.current
+                        val navigator = LocalTrapezeNavigator.current
                         
                         // NOTE: In a real app Interop might also be provided via CompositionLocal or Dependency Injection
                         val interop = remember {
-                            object : TrapezeInterop {
-                                override fun send(event: TrapezeInteropEvent) {
-                                    Toast.makeText(this@MainActivity, "Interop Event: $event", Toast.LENGTH_SHORT).show()
+                            object : AppInterop {
+                                override fun send(event: AppInteropEvent) {
+                                    Toast.makeText(this@MainActivity, "App Interop: $event", Toast.LENGTH_SHORT).show()
                                 }
                             }
                         }
@@ -46,6 +51,14 @@ class MainActivity : ComponentActivity() {
                                      screen = screen,
                                      stateHolder = CounterStateHolder(interop, navigator),
                                      ui = ::CounterUi
+                                 )
+                             }
+                             is SummaryScreen -> {
+                                 TrapezeContent(
+                                     modifier = Modifier.padding(innerPadding),
+                                     screen = screen,
+                                     stateHolder = SummaryStateHolder(navigator),
+                                     ui = ::SummaryUi
                                  )
                              }
                              else -> {} // Handle potential other screens

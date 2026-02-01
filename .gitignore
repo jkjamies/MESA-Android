@@ -1,18 +1,13 @@
-# Gradle files
-.gradle/
-build/
-
-# Android Studio generated files
-.idea/
 *.iml
-
-# Other
-captures/
-*.hprof
-local.properties
+.gradle
+/local.properties
+.idea
 .DS_Store
-.externalNativeBuild/
-.cxx/
+build/
+/captures
+.externalNativeBuild
+.cxx
+local.properties
 
 # AI Context Files
 CLAUDE.md

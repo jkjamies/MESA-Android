@@ -31,7 +31,9 @@ fun TrapezeNavHost(
             }
             override fun pop() {
                 if (stack.size > 1) {
+                    val poppedScreen = stack.last()
                     stack = stack.dropLast(1)
+                    saveableStateHolder.removeState(poppedScreen)
                 }
             }
         }
