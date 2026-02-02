@@ -24,21 +24,31 @@ import com.jkjamies.trapeze.TrapezeStateHolder
 import com.jkjamies.trapeze.features.summary.api.ObserveLastSavedValue
 import com.jkjamies.trapeze.features.summary.api.SaveSummaryValue
 import com.jkjamies.trapeze.navigation.TrapezeNavigator
-import com.jkjamies.strata.launchOrThrow
+import com.jkjamies.strata.strataLaunch
 import kotlinx.coroutines.CoroutineScope
 
+/**
+ * StateHolder for the Summary screen.
+ * 
+ * Manages saving and observing summary values via [SaveSummaryValue] and [ObserveLastSavedValue].
+ */
 class SummaryStateHolder(
     private val navigator: TrapezeNavigator,
     private val saveSummaryValue: Lazy<SaveSummaryValue>,
     private val observeLastSavedValue: Lazy<ObserveLastSavedValue>
 ) : TrapezeStateHolder<SummaryScreen, SummaryState, SummaryEvent>() {
 
+    /**
+     * Produces the [SummaryState] for the given [screen].
+     */
     @Composable
     override fun produceState(screen: SummaryScreen): SummaryState {
         LaunchedEffect(Unit) {
             observeLastSavedValue.value.invoke(Unit)
         }
+
         val lastSavedValue by observeLastSavedValue.value.flow.collectAsState(initial = null)
+        val saveSummaryLoading by saveSummaryValue.value.inProgress.collectAsState(initial = false)
 
         val eventSink = wrapEventSink<SummaryEvent> { event ->
             when (event) {
@@ -47,7 +57,7 @@ class SummaryStateHolder(
                     println("Value: ${screen.finalCount}")
                 }
                 SummaryEvent.SaveValue -> {
-                    launchOrThrow {
+                    strataLaunch {
                         saveSummaryValue.value.invoke(screen.finalCount).onFailure {
                             it.printStackTrace()
                         }
@@ -59,6 +69,7 @@ class SummaryStateHolder(
         return SummaryState(
             finalCount = screen.finalCount,
             lastSavedValue = lastSavedValue,
+            saveInProgress = saveSummaryLoading,
             eventSink = eventSink
         )
     }

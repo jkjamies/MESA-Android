@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 
-package com.jkjamies.trapeze.features.summary.api
-
-import com.jkjamies.strata.StrataInteractor
+package com.jkjamies.strata
 
 /**
- * UseCase to save a summary value.
+ * A concrete wrapper for unknown exceptions caught during Strata execution.
  */
-abstract class SaveSummaryValue : StrataInteractor<Int, Unit>()
+class StrataExecutionException(cause: Throwable) : StrataException(cause.message ?: "Execution failed", cause)

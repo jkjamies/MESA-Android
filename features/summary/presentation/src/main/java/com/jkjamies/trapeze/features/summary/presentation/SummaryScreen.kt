@@ -28,6 +28,7 @@ data class SummaryScreen(val finalCount: Int) : TrapezeScreen, Parcelable
 data class SummaryState(
     val finalCount: Int,
     val lastSavedValue: Int?,
+    val saveInProgress: Boolean,
     val eventSink: (SummaryEvent) -> Unit
 ) : TrapezeState
 

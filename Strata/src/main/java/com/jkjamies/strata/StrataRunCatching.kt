@@ -19,17 +19,21 @@ package com.jkjamies.strata
 import kotlin.coroutines.cancellation.CancellationException
 
 /**
- * A version of [runCatching] that re-throws [CancellationException].
+ * Calls the specified function [block] and returns its encapsulated result as a [StrataResult].
  *
- * This is important for suspending functions that might be cancelled, as [runCatching]
- * swallows [CancellationException], preventing structured concurrency from working correctly.
+ * - If execution completes successfully, returns [StrataResult.Success].
+ * - If execution throws [CancellationException], it is re-thrown (respecting structured concurrency).
+ * - If execution throws a [StrataException], it is captured as [StrataResult.Failure].
+ * - If execution throws any other [Throwable], it is wrapped in [StrataExecutionException] and captured as [StrataResult.Failure].
  */
-inline fun <R> cancellableRunCatching(block: () -> R): Result<R> {
+inline fun <R> strataRunCatching(block: () -> R): StrataResult<R> {
     return try {
-        Result.success(block())
+        StrataResult.Success(block())
     } catch (e: CancellationException) {
         throw e
+    } catch (e: StrataException) {
+        StrataResult.Failure(e)
     } catch (e: Throwable) {
-        Result.failure(e)
+        StrataResult.Failure(StrataExecutionException(e))
     }
 }

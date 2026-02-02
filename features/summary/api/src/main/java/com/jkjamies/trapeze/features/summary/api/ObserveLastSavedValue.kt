@@ -16,6 +16,9 @@
 
 package com.jkjamies.trapeze.features.summary.api
 
-import com.jkjamies.strata.SubjectInteractor
+import com.jkjamies.strata.StrataSubjectInteractor
 
-abstract class ObserveLastSavedValue : SubjectInteractor<Unit, Int?>()
+/**
+ * UseCase to observe the last saved summary value.
+ */
+abstract class ObserveLastSavedValue : StrataSubjectInteractor<Unit, Int?>()

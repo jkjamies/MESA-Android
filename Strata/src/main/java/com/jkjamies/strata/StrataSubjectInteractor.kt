@@ -24,7 +24,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 
 @OptIn(ExperimentalCoroutinesApi::class)
-abstract class SubjectInteractor<P : Any, T> {
+abstract class StrataSubjectInteractor<P : Any, T> {
     // Ideally this would be buffer = 0, since we use flatMapLatest below, BUT invoke is not
     // suspending. This means that we can't suspend while flatMapLatest cancels any
     // existing flows. The buffer of 1 means that we can use tryEmit() and buffer the value

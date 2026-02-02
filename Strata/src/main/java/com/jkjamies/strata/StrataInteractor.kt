@@ -28,7 +28,12 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
-abstract class Interactor<in P, R> {
+/**
+ * Base class for all business logic units in Strata.
+ *
+ * Manages loading state, timeouts, and error handling via [StrataResult].
+ */
+abstract class StrataInteractor<in P, R> {
     private val loadingState = MutableStateFlow(State())
 
     @OptIn(FlowPreview::class)
@@ -65,11 +70,19 @@ abstract class Interactor<in P, R> {
         }
     }
 
+    /**
+     * Executes the interactor with the given [params].
+     *
+     * @param params The parameters for the execution.
+     * @param timeout The timeout duration.
+     * @param userInitiated Whether this execution was initiated by a user action (affects loading state).
+     * @return A [StrataResult] containing the result or failure.
+     */
     suspend operator fun invoke(
         params: P,
         timeout: Duration = DefaultTimeout,
         userInitiated: Boolean = params.isUserInitiated,
-    ): Result<R> = cancellableRunCatching {
+    ): StrataResult<R> = strataRunCatching {
         addLoader(userInitiated)
         withTimeout(timeout) {
             doWork(params)
@@ -79,7 +92,7 @@ abstract class Interactor<in P, R> {
     }
 
     private val P.isUserInitiated: Boolean
-        get() = (this as? UserInitiatedParams)?.isUserInitiated ?: true
+        get() = (this as? StrataUserInitiatedParams)?.isUserInitiated ?: true
 
     protected abstract suspend fun doWork(params: P): R
 
@@ -90,6 +103,6 @@ abstract class Interactor<in P, R> {
     private data class State(val userCount: Int = 0, val ambientCount: Int = 0)
 }
 
-suspend operator fun <R> Interactor<Unit, R>.invoke(
-    timeout: Duration = Interactor.DefaultTimeout,
+suspend operator fun <R> StrataInteractor<Unit, R>.invoke(
+    timeout: Duration = StrataInteractor.DefaultTimeout,
 ) = invoke(Unit, timeout)

@@ -2,38 +2,45 @@
 
 A type-safe, MESA-inspired architecture for Jetpack Compose. This framework enforces a strict separation between logic (StateHolder), presentation (UI), and identity (Screen).
 
-## Libraries
+## 📚 Libraries
 
-- **Trapeze**: The core types (`TrapezeStateHolder`, `TrapezeState`, `TrapezeScreen`, `TrapezeEvent`, `TrapezeContent`).
+- **Trapeze**: The core architecture types (`TrapezeStateHolder`, `TrapezeState`, `TrapezeScreen`, `TrapezeEvent`, `TrapezeContent`).
 - **TrapezeNavigation**: The navigation layer (`TrapezeNavigator`, `TrapezeNavHost`, `TrapezeInterop`).
+- **Strata**: The business logic and concurrency layer (`StrataInteractor`, `StrataResult`, `strataLaunch`).
 
-## Core Architecture
+---
 
-### 1. The Screen (Identity)
-The `TrapezeScreen` is a `Parcelable` data structure. It acts as the unique identifier for a feature and carries all necessary initialization parameters.
+## 🏗️ Trapeze Architecture
 
-### 2. The StateHolder (Logic)
-The `TrapezeStateHolder` is the brain of the feature. It manages the lifecycle and business logic, producing an immutable `State`. It is implemented as a standard class that exposes a `produceState` Composable function.
+Trapeze implements the MESA pattern (Modular, Explicit, State-driven, Architecture).
 
-### 3. The UI (Stateless View)
-The `TrapezeUi` is a pure mapping function. It takes a `State` and a `Modifier` and emits UI. It communicates user interactions back to the StateHolder via lambda events defined in the State.
+### 1. Identity (The Screen)
+The `TrapezeScreen` is a `Parcelable` data structure that uniquely identifies a destination. It carries strict, typed arguments.
+```kotlin
+@Parcelize
+data class DictionaryScreen(val word: String) : TrapezeScreen, Parcelable
+```
 
-### 4. The Runtime (The Weld)
-The `TrapezeContent` bridge connects a `Screen` to its `StateHolder` and `UI`.
+### 2. Logic (The StateHolder)
+The `TrapezeStateHolder` is the brain. It manages lifecycle, holds business logic, and produces the single source of truth (`State`).
+- **Input**: The `Screen` arguments.
+- **Output**: A `State` object.
+- **Dependencies**: Injected via Metro/Dagger.
 
-## Clean Architecture & Modules
-Trapeze encourages a 4-layer modular architecture per feature:
-1. **API (`:features:foo:api`)**: Public interfaces (UseCases, Screen, Event).
-2. **Domain (`:features:foo:domain`)**: Pure Kotlin business logic (UseCases, Interactors).
-3. **Data (`:features:foo:data`)**: Repository implementations and data sources.
-4. **Presentation (`:features:foo:presentation`)**: Android-specific UI and StateHolder.
+### 3. State (The Contract)
+An immutable data class containing:
+- **Data**: All fields needed for rendering.
+- **Events**: A single `eventSink: (Event) -> Unit` lambda to handle user interactions.
 
-## Dependency Injection
-We use **Metro** (Dagger-compatible) for statically verified dependency injection.
-- Bind implementations in `Data/Domain` using `@ContributesBinding(AppScope::class)`.
-- Inject interfaces in `Presentation`.
+### 4. UI (The View)
+A stateless Composable function. It is a pure projection of the `State`.
 
-## Example: Counter Feature
+### 5. The Weld (TrapezeContent)
+Connects the pieces together at runtime, typically within the NavGraph.
+
+---
+
+## 💻 Example: Counter Feature
 
 ```kotlin
 import android.os.Parcelable
@@ -85,98 +92,101 @@ fun CounterUi(modifier: Modifier = Modifier, state: CounterState) {
 }
 ```
 
-## Navigation Host
+---
 
-Use `TrapezeNavHost` to drive navigation.
+## � Trapeze Navigation
 
-- Features call `navigator.navigate(...)` and `navigator.pop()`.
-- The host owns the stack state and handles persistence.
+Type-safe navigation integrated with Trapeze.
 
+### TrapezeNavHost
+The root container. Manages the backstack and screen restoration.
 ```kotlin
-import androidx.compose.runtime.Composable
-import com.jkjamies.trapeze.navigation.TrapezeNavHost
-import com.jkjamies.trapeze.TrapezeContent
-
-@Composable
-fun AppRoot() {
-    TrapezeNavHost(initialScreen = CounterScreen(0)) { screen ->
-        // Use composition locals or DI to get navigator
-        val navigator = LocalTrapezeNavigator.current
-        
-        when(screen) {
-            is CounterScreen -> {
-                TrapezeContent(
-                    screen = screen,
-                    stateHolder = CounterStateHolder(),
-                    ui = ::CounterUi
-                )
-            }
-            // ... other screens
-        }
+TrapezeNavHost(initialScreen = HomeScreen) { screen ->
+    when(screen) {
+        is HomeScreen -> TrapezeContent(screen, HomeStateHolder(), ::HomeUi)
+        is DetailScreen -> TrapezeContent(screen, DetailStateHolder(), ::DetailUi)
     }
 }
 ```
 
-## Interop (Advanced)
+### TrapezeNavigator
+Injectable interface for navigation actions. 
 
-For legacy apps, global events, or system alerts, use the `TrapezeInterop` interface.
+**Capabilities:**
+- `navigate(screen)`: Push a new screen.
+- `pop()`: Go back one level.
+- `popTo(screen)`: Pop until a specific screen found.
+- `replace(screen)`: Replace current screen.
 
-1. **Define Events**:
-   ```kotlin
-   sealed interface AppInteropEvent : TrapezeInteropEvent {
-       data class ShowAlert(val message: String) : AppInteropEvent
-   }
-   ```
+### Interop
+For communicating with the host Activity or global handlers (e.g., Toasts, Dialogs).
+1. Define `TrapezeInteropEvent`.
+2. Inject `TrapezeInterop` into StateHolder.
+3. Send events: `interop.send(MyEvent)`.
+4. Handle in `NavHost` via composition local or callback.
 
-2. **Send from StateHolder**:
-   ```kotlin
-   // Inject 'interop: TrapezeInterop' into your StateHolder
-   interop.send(AppInteropEvent.ShowAlert("Hello"))
-   ```
+---
 
-3. **Handle in Host**:
-   ```kotlin
-   val interop = remember {
-       object : TrapezeInterop {
-           override fun send(event: TrapezeInteropEvent) {
-               when(event) {
-                   is AppInteropEvent.ShowAlert -> showToast(event.message)
-               }
-           }
-       }
-   }
-   
-   // Pass 'interop' to your StateHolders via DI or constructor
-   ```
+## �🧠 Strata (Business Logic)
 
-## Strata (Interactors)
-Trapeze uses **Strata** for business logic, providing a uniform `Interactor` API.
+Strata standardizes all asynchronous operations and error handling. It forces business logic out of the UI and StateHolder.
 
-### SuspendingWorkInteractor
-For one-shot async operations (e.g., API calls, Database writes).
+### Interactors
+All logic units extend `StrataInteractor`.
+
+#### 1. StrataInteractor (One-Shot)
+For operations that complete once (e.g., API calls, DB writes).
 ```kotlin
-@Inject
-class SaveCount(private val repo: CountRepo) : SuspendingWorkInteractor<Int, Unit>() {
-    override suspend fun doWork(params: Int): Unit = repo.save(params)
-}
-
-// Usage:
-launchOrThrow {
-    saveCount.invoke(5).onFailure { error -> /* handle error */ }
+class SaveNote : StrataInteractor<String, Unit>() {
+    override suspend fun doWork(params: String) {
+        db.save(params)
+    }
 }
 ```
 
-### SubjectInteractor
-For observing data streams (Flows). Requires explicit invocation to start emission.
+#### 2. StrataSubjectInteractor (Streams)
+For observing data over time. Requires an explicit trigger to start emission.
 ```kotlin
-@Inject
-class ObserveCount(private val repo: CountRepo) : SubjectInteractor<Unit, Int>() {
-    override fun createObservable(params: Unit): Flow<Int> = repo.observeCount()
+class ObserveNote : StrataSubjectInteractor<String, Note>() {
+    override fun createObservable(params: String): Flow<Note> = db.observe(params)
+}
+```
+
+### Execution & Error Handling
+StateHolders use `strataLaunch` to execute interactors safely. Results are wrapped in `StrataResult`.
+
+```kotlin
+// In StateHolder
+fun save(content: String) {
+    strataLaunch {
+        // Returns StrataResult<Unit>
+        // You can handle failure without needing explicit onSuccess
+        saveNote(content).onFailure { error -> 
+            // error is StrataException
+            notifyError(error)
+        }
+    }
 }
 
-// Usage in StateHolder:
+// Triggering a Subject
 LaunchedEffect(Unit) {
-    observeCount.invoke(Unit)
+    observeNote(noteId) // Starts the flow
 }
-val count by observeCount.flow.collectAsState(initial = 0)
+val note by observeNote.flow.collectAsState(initial = null)
 ```
+
+---
+
+## 🔌 Dependency Injection
+
+Trapeze is **injection-agnostic**. You can use Manual DI, Dagger, Hilt, Koin, or any other framework.
+
+### Why we recommend Metro
+The examples in this repo leverage **Metro**, a highly optimized Dagger-compatible graph. 
+- **Speed**: 40-70% faster build times than Dagger/Hilt.
+- **Modern**: Built on KSP and fully compatible with the Kotlin K2 compiler.
+- **Standard**: Uses standard `javax.inject` annotations.
+
+If using Metro:
+- Bind implementations using `@ContributesBinding(AppScope::class)`.
+- Use `Lazy<T>` to delay initialization of heavy Interactors.
