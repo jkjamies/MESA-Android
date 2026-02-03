@@ -18,32 +18,23 @@ package com.jkjamies.trapeze.counter
 
 import android.app.Activity
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import com.jkjamies.trapeze.TrapezeContent
-import com.jkjamies.trapeze.core.presentation.AppInterop
-import com.jkjamies.trapeze.core.presentation.AppInteropEvent
-import com.jkjamies.trapeze.features.counter.presentation.CounterScreen
-import com.jkjamies.trapeze.features.counter.presentation.CounterStateHolder
-import com.jkjamies.trapeze.features.counter.presentation.CounterUi
-import com.jkjamies.trapeze.features.summary.presentation.SummaryScreen
-import com.jkjamies.trapeze.features.summary.presentation.SummaryStateHolder
-import com.jkjamies.trapeze.features.summary.presentation.SummaryUi
+import com.jkjamies.trapeze.Trapeze
+import com.jkjamies.trapeze.TrapezeCompositionLocals
 import com.jkjamies.trapeze.counter.theme.TrapezeTheme
-import com.jkjamies.trapeze.navigation.LocalTrapezeNavigator
-import com.jkjamies.trapeze.navigation.TrapezeNavHost
-import dev.zacsweers.metro.Inject
-import com.jkjamies.trapeze.features.summary.api.SaveSummaryValue
-import com.jkjamies.trapeze.features.summary.api.ObserveLastSavedValue
+import com.jkjamies.trapeze.features.counter.presentation.CounterScreen
+import com.jkjamies.trapeze.navigation.NavigableTrapezeContent
+import com.jkjamies.trapeze.navigation.rememberSaveableBackStack
+import com.jkjamies.trapeze.navigation.rememberTrapezeNavigator
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesIntoMap
+import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.binding
 import dev.zacsweers.metrox.android.ActivityKey
 
@@ -51,48 +42,23 @@ import dev.zacsweers.metrox.android.ActivityKey
 @ActivityKey(MainActivity::class)
 class MainActivity : ComponentActivity() {
 
-    // TODO: inject the stateHolder and UI with the domains, not here
-    @Inject lateinit var saveSummaryValue: Lazy<SaveSummaryValue>
-    @Inject lateinit var observeLastSavedValue: Lazy<ObserveLastSavedValue>
+    @Inject lateinit var trapeze: Trapeze
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             TrapezeTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    TrapezeNavHost(
-                        initialScreen = CounterScreen(initialCount = 0)
-                    ) { screen ->
-                        val navigator = LocalTrapezeNavigator.current
-                        
-                        val interop = remember {
-                            object : AppInterop {
-                                override fun send(event: AppInteropEvent) {
-                                    Toast.makeText(this@MainActivity, "App Interop: $event", Toast.LENGTH_SHORT).show()
-                                }
-                            }
-                        }
+                TrapezeCompositionLocals(trapeze) {
+                    val backStack = rememberSaveableBackStack(root = CounterScreen(initialCount = 0))
+                    val navigator = rememberTrapezeNavigator(backStack)
 
-                        when(screen) {
-                             is CounterScreen -> {
-                                 TrapezeContent(
-                                     modifier = Modifier.padding(innerPadding),
-                                     screen = screen,
-                                     stateHolder = CounterStateHolder(interop, navigator),
-                                     ui = ::CounterUi
-                                 )
-                             }
-                             is SummaryScreen -> {
-                                 TrapezeContent(
-                                     modifier = Modifier.padding(innerPadding),
-                                     screen = screen,
-                                     stateHolder = SummaryStateHolder(navigator, saveSummaryValue, observeLastSavedValue),
-                                     ui = ::SummaryUi
-                                 )
-                             }
-                             else -> {} 
-                        }
+                    Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                        NavigableTrapezeContent(
+                            navigator = navigator,
+                            backStack = backStack,
+                            modifier = Modifier.padding(innerPadding)
+                        )
                     }
                 }
             }

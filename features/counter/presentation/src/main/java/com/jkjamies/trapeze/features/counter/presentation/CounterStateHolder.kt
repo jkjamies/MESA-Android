@@ -16,23 +16,32 @@
 
 package com.jkjamies.trapeze.features.counter.presentation
 
-import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import com.jkjamies.trapeze.TrapezeNavigator
 import com.jkjamies.trapeze.TrapezeStateHolder
 import com.jkjamies.trapeze.core.presentation.AppInterop
 import com.jkjamies.trapeze.core.presentation.AppInteropEvent
 import com.jkjamies.trapeze.features.summary.presentation.SummaryScreen
-import com.jkjamies.trapeze.navigation.TrapezeNavigator
+import dev.zacsweers.metro.Assisted
+import dev.zacsweers.metro.AssistedFactory
+import dev.zacsweers.metro.AssistedInject
 
-class CounterStateHolder(
-    private val interop: AppInterop,
-    private val navigator: TrapezeNavigator
+/**
+ * StateHolder for the Counter screen.
+ */
+class CounterStateHolder @AssistedInject constructor(
+    @Assisted private val interop: AppInterop,
+    @Assisted private val navigator: TrapezeNavigator
 ) : TrapezeStateHolder<CounterScreen, CounterState, CounterEvent>() {
+
+    @AssistedFactory
+    fun interface Factory {
+        fun create(interop: AppInterop, navigator: TrapezeNavigator): CounterStateHolder
+    }
 
     @Composable
     override fun produceState(screen: CounterScreen): CounterState {

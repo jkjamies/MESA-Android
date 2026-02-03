@@ -18,13 +18,27 @@ package com.jkjamies.trapeze.counter
 
 import android.app.Application
 import android.content.Context
+import com.jkjamies.trapeze.Trapeze
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.DependencyGraph
+import dev.zacsweers.metro.Multibinds
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metrox.android.MetroAppComponentProviders
 
 @DependencyGraph(AppScope::class)
 interface AppGraph : MetroAppComponentProviders {
+
+    @Multibinds
+    val stateHolderFactories: Set<Trapeze.StateHolderFactory>
+
+    @Multibinds
+    val uiFactories: Set<Trapeze.UiFactory>
+
+    val trapeze: Trapeze
+        @Provides get() = Trapeze.Builder()
+            .apply { stateHolderFactories.forEach { addStateHolderFactory(it) } }
+            .apply { uiFactories.forEach { addUiFactory(it) } }
+            .build()
 
     @Provides fun provideApplicationContext(application: Application): Context = application
 

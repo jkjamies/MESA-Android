@@ -20,23 +20,30 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import com.jkjamies.trapeze.TrapezeNavigator
 import com.jkjamies.trapeze.TrapezeStateHolder
 import com.jkjamies.trapeze.features.summary.api.ObserveLastSavedValue
 import com.jkjamies.trapeze.features.summary.api.SaveSummaryValue
-import com.jkjamies.trapeze.navigation.TrapezeNavigator
 import com.jkjamies.strata.strataLaunch
-import kotlinx.coroutines.CoroutineScope
+import dev.zacsweers.metro.Assisted
+import dev.zacsweers.metro.AssistedFactory
+import dev.zacsweers.metro.AssistedInject
 
 /**
  * StateHolder for the Summary screen.
- * 
+ *
  * Manages saving and observing summary values via [SaveSummaryValue] and [ObserveLastSavedValue].
  */
-class SummaryStateHolder(
-    private val navigator: TrapezeNavigator,
+class SummaryStateHolder @AssistedInject constructor(
+    @Assisted private val navigator: TrapezeNavigator,
     private val saveSummaryValue: Lazy<SaveSummaryValue>,
     private val observeLastSavedValue: Lazy<ObserveLastSavedValue>
 ) : TrapezeStateHolder<SummaryScreen, SummaryState, SummaryEvent>() {
+
+    @AssistedFactory
+    fun interface Factory {
+        fun create(navigator: TrapezeNavigator): SummaryStateHolder
+    }
 
     /**
      * Produces the [SummaryState] for the given [screen].

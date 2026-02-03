@@ -22,7 +22,7 @@ plugins {
 
 android {
     namespace = "com.jkjamies.trapeze.navigation"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         minSdk = 27

@@ -20,12 +20,43 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 
 /**
- * The Entry Point: Bridges the Logic and the UI.
- * Generic constraints ensure S is identical in both.
+ * Renders a [TrapezeScreen] by resolving its [TrapezeStateHolder] and [TrapezeUi] from [Trapeze].
+ *
+ * This is the primary entry point for rendering a single screen. For navigation with a backstack,
+ * use [com.jkjamies.trapeze.navigation.NavigableTrapezeContent].
+ *
+ * @param screen The screen to render.
+ * @param modifier Modifier to apply to the UI.
+ * @param trapeze The [Trapeze] instance to resolve factories from. Defaults to [LocalTrapeze].
+ * @param navigator Optional navigator for screens that need navigation capabilities.
  */
 @Composable
-fun <T : TrapezeScreen, S : TrapezeState, E : TrapezeEvent> TrapezeContent(
+public fun TrapezeContent(
+    screen: TrapezeScreen,
     modifier: Modifier = Modifier,
+    trapeze: Trapeze = LocalTrapeze.current,
+    navigator: TrapezeNavigator? = null
+) {
+    val stateHolder = trapeze.stateHolder(screen, navigator)
+    val ui = trapeze.ui(screen)
+    if (stateHolder != null && ui != null) {
+        @Suppress("UNCHECKED_CAST")
+        TrapezeRenderer(
+            modifier = modifier,
+            screen = screen,
+            stateHolder = stateHolder as TrapezeStateHolder<TrapezeScreen, TrapezeState, TrapezeEvent>,
+            ui = ui as TrapezeUi<TrapezeState>
+        )
+    }
+}
+
+/**
+ * Internal: Wires a [TrapezeStateHolder] to a [TrapezeUi].
+ * Produces state from the StateHolder and passes it to the UI.
+ */
+@Composable
+internal fun <T : TrapezeScreen, S : TrapezeState, E : TrapezeEvent> TrapezeRenderer(
+    modifier: Modifier,
     screen: T,
     stateHolder: TrapezeStateHolder<T, S, E>,
     ui: TrapezeUi<S>
