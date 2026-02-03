@@ -47,6 +47,15 @@ fun CounterUi(modifier: Modifier = Modifier, state: CounterState) {
                 text = "Count: ${state.count}",
                 style = MaterialTheme.typography.displayLarge
             )
+
+            state.trapezeMessage?.let { message ->
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = message.message,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
             
             Spacer(modifier = Modifier.height(32.dp))
             
@@ -75,6 +84,24 @@ fun CounterUi(modifier: Modifier = Modifier, state: CounterState) {
 
             Button(onClick = { state.eventSink(CounterEvent.GetHelp) }) {
                 Text("Get Help")
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            val trapezeMessage = state.trapezeMessage
+            Button(
+                onClick = {
+                    if (trapezeMessage != null) {
+                        state.eventSink(CounterEvent.ClearError(trapezeMessage.id))
+                    } else {
+                        state.eventSink(CounterEvent.ThrowError)
+                    }
+                },
+                colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                    containerColor = if (trapezeMessage != null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+                )
+            ) {
+                Text(if (trapezeMessage != null) "Clear Error" else "Throw Error")
             }
         }
     }

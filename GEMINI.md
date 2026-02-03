@@ -8,7 +8,7 @@ A Pure-Compose driven architectural library implementing the **MESA framework** 
 ## Libraries
 | Library | Purpose | Key Exports |
 |---------|---------|-------------|
-| **Trapeze** | Core architecture | `TrapezeStateHolder`, `TrapezeState`, `TrapezeScreen`, `TrapezeEvent`, `TrapezeContent`, `Trapeze`, `TrapezeCompositionLocals` |
+| **Trapeze** | Core architecture | `TrapezeStateHolder`, `TrapezeState`, `TrapezeScreen`, `TrapezeEvent`, `TrapezeContent`, `Trapeze`, `TrapezeCompositionLocals`, `TrapezeMessage`, `TrapezeMessageManager` |
 | **TrapezeNavigation** | Navigation layer | `NavigableTrapezeContent`, `TrapezeBackStack`, `TrapezeNavigator`, `LocalTrapezeNavigator` |
 | **Strata** | Business logic layer | `StrataInteractor`, `StrataSubjectInteractor`, `StrataResult`, `strataLaunch` |
 
@@ -282,3 +282,26 @@ interface AppInterop : TrapezeInterop {
 @ContributesBinding(AppScope::class)
 class AppInteropImpl @Inject constructor(private val context: Context) : AppInterop
 ```
+
+### Transient UI Messages
+Use `TrapezeMessage` and `TrapezeMessageManager` to handle one-off events (snackbars, toasts) complying with UDF.
+
+**StateHolder:**
+```kotlin
+val messageManager = remember { TrapezeMessageManager() }
+val message by messageManager.message.collectAsState(initial = null)
+
+// Emit a message
+messageManager.emitMessage(TrapezeMessage(Throwable("Something went wrong")))
+```
+
+**UI:**
+```kotlin
+state.trapezeMessage?.let { msg ->
+    Snackbar(
+        action = { Button(onClick = { state.eventSink(ClearError(msg.id)) }) { Text("Dismiss") } }
+    ) { Text(msg.message) }
+}
+```
+
+**Note**: `ExperimentalUuidApi` is globally opted-in via the root build configuration.

@@ -21,6 +21,9 @@ import com.jkjamies.trapeze.TrapezeScreen
 import com.jkjamies.trapeze.TrapezeState
 import kotlinx.parcelize.Parcelize
 import android.os.Parcelable
+import com.jkjamies.trapeze.TrapezeMessage
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 @Parcelize
 data class CounterScreen(
@@ -29,6 +32,7 @@ data class CounterScreen(
 
 data class CounterState(
     val count: Int,
+    val trapezeMessage: TrapezeMessage? = null,
     val eventSink: (CounterEvent) -> Unit
 ) : TrapezeState
 
@@ -38,4 +42,6 @@ sealed interface CounterEvent : TrapezeEvent {
     data object Divide : CounterEvent
     data object GoToSummary : CounterEvent
     data object GetHelp : CounterEvent
+    data object ThrowError : CounterEvent
+    data class ClearError(val id: Uuid) : CounterEvent
 }

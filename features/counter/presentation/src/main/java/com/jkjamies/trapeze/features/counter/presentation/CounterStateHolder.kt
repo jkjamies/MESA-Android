@@ -20,9 +20,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.collectAsState
 import com.jkjamies.trapeze.TrapezeNavigator
 import com.jkjamies.trapeze.TrapezeStateHolder
+import com.jkjamies.trapeze.TrapezeMessage
+import com.jkjamies.trapeze.TrapezeMessageManager
+import com.jkjamies.strata.StrataException
 import com.jkjamies.trapeze.core.presentation.AppInterop
 import com.jkjamies.trapeze.core.presentation.AppInteropEvent
 import com.jkjamies.trapeze.features.summary.presentation.SummaryScreen
@@ -46,9 +51,12 @@ class CounterStateHolder @AssistedInject constructor(
     @Composable
     override fun produceState(screen: CounterScreen): CounterState {
         var count by rememberSaveable { mutableIntStateOf(screen.initialCount) }
+        val trapezeMessageManager = remember { TrapezeMessageManager() }
+        val trapezeMessage by trapezeMessageManager.message.collectAsState(initial = null)
 
         return CounterState(
             count = count,
+            trapezeMessage = trapezeMessage,
             eventSink = { event ->
                 when (event) {
                     CounterEvent.Increment -> count++
@@ -62,8 +70,16 @@ class CounterStateHolder @AssistedInject constructor(
                             override fun toString(): String = "Help Requested!"
                         })
                     }
+                    CounterEvent.ThrowError -> {
+                        trapezeMessageManager.emitMessage(TrapezeMessage(MockError("Simulated Failure")))
+                    }
+                    is CounterEvent.ClearError -> {
+                        trapezeMessageManager.clearMessage(event.id)
+                    }
                 }
             }
         )
     }
+
+    private class MockError(message: String) : StrataException(message)
 }

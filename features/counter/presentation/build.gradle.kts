@@ -43,6 +43,7 @@ dependencies {
     implementation(project(":TrapezeNavigation"))
     implementation(project(":core:presentation"))
     implementation(project(":features:summary:presentation"))
+    implementation(project(":Strata"))
     implementation(libs.androidx.core.ktx)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)

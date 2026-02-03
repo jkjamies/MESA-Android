@@ -6,7 +6,7 @@ A type-safe, MESA-inspired architecture for Jetpack Compose. Trapeze enforces st
 
 | Library | Purpose | Key Components |
 |---------|---------|----------------|
-| **Trapeze** | Core architecture | `TrapezeStateHolder`, `TrapezeState`, `TrapezeScreen`, `TrapezeEvent`, `TrapezeContent`, `Trapeze` |
+| **Trapeze** | Core architecture | `TrapezeStateHolder`, `TrapezeState`, `TrapezeScreen`, `TrapezeEvent`, `TrapezeContent`, `Trapeze`, `TrapezeCompositionLocals`, `TrapezeMessage`, `TrapezeMessageManager` |
 | **TrapezeNavigation** | Navigation layer | `NavigableTrapezeContent`, `TrapezeBackStack`, `TrapezeNavigator`, `LocalTrapezeNavigator` |
 | **Strata** | Business logic | `StrataInteractor`, `StrataSubjectInteractor`, `StrataResult`, `strataLaunch` |
 
@@ -180,7 +180,7 @@ class CounterStateHolder @AssistedInject constructor(
 
         return CounterState(
             count = count,
-            eventSink = { event ->
+            eventSink = wrapEventSink { event ->
                 when (event) {
                     CounterEvent.Increment -> count++
                     CounterEvent.Decrement -> count--
@@ -263,7 +263,7 @@ class CounterStateHolder @AssistedInject constructor(
     override fun produceState(screen: CounterScreen): CounterState {
         return CounterState(
             // ...
-            eventSink = { event ->
+            eventSink = wrapEventSink { event ->
                 when (event) {
                     CounterEvent.GoToDetails -> navigator.navigate(DetailsScreen(count))
                     CounterEvent.GoBack -> navigator.pop()
@@ -338,7 +338,7 @@ class NoteStateHolder @AssistedInject constructor(
 
         return NoteState(
             note = note,
-            eventSink = { event ->
+            eventSink = wrapEventSink { event ->
                 when (event) {
                     is NoteEvent.Save -> strataLaunch {
                         saveNote.value(event.params).onFailure { error ->
@@ -430,6 +430,29 @@ Wrap event sink using `wrapEventSink` helper:
 ```kotlin
 val wrappedSink = wrapEventSink(eventSink)
 ```
+
+### Transient UI Messages
+Use `TrapezeMessage` and `TrapezeMessageManager` to handle one-off events (snackbars, toasts) complying with UDF.
+
+**StateHolder:**
+```kotlin
+val messageManager = remember { TrapezeMessageManager() }
+val message by messageManager.message.collectAsState(initial = null)
+
+// Emit a message
+messageManager.emitMessage(TrapezeMessage(Throwable("Something went wrong")))
+```
+
+**UI:**
+```kotlin
+state.trapezeMessage?.let { msg ->
+    Snackbar(
+        action = { Button(onClick = { state.eventSink(ClearError(msg.id)) }) { Text("Dismiss") } }
+    ) { Text(msg.message) }
+}
+```
+
+**Note**: `ExperimentalUuidApi` is globally opted-in via the root build configuration.
 
 ---
 
