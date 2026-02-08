@@ -29,7 +29,7 @@ import dev.zacsweers.metro.Inject
  * Factory that creates [SummaryStateHolder] for [SummaryScreen].
  */
 @ContributesIntoSet(AppScope::class)
-class SummaryStateHolderFactory @Inject constructor(
+class SummaryStateHolderFactory(
     private val factory: SummaryStateHolder.Factory
 ) : Trapeze.StateHolderFactory {
     override fun create(
@@ -46,7 +46,7 @@ class SummaryStateHolderFactory @Inject constructor(
  * Factory that provides [SummaryUi] for [SummaryScreen].
  */
 @ContributesIntoSet(AppScope::class)
-class SummaryUiFactory @Inject constructor() : Trapeze.UiFactory {
+class SummaryUiFactory() : Trapeze.UiFactory {
     override fun create(screen: TrapezeScreen): TrapezeUi<*>? {
         return if (screen is SummaryScreen) ::SummaryUi else null
     }

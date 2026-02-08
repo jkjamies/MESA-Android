@@ -30,7 +30,7 @@ import dev.zacsweers.metro.Inject
  * Factory that creates [CounterStateHolder] for [CounterScreen].
  */
 @ContributesIntoSet(AppScope::class)
-class CounterStateHolderFactory @Inject constructor(
+class CounterStateHolderFactory(
     private val factory: CounterStateHolder.Factory,
     private val appInterop: AppInterop
 ) : Trapeze.StateHolderFactory {
@@ -48,7 +48,7 @@ class CounterStateHolderFactory @Inject constructor(
  * Factory that provides [CounterUi] for [CounterScreen].
  */
 @ContributesIntoSet(AppScope::class)
-class CounterUiFactory @Inject constructor() : Trapeze.UiFactory {
+class CounterUiFactory() : Trapeze.UiFactory {
     override fun create(screen: TrapezeScreen): TrapezeUi<*>? {
         return if (screen is CounterScreen) ::CounterUi else null
     }

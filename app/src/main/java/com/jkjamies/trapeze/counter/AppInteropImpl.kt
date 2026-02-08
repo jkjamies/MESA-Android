@@ -28,7 +28,7 @@ import dev.zacsweers.metro.Inject
  * Default implementation of [AppInterop] that shows Toast messages.
  */
 @ContributesBinding(AppScope::class)
-class AppInteropImpl @Inject constructor(
+class AppInteropImpl(
     private val context: Context
 ) : AppInterop {
     override fun send(event: AppInteropEvent) {

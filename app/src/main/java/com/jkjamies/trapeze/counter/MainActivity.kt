@@ -34,15 +34,12 @@ import com.jkjamies.trapeze.navigation.rememberSaveableBackStack
 import com.jkjamies.trapeze.navigation.rememberTrapezeNavigator
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesIntoMap
-import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.binding
 import dev.zacsweers.metrox.android.ActivityKey
 
 @ContributesIntoMap(AppScope::class, binding<Activity>())
 @ActivityKey(MainActivity::class)
-class MainActivity : ComponentActivity() {
-
-    @Inject lateinit var trapeze: Trapeze
+class MainActivity(private val trapeze: Trapeze) : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
