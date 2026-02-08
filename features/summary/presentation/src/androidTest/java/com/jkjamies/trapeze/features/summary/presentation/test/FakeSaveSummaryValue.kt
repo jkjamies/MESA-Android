@@ -14,23 +14,14 @@
  * limitations under the License.
  */
 
-plugins {
-    alias(libs.plugins.kotlin.jvm)
-}
+package com.jkjamies.trapeze.features.summary.presentation.test
 
-kotlin {
-    jvmToolchain(17)
-}
+import com.jkjamies.trapeze.features.summary.api.SaveSummaryValue
 
-tasks.withType<Test> {
-    useJUnitPlatform()
-}
+class FakeSaveSummaryValue : SaveSummaryValue() {
+    val savedValues = mutableListOf<Int>()
 
-dependencies {
-    implementation(libs.kotlinx.coroutines.core)
-    testImplementation(libs.kotlinx.coroutines.test)
-    testImplementation(libs.kotest.runner.junit5)
-    testImplementation(libs.kotest.assertions.core)
-    testImplementation(libs.kotest.property)
-    testImplementation(libs.turbine)
+    override suspend fun doWork(params: Int) {
+        savedValues.add(params)
+    }
 }

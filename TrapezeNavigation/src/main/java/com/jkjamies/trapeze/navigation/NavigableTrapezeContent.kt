@@ -18,7 +18,9 @@ package com.jkjamies.trapeze.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import com.jkjamies.trapeze.LocalTrapeze
 import com.jkjamies.trapeze.Trapeze
@@ -45,6 +47,23 @@ public fun NavigableTrapezeContent(
 ) {
     val saveableStateHolder = rememberSaveableStateHolder()
     val currentScreen = backStack.current
+
+    // Clean up saved state for screens that have been popped from the backstack
+    LaunchedEffect(saveableStateHolder) {
+        var previousScreens = backStack.asList()
+        snapshotFlow { backStack.asList() }
+            .collect { currentScreens ->
+                if (currentScreens.size < previousScreens.size) {
+                    val currentSet = currentScreens.toSet()
+                    previousScreens.forEach { screen ->
+                        if (screen !in currentSet) {
+                            saveableStateHolder.removeState(screen)
+                        }
+                    }
+                }
+                previousScreens = currentScreens
+            }
+    }
 
     CompositionLocalProvider(LocalTrapezeNavigator provides navigator) {
         saveableStateHolder.SaveableStateProvider(key = currentScreen) {

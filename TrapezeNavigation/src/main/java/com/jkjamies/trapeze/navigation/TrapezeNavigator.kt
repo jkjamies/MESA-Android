@@ -17,8 +17,9 @@
 package com.jkjamies.trapeze.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveableStateHolder
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.staticCompositionLocalOf
 import com.jkjamies.trapeze.TrapezeNavigator
 import com.jkjamies.trapeze.TrapezeScreen
@@ -41,7 +42,7 @@ public fun rememberTrapezeNavigator(
     backStack: TrapezeBackStack,
     onRootPop: (() -> Unit)? = null
 ): TrapezeNavigator {
-    val saveableStateHolder = rememberSaveableStateHolder()
+    val currentOnRootPop by rememberUpdatedState(onRootPop)
     return remember(backStack) {
         object : TrapezeNavigator {
             override fun navigate(screen: TrapezeScreen) {
@@ -50,11 +51,9 @@ public fun rememberTrapezeNavigator(
 
             override fun pop() {
                 if (backStack.size > 1) {
-                    val popped = backStack.current
                     backStack.pop()
-                    saveableStateHolder.removeState(popped)
                 } else {
-                    onRootPop?.invoke()
+                    currentOnRootPop?.invoke()
                 }
             }
         }

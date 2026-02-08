@@ -20,17 +20,19 @@ import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.test.TestScope
-import kotlinx.coroutines.test.runTest
 
-class LaunchOrThrowTest : BehaviorSpec({
+class StrataLaunchTest : BehaviorSpec({
 
-    Given("a coroutine scope") {
-        When("launchOrThrow is called") {
+    coroutineTestScope = true
+
+    Given("an active coroutine scope") {
+        When("strataLaunch is called") {
             Then("it runs the block successfully") {
-                runTest {
+                coroutineScope {
                     var ran = false
-                    val job = launchOrThrow {
+                    val job = strataLaunch {
                         ran = true
                     }
                     job.join()
@@ -38,14 +40,16 @@ class LaunchOrThrowTest : BehaviorSpec({
                 }
             }
         }
+    }
 
-        When("launchOrThrow is called on a cancelled scope") {
+    Given("a cancelled coroutine scope") {
+        When("strataLaunch is called") {
             Then("it throws IllegalStateException") {
                 val scope = TestScope()
                 scope.cancel()
 
                 shouldThrow<IllegalStateException> {
-                    scope.launchOrThrow { }
+                    scope.strataLaunch { }
                 }
             }
         }

@@ -28,6 +28,7 @@ android {
 
     defaultConfig {
         minSdk = 27
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -48,4 +49,8 @@ dependencies {
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.material3)
+
+    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    androidTestImplementation(libs.kotest.assertions.core)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
 }

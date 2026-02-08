@@ -14,20 +14,14 @@
  * limitations under the License.
  */
 
-package com.jkjamies.trapeze
+package com.jkjamies.trapeze.features.summary.presentation.test
 
-import org.junit.Test
+import com.jkjamies.trapeze.features.summary.api.ObserveLastSavedValue
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 
-import org.junit.Assert.*
+class FakeObserveLastSavedValue : ObserveLastSavedValue() {
+    val valueFlow = MutableStateFlow<Int?>(null)
 
-/**
- * Example local unit test, which will execute on the development machine (host).
- *
- * See [testing documentation](http://d.android.com/tools/testing).
- */
-class ExampleUnitTest {
-    @Test
-    fun addition_isCorrect() {
-        assertEquals(4, 2 + 2)
-    }
+    override fun createObservable(params: Unit): Flow<Int?> = valueFlow
 }

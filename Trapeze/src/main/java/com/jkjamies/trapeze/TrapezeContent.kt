@@ -17,6 +17,7 @@
 package com.jkjamies.trapeze
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 
 /**
@@ -37,8 +38,8 @@ public fun TrapezeContent(
     trapeze: Trapeze = LocalTrapeze.current,
     navigator: TrapezeNavigator? = null
 ) {
-    val stateHolder = trapeze.stateHolder(screen, navigator)
-    val ui = trapeze.ui(screen)
+    val stateHolder = remember(screen) { trapeze.stateHolder(screen, navigator) }
+    val ui = remember(screen) { trapeze.ui(screen) }
     if (stateHolder != null && ui != null) {
         @Suppress("UNCHECKED_CAST")
         TrapezeRenderer(

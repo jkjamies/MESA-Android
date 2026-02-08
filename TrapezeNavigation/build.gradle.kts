@@ -52,4 +52,7 @@ dependencies {
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.material3)
     testImplementation(libs.junit)
+    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    androidTestImplementation(libs.kotest.assertions.core)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
 }

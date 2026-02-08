@@ -82,13 +82,21 @@ abstract class StrataInteractor<in P, R> {
         params: P,
         timeout: Duration = DefaultTimeout,
         userInitiated: Boolean = params.isUserInitiated,
-    ): StrataResult<R> = strataRunCatching {
-        addLoader(userInitiated)
-        withTimeout(timeout) {
-            doWork(params)
+    ): StrataResult<R> = withLoader(userInitiated) {
+        strataRunCatching {
+            withTimeout(timeout) {
+                doWork(params)
+            }
         }
-    }.also {
-        removeLoader(userInitiated)
+    }
+
+    private inline fun <T> withLoader(fromUser: Boolean, block: () -> T): T {
+        addLoader(fromUser)
+        try {
+            return block()
+        } finally {
+            removeLoader(fromUser)
+        }
     }
 
     private val P.isUserInitiated: Boolean
