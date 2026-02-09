@@ -23,7 +23,15 @@ import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
-fun CoroutineScope.strataLaunch(
+/**
+ * Launches a coroutine and immediately verifies that its [Job] is not already cancelled.
+ *
+ * Use this instead of bare [launch] inside event sinks to fail fast when the
+ * [CoroutineScope] has been cancelled (e.g., after composition disposal).
+ *
+ * @throws IllegalStateException if the returned [Job] is already cancelled at launch time.
+ */
+public fun CoroutineScope.strataLaunch(
     context: CoroutineContext = EmptyCoroutineContext,
     start: CoroutineStart = CoroutineStart.DEFAULT,
     block: suspend CoroutineScope.() -> Unit,

@@ -29,15 +29,22 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 /**
- * Base class for all business logic units in Strata.
+ * Base class for one-shot business logic operations in Strata.
  *
- * Manages loading state, timeouts, and error handling via [StrataResult].
+ * Subclass and implement [doWork] to define the operation. Invoke via the `operator fun invoke`
+ * which handles timeouts, error wrapping, and loading-state tracking automatically.
+ *
+ * The [inProgress] flow emits `true` while work is running. User-initiated calls update the
+ * indicator immediately; ambient calls are debounced by 5 seconds to avoid flicker.
+ *
+ * @param P The parameter type.
+ * @param R The result type on success.
  */
-abstract class StrataInteractor<in P, R> {
+public abstract class StrataInteractor<in P, R> {
     private val loadingState = MutableStateFlow(State())
 
     @OptIn(FlowPreview::class)
-    val inProgress: Flow<Boolean> by lazy {
+    public val inProgress: Flow<Boolean> by lazy {
         loadingState
             .debounce {
                 if (it.ambientCount > 0) {
@@ -78,7 +85,7 @@ abstract class StrataInteractor<in P, R> {
      * @param userInitiated Whether this execution was initiated by a user action (affects loading state).
      * @return A [StrataResult] containing the result or failure.
      */
-    suspend operator fun invoke(
+    public suspend operator fun invoke(
         params: P,
         timeout: Duration = DefaultTimeout,
         userInitiated: Boolean = params.isUserInitiated,
@@ -111,6 +118,6 @@ abstract class StrataInteractor<in P, R> {
     private data class State(val userCount: Int = 0, val ambientCount: Int = 0)
 }
 
-suspend operator fun <R> StrataInteractor<Unit, R>.invoke(
+public suspend operator fun <R> StrataInteractor<Unit, R>.invoke(
     timeout: Duration = StrataInteractor.DefaultTimeout,
 ) = invoke(Unit, timeout)

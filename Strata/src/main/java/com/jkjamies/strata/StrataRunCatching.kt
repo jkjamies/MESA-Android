@@ -26,7 +26,7 @@ import kotlin.coroutines.cancellation.CancellationException
  * - If execution throws a [StrataException], it is captured as [StrataResult.Failure].
  * - If execution throws any other [Throwable], it is wrapped in [StrataExecutionException] and captured as [StrataResult.Failure].
  */
-inline fun <R> strataRunCatching(block: () -> R): StrataResult<R> {
+public inline fun <R> strataRunCatching(block: () -> R): StrataResult<R> {
     return try {
         StrataResult.Success(block())
     } catch (e: CancellationException) {

@@ -16,6 +16,13 @@
 
 package com.jkjamies.strata
 
-interface StrataUserInitiatedParams {
-    val isUserInitiated: Boolean
+/**
+ * Marker interface for interactor parameters that carry a user-initiation flag.
+ *
+ * When a params object implements this interface, [StrataInteractor] uses [isUserInitiated]
+ * to decide whether the loading indicator appears immediately (user-initiated) or after
+ * a debounce delay (ambient).
+ */
+public interface StrataUserInitiatedParams {
+    public val isUserInitiated: Boolean
 }

@@ -20,12 +20,22 @@ import androidx.compose.runtime.Composable
 import kotlinx.coroutines.CoroutineScope
 
 /**
- * The Brain: StateHolder manages the logic lifecycle.
- * No initial state is required in the constructor.
+ * Base class for all Trapeze logic holders.
+ *
+ * A StateHolder is the "brain" of a screen — it owns the business logic and produces an
+ * immutable [TrapezeState] that the UI renders. There is no initial state; instead,
+ * [produceState] is called inside the composition to build and emit state reactively.
+ *
+ * Use [wrapEventSink] inside [produceState] to create a coroutine-safe event callback
+ * that silently drops events when the composition's [CoroutineScope] is no longer active.
+ *
+ * @param T The [TrapezeScreen] type this holder is associated with.
+ * @param S The [TrapezeState] type this holder produces.
+ * @param E The [TrapezeEvent] type this holder handles.
  */
-abstract class TrapezeStateHolder<T : TrapezeScreen, S : TrapezeState, E : TrapezeEvent> {
+public abstract class TrapezeStateHolder<T : TrapezeScreen, S : TrapezeState, E : TrapezeEvent> {
     @Composable
-    abstract fun produceState(screen: T): S
+    public abstract fun produceState(screen: T): S
 
     @Composable
     protected inline fun <reified EV : E> wrapEventSink(

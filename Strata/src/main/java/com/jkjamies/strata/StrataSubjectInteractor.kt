@@ -23,8 +23,19 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 
+/**
+ * Base class for streaming business logic in Strata.
+ *
+ * Subclass and implement [createObservable] to return a [Flow] for the given parameters.
+ * Call [invoke] to switch the active subscription; the [flow] property emits values from
+ * the latest observable via `flatMapLatest`. Duplicate parameters are filtered by
+ * `distinctUntilChanged` to avoid unnecessary re-subscriptions.
+ *
+ * @param P The parameter type (must be non-null for `distinctUntilChanged`).
+ * @param T The emitted value type.
+ */
 @OptIn(ExperimentalCoroutinesApi::class)
-abstract class StrataSubjectInteractor<P : Any, T> {
+public abstract class StrataSubjectInteractor<P : Any, T> {
     // Ideally this would be buffer = 0, since we use flatMapLatest below, BUT invoke is not
     // suspending. This means that we can't suspend while flatMapLatest cancels any
     // existing flows. The buffer of 1 means that we can use tryEmit() and buffer the value
@@ -35,12 +46,12 @@ abstract class StrataSubjectInteractor<P : Any, T> {
         onBufferOverflow = BufferOverflow.DROP_OLDEST,
     )
 
-    val flow: Flow<T> = paramState
+    public val flow: Flow<T> = paramState
         .distinctUntilChanged()
         .flatMapLatest { createObservable(it) }
         .distinctUntilChanged()
 
-    operator fun invoke(params: P) {
+    public operator fun invoke(params: P) {
         paramState.tryEmit(params)
     }
 

@@ -14,12 +14,15 @@
  * limitations under the License.
  */
 
-package com.jkjamies.strata
+package com.jkjamies.trapeze.features.counter.presentation.test
 
-/**
- * Wraps an unexpected (non-[StrataException]) throwable caught during interactor execution.
- *
- * Created automatically by [strataRunCatching] when a throwable that is not a
- * [StrataException] or [CancellationException][kotlin.coroutines.cancellation.CancellationException] is thrown.
- */
-public class StrataExecutionException(cause: Throwable) : StrataException(cause.message ?: "Execution failed", cause)
+import com.jkjamies.trapeze.core.presentation.AppInterop
+import com.jkjamies.trapeze.core.presentation.AppInteropEvent
+
+class FakeAppInterop : AppInterop {
+    val events = mutableListOf<AppInteropEvent>()
+
+    override fun send(event: AppInteropEvent) {
+        events.add(event)
+    }
+}

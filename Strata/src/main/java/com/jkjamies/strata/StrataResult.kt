@@ -22,7 +22,7 @@ package com.jkjamies.strata
  *
  * This type is used to enforce strict exception handling boundaries within the Strata architecture.
  */
-sealed interface StrataResult<out T> {
+public sealed interface StrataResult<out T> {
     /**
      * Represents a successful operation containing [data].
      */

@@ -14,12 +14,20 @@
  * limitations under the License.
  */
 
-package com.jkjamies.strata
+package com.jkjamies.trapeze.features.counter.presentation.test
 
-/**
- * Wraps an unexpected (non-[StrataException]) throwable caught during interactor execution.
- *
- * Created automatically by [strataRunCatching] when a throwable that is not a
- * [StrataException] or [CancellationException][kotlin.coroutines.cancellation.CancellationException] is thrown.
- */
-public class StrataExecutionException(cause: Throwable) : StrataException(cause.message ?: "Execution failed", cause)
+import com.jkjamies.trapeze.TrapezeNavigator
+import com.jkjamies.trapeze.TrapezeScreen
+
+class FakeTrapezeNavigator : TrapezeNavigator {
+    val screens = mutableListOf<TrapezeScreen>()
+    var popCount = 0
+
+    override fun navigate(screen: TrapezeScreen) {
+        screens.add(screen)
+    }
+
+    override fun pop() {
+        popCount++
+    }
+}

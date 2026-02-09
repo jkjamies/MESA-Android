@@ -16,4 +16,10 @@
 
 package com.jkjamies.strata
 
-abstract class StrataException(message: String, cause: Throwable? = null) : Exception(message, cause)
+/**
+ * Base exception for all domain-level errors in the Strata architecture.
+ *
+ * Subclass this for specific business-rule failures.
+ * Thrown [StrataException]s are captured as [StrataResult.Failure] without wrapping.
+ */
+public abstract class StrataException(message: String, cause: Throwable? = null) : Exception(message, cause)

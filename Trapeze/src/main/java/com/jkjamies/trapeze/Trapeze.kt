@@ -17,7 +17,6 @@
 package com.jkjamies.trapeze
 
 import androidx.compose.runtime.Immutable
-import com.jkjamies.trapeze.TrapezeNavigator
 
 /**
  * Central circuit for Trapeze that adapts [StateHolderFactory] instances to their corresponding
