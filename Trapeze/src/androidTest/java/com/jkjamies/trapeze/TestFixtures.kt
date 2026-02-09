@@ -16,21 +16,19 @@
 
 package com.jkjamies.trapeze
 
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.isActive
-import android.util.Log
+import android.os.Parcel
+import android.os.Parcelable
 
-@Composable
-@PublishedApi
-internal inline fun <E> wrapEventSink(
-    crossinline eventSink: CoroutineScope.(E) -> Unit,
-    coroutineScope: CoroutineScope = rememberCoroutineScope(),
-): (E) -> Unit = { event ->
-    if (coroutineScope.isActive) {
-        coroutineScope.eventSink(event)
-    } else {
-        Log.w("WrapEventSink", "Received event, but CoroutineScope is no longer active.")
-    }
+data object TestScreen : TrapezeScreen {
+    override fun describeContents(): Int = 0
+    override fun writeToParcel(dest: Parcel, flags: Int) {}
+}
+
+data class TestState(
+    val count: Int = 0,
+    val eventSink: (TestEvent) -> Unit = {}
+) : TrapezeState
+
+sealed interface TestEvent : TrapezeEvent {
+    data object Action : TestEvent
 }

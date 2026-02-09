@@ -63,9 +63,10 @@ public class TrapezeMessageManager {
 
     /**
      * Adds a [message] to the end of the queue.
+     * If the queue exceeds [MAX_QUEUE_SIZE], the oldest messages are dropped.
      */
     public fun emitMessage(message: TrapezeMessage) {
-        _message.update { it + message }
+        _message.update { (it + message).takeLast(MAX_QUEUE_SIZE) }
     }
 
     /**
@@ -75,5 +76,9 @@ public class TrapezeMessageManager {
         _message.update { messages ->
             messages.filterNot { it.id == id }
         }
+    }
+
+    private companion object {
+        const val MAX_QUEUE_SIZE = 10
     }
 }

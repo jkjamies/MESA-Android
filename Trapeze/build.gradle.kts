@@ -68,4 +68,7 @@ dependencies {
     testImplementation(libs.kotest.assertions.core)
     testImplementation(libs.turbine)
     testImplementation(libs.kotlinx.coroutines.test)
+    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    androidTestImplementation(libs.kotest.assertions.core)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
 }

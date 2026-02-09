@@ -101,4 +101,24 @@ class StrataSubjectInteractorTest : BehaviorSpec({
             }
         }
     }
+
+    Given("a subject interactor receiving rapid invocations") {
+        val interactor = object : StrataSubjectInteractor<Int, String>() {
+            override fun createObservable(params: Int): Flow<String> = flowOf("value-$params")
+        }
+
+        When("invoked rapidly with different params") {
+            Then("it settles on the last value via DROP_OLDEST") {
+                interactor.flow.test {
+                    // Rapid-fire different params — DROP_OLDEST ensures the latest wins
+                    for (i in 1..100) {
+                        interactor(i)
+                    }
+                    // Due to flatMapLatest, intermediate observables are cancelled.
+                    // The most recent emission must correspond to the final param.
+                    expectMostRecentItem() shouldBe "value-100"
+                }
+            }
+        }
+    }
 })

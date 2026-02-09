@@ -32,7 +32,6 @@ A Pure-Compose driven architectural library implementing the **MESA framework** 
 | **UI** | Stateless Composable | Signature: `@Composable (Modifier, State) -> Unit` |
 
 ### Data Flow
-### Data Flow
 ```mermaid
 %%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#6366f1', 'primaryTextColor': '#fff', 'primaryBorderColor': '#4338ca', 'lineColor': '#64748b', 'secondaryColor': '#f1f5f9', 'tertiaryColor': '#e0e7ff'}}}%%
 flowchart LR
@@ -42,7 +41,7 @@ flowchart LR
     D --> E["📦 State<br/>(Immutable)"]
     E --> F(("📱 UI<br/>(Composable)"))
     F -.-> A
-    
+
     style A fill:#6366f1,stroke:#4338ca,stroke-width:2px,color:#fff,shadow:true
     style F fill:#6366f1,stroke:#4338ca,stroke-width:2px,color:#fff,shadow:true
     style D fill:#10b981,stroke:#059669,stroke-width:2px,color:#fff,shadow:true
@@ -103,7 +102,7 @@ class FooStateHolder @AssistedInject constructor(
     @Assisted private val navigator: TrapezeNavigator,  // Runtime - from factory call
     private val fooUseCase: Lazy<FooUseCase>            // Graph - from DI
 ) : TrapezeStateHolder<FooScreen, FooState, FooEvent>() {
-    
+
     @AssistedFactory
     fun interface Factory {
         fun create(navigator: TrapezeNavigator): FooStateHolder
@@ -130,7 +129,7 @@ class FooStateHolder @AssistedInject constructor(
 TrapezeCompositionLocals(trapeze) {
     val backStack = rememberSaveableBackStack(root = HomeScreen)
     val navigator = rememberTrapezeNavigator(backStack)
-    
+
     NavigableTrapezeContent(navigator, backStack)
 }
 ```
@@ -209,7 +208,7 @@ val data by observeData.flow.collectAsState(initial = null)
 interface AppGraph : MetroAppComponentProviders {
     @Multibinds val stateHolderFactories: Set<Trapeze.StateHolderFactory>
     @Multibinds val uiFactories: Set<Trapeze.UiFactory>
-    
+
     val trapeze: Trapeze
         @Provides get() = Trapeze.Builder()
             .apply { stateHolderFactories.forEach { addStateHolderFactory(it) } }
@@ -305,3 +304,13 @@ state.trapezeMessage?.let { msg ->
 ```
 
 **Note**: `ExperimentalUuidApi` is globally opted-in via the root build configuration.
+
+---
+
+## Testing
+
+### Test Style
+- **JVM tests** (`src/test/`): Use **Kotest BehaviorSpec** (Given/When/Then) with `coroutineTestScope = true` for virtual time control. Used by Trapeze core and Strata modules.
+- **Android instrumented tests** (`src/androidTest/`): Use **JUnit4** with `createComposeRule()` and **kotest assertions** (`shouldBe`, `shouldBeInstanceOf`, etc.). Required for tests that need a real Compose runtime (TrapezeNavigation, feature modules, Trapeze core Compose tests).
+
+This split is necessary because `androidTest` requires JUnit4 as the test runner, while Kotest BehaviorSpec runs on JUnit Platform (JUnit5) which is only available in JVM `test/` source sets.

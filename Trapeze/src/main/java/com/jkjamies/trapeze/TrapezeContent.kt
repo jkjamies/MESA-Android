@@ -16,6 +16,7 @@
 
 package com.jkjamies.trapeze
 
+import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -38,17 +39,21 @@ public fun TrapezeContent(
     trapeze: Trapeze = LocalTrapeze.current,
     navigator: TrapezeNavigator? = null
 ) {
+    // Navigator is intentionally excluded from the remember key — navigators are stable
+    // instances tied to the backstack, so they never change for a given composition.
     val stateHolder = remember(screen) { trapeze.stateHolder(screen, navigator) }
     val ui = remember(screen) { trapeze.ui(screen) }
-    if (stateHolder != null && ui != null) {
-        @Suppress("UNCHECKED_CAST")
-        TrapezeRenderer(
-            modifier = modifier,
-            screen = screen,
-            stateHolder = stateHolder as TrapezeStateHolder<TrapezeScreen, TrapezeState, TrapezeEvent>,
-            ui = ui as TrapezeUi<TrapezeState>
-        )
+    if (stateHolder == null || ui == null) {
+        Log.w("TrapezeContent", "No factory found for screen: $screen")
+        return
     }
+    @Suppress("UNCHECKED_CAST")
+    TrapezeRenderer(
+        modifier = modifier,
+        screen = screen,
+        stateHolder = stateHolder as TrapezeStateHolder<TrapezeScreen, TrapezeState, TrapezeEvent>,
+        ui = ui as TrapezeUi<TrapezeState>
+    )
 }
 
 /**

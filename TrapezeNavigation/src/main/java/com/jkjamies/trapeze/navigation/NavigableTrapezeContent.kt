@@ -49,7 +49,7 @@ public fun NavigableTrapezeContent(
     val currentScreen = backStack.current
 
     // Clean up saved state for screens that have been popped from the backstack
-    LaunchedEffect(saveableStateHolder) {
+    LaunchedEffect(Unit) {
         var previousScreens = backStack.asList()
         snapshotFlow { backStack.asList() }
             .collect { currentScreens ->

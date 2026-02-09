@@ -133,6 +133,28 @@ class StrataInteractorTest : BehaviorSpec({
         }
     }
 
+    Given("an interactor with ambient (non-user-initiated) loading") {
+        When("invoked with userInitiated = false") {
+            Then("inProgress is debounced and does not emit true immediately") {
+                val interactor = object : StrataInteractor<Unit, Unit>() {
+                    override suspend fun doWork(params: Unit) {
+                        delay(100.milliseconds)
+                    }
+                }
+
+                interactor.inProgress.test {
+                    awaitItem() shouldBe false // initial state
+                    val job = launch { interactor(Unit, userInitiated = false) }
+                    // The 5-second debounce prevents immediate true emission.
+                    // The work completes in 100ms, well before the 5s debounce,
+                    // so inProgress should never emit true.
+                    job.join()
+                    expectNoEvents()
+                }
+            }
+        }
+    }
+
     Given("the Unit params extension") {
         val interactor = object : StrataInteractor<Unit, String>() {
             override suspend fun doWork(params: Unit): String = "done"

@@ -25,6 +25,8 @@ import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 
+// Manual Parcelable implementation because @Parcelize is not available in JVM unit tests —
+// it requires the Android Gradle plugin's codegen which only runs for androidTest/main source sets.
 private data class ScreenA(val id: Int = 0) : TrapezeScreen {
     override fun describeContents(): Int = 0
     override fun writeToParcel(dest: Parcel, flags: Int) {}
