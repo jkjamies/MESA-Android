@@ -20,6 +20,9 @@ plugins {
     alias(libs.plugins.kotlin.parcelize)
 }
 
+group = property("publishingGroup") as String
+version = property("publishingVersion") as String
+
 android {
     namespace = "com.jkjamies.trapeze"
     compileSdk {
@@ -56,6 +59,11 @@ android {
             it.useJUnitPlatform()
         }
     }
+    publishing {
+        singleVariant("release") {
+            withSourcesJar()
+        }
+    }
 }
 
 dependencies {
@@ -72,3 +80,5 @@ dependencies {
     androidTestImplementation(libs.kotest.assertions.core)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 }
+
+apply(from = rootProject.file("gradle/publishing.gradle.kts"))

@@ -20,6 +20,9 @@ plugins {
     alias(libs.plugins.kotlin.parcelize)
 }
 
+group = property("publishingGroup") as String
+version = property("publishingVersion") as String
+
 android {
     namespace = "com.jkjamies.trapeze.navigation"
     compileSdk = 36
@@ -43,10 +46,15 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
+    publishing {
+        singleVariant("release") {
+            withSourcesJar()
+        }
+    }
 }
 
 dependencies {
-    implementation(project(":Trapeze"))
+    implementation(project(":trapeze"))
     implementation(libs.androidx.core.ktx)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
@@ -56,3 +64,5 @@ dependencies {
     androidTestImplementation(libs.kotest.assertions.core)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 }
+
+apply(from = rootProject.file("gradle/publishing.gradle.kts"))

@@ -8,8 +8,4 @@ build/
 .externalNativeBuild
 .cxx
 local.properties
-
-# AI Context Files
-CLAUDE.md
-.github/copilot-instructions.md
-.junie/guidelines.md
+bin/

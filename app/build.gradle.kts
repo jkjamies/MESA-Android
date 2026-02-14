@@ -53,8 +53,8 @@ android {
 }
 
 dependencies {
-    implementation(project(":Trapeze"))
-    implementation(project(":TrapezeNavigation"))
+    implementation(project(":trapeze"))
+    implementation(project(":trapeze-navigation"))
     implementation(project(":core:presentation"))
     implementation(project(":features:counter:presentation"))
     implementation(project(":features:summary:presentation"))

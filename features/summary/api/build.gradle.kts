@@ -33,7 +33,7 @@ android {
 }
 
 dependencies {
-    api(project(":Strata"))
+    api(project(":strata"))
     implementation(libs.androidx.core.ktx)
     implementation(libs.kotlinx.coroutines.core)
 }
