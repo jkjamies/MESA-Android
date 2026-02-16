@@ -20,7 +20,7 @@ plugins {
 }
 
 android {
-    namespace = "com.jkjamies.trapeze.features.summary.api"
+    namespace = "com.jkjamies.mesa.features.summary.api"
     compileSdk = 36
 
     defaultConfig {
@@ -33,7 +33,7 @@ android {
 }
 
 dependencies {
-    api(project(":Strata"))
+    api(project(":strata"))
     implementation(libs.androidx.core.ktx)
     implementation(libs.kotlinx.coroutines.core)
 }

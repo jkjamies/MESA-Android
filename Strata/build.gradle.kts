@@ -18,6 +18,13 @@ plugins {
     alias(libs.plugins.kotlin.jvm)
 }
 
+group = property("publishingGroup") as String
+version = property("publishingVersion") as String
+
+java {
+    withSourcesJar()
+}
+
 kotlin {
     jvmToolchain(17)
 }
@@ -34,3 +41,5 @@ dependencies {
     testImplementation(libs.kotest.property)
     testImplementation(libs.turbine)
 }
+
+apply(from = rootProject.file("gradle/publishing.gradle.kts"))

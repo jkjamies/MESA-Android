@@ -23,7 +23,7 @@ plugins {
 }
 
 android {
-    namespace = "com.jkjamies.trapeze.features.counter.presentation"
+    namespace = "com.jkjamies.mesa.features.counter.presentation"
     compileSdk = 36
 
     defaultConfig {
@@ -40,11 +40,11 @@ android {
 }
 
 dependencies {
-    implementation(project(":Trapeze"))
-    implementation(project(":TrapezeNavigation"))
+    implementation(project(":trapeze"))
+    implementation(project(":trapeze-navigation"))
     implementation(project(":core:presentation"))
     implementation(project(":features:summary:presentation"))
-    implementation(project(":Strata"))
+    implementation(project(":strata"))
     implementation(libs.androidx.core.ktx)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)

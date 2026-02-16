@@ -1,14 +1,14 @@
-# Trapeze Framework
+# MESA-Android
 
-A type-safe, MESA-inspired architecture for Jetpack Compose. Trapeze enforces strict separation between logic (StateHolder), presentation (UI), and identity (Screen) with a Circuit-style factory pattern for decoupled component resolution.
+A multi-library project providing type-safe, MESA-inspired architecture for Jetpack Compose. The libraries enforce strict separation between logic (StateHolder), presentation (UI), and identity (Screen) with a Circuit-style factory pattern for decoupled component resolution.
 
 ## 📚 Libraries
 
-| Library | Purpose | Key Components |
-|---------|---------|----------------|
-| **Trapeze** | Core architecture | `TrapezeStateHolder`, `TrapezeState`, `TrapezeScreen`, `TrapezeEvent`, `TrapezeContent`, `Trapeze`, `TrapezeCompositionLocals`, `TrapezeMessage`, `TrapezeMessageManager` |
-| **TrapezeNavigation** | Navigation layer | `NavigableTrapezeContent`, `TrapezeBackStack`, `TrapezeNavigator`, `LocalTrapezeNavigator` |
-| **Strata** | Business logic | `StrataInteractor`, `StrataSubjectInteractor`, `StrataResult`, `strataLaunch` |
+| Library | Artifact | Purpose | Key Components |
+|---------|----------|---------|----------------|
+| **Trapeze** | `com.jkjamies:trapeze` | Core architecture | `TrapezeStateHolder`, `TrapezeState`, `TrapezeScreen`, `TrapezeEvent`, `TrapezeContent`, `Trapeze`, `TrapezeCompositionLocals`, `TrapezeMessage`, `TrapezeMessageManager` |
+| **Trapeze Navigation** | `com.jkjamies:trapeze-navigation` | Navigation layer | `NavigableTrapezeContent`, `TrapezeBackStack`, `TrapezeNavigator`, `LocalTrapezeNavigator` |
+| **Strata** | `com.jkjamies:strata` | Business logic | `StrataInteractor`, `StrataSubjectInteractor`, `StrataResult`, `strataLaunch` |
 
 ---
 
@@ -108,10 +108,38 @@ flowchart TB
 ## 🔧 Setup
 
 ### 1. Add Dependencies
+
+**From GitHub Packages** (external consumers):
+
+Add the GitHub Packages repository to your `settings.gradle.kts` or root `build.gradle.kts`:
 ```kotlin
-implementation(project(":Trapeze"))
-implementation(project(":TrapezeNavigation"))
-implementation(project(":Strata"))
+repositories {
+    maven {
+        url = uri("https://maven.pkg.github.com/jkjamies/MESA-Android")
+        credentials {
+            username = providers.gradleProperty("gpr.user").orNull
+                ?: System.getenv("GITHUB_ACTOR")
+            password = providers.gradleProperty("gpr.token").orNull
+                ?: System.getenv("GITHUB_TOKEN")
+        }
+    }
+}
+```
+
+Then add the dependencies:
+```kotlin
+implementation("com.jkjamies:trapeze:0.1.0")
+implementation("com.jkjamies:trapeze-navigation:0.1.0")
+implementation("com.jkjamies:strata:0.1.0")
+```
+
+> **Note**: GitHub Packages requires authentication even for public packages. Create a [personal access token](https://github.com/settings/tokens) with `read:packages` scope and set `gpr.user` / `gpr.token` in your `~/.gradle/gradle.properties`.
+
+**For local/monorepo development**:
+```kotlin
+implementation(project(":trapeze"))
+implementation(project(":trapeze-navigation"))
+implementation(project(":strata"))
 ```
 
 ### 2. Configure DI Graph (Metro)

@@ -22,10 +22,10 @@ plugins {
 }
 
 android {
-    namespace = "com.jkjamies.trapeze.counter"
+    namespace = "com.jkjamies.mesa.counter"
     compileSdk = 36
     defaultConfig {
-        applicationId = "com.jkjamies.trapeze"
+        applicationId = "com.jkjamies.mesa"
         minSdk = 28
         targetSdk = 36
         versionCode = 1
@@ -53,8 +53,8 @@ android {
 }
 
 dependencies {
-    implementation(project(":Trapeze"))
-    implementation(project(":TrapezeNavigation"))
+    implementation(project(":trapeze"))
+    implementation(project(":trapeze-navigation"))
     implementation(project(":core:presentation"))
     implementation(project(":features:counter:presentation"))
     implementation(project(":features:summary:presentation"))
