@@ -23,7 +23,7 @@ plugins {
 }
 
 android {
-    namespace = "com.jkjamies.trapeze.features.counter.presentation"
+    namespace = "com.jkjamies.mesa.features.counter.presentation"
     compileSdk = 36
 
     defaultConfig {

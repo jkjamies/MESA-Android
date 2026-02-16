@@ -21,7 +21,7 @@ plugins {
 }
 
 android {
-    namespace = "com.jkjamies.trapeze.core.presentation"
+    namespace = "com.jkjamies.mesa.core.presentation"
     compileSdk = 36
 
     defaultConfig {

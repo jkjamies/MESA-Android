@@ -22,10 +22,10 @@ plugins {
 }
 
 android {
-    namespace = "com.jkjamies.trapeze.counter"
+    namespace = "com.jkjamies.mesa.counter"
     compileSdk = 36
     defaultConfig {
-        applicationId = "com.jkjamies.trapeze"
+        applicationId = "com.jkjamies.mesa"
         minSdk = 28
         targetSdk = 36
         versionCode = 1

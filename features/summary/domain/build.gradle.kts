@@ -20,7 +20,7 @@ plugins {
 }
 
 android {
-    namespace = "com.jkjamies.trapeze.features.summary.domain"
+    namespace = "com.jkjamies.mesa.features.summary.domain"
     compileSdk = 36
 
     defaultConfig {

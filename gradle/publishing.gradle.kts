@@ -41,7 +41,7 @@ afterEvaluate {
                 pom {
                     name.set(publishingName)
                     description.set(publishingDescription)
-                    url.set("https://github.com/jkjamies/Trapeze")
+                    url.set("https://github.com/jkjamies/MESA-Android")
 
                     licenses {
                         license {
@@ -58,9 +58,9 @@ afterEvaluate {
                     }
 
                     scm {
-                        connection.set("scm:git:git://github.com/jkjamies/Trapeze.git")
-                        developerConnection.set("scm:git:ssh://github.com/jkjamies/Trapeze.git")
-                        url.set("https://github.com/jkjamies/Trapeze")
+                        connection.set("scm:git:git://github.com/jkjamies/MESA-Android.git")
+                        developerConnection.set("scm:git:ssh://github.com/jkjamies/MESA-Android.git")
+                        url.set("https://github.com/jkjamies/MESA-Android")
                     }
                 }
             }
@@ -69,7 +69,7 @@ afterEvaluate {
         repositories {
             maven {
                 name = "GitHubPackages"
-                url = uri("https://maven.pkg.github.com/jkjamies/Trapeze")
+                url = uri("https://maven.pkg.github.com/jkjamies/MESA-Android")
                 credentials {
                     username = System.getenv("GITHUB_ACTOR")
                         ?: findProperty("gpr.user") as String? ?: ""

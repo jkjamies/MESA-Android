@@ -38,12 +38,9 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Trapeze"
+rootProject.name = "MESA-Android"
 include(":app")
 include(":core:presentation")
-include(":features:counter:api")
-include(":features:counter:data")
-include(":features:counter:domain")
 include(":features:counter:presentation")
 include(":features:summary:api")
 include(":features:summary:data")

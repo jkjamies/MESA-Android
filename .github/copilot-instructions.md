@@ -1,6 +1,6 @@
-# Trapeze Project Guide
+# MESA-Android Project Guide
 
-> **For AI Agents**: This document provides comprehensive context for understanding and contributing to the Trapeze codebase. Read this entire document before making changes.
+> **For AI Agents**: This document provides comprehensive context for understanding and contributing to the MESA-Android codebase. Read this entire document before making changes.
 
 ## Project Overview
 A Pure-Compose driven architectural library implementing the **MESA framework** (Modular, Explicit, State-driven, Architecture). The library facilitates a rigid UDF (Unidirectional Data Flow) where the UI is a stateless projection of a single State object.

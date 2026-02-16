@@ -1,6 +1,6 @@
-# Trapeze Framework
+# MESA-Android
 
-A type-safe, MESA-inspired architecture for Jetpack Compose. Trapeze enforces strict separation between logic (StateHolder), presentation (UI), and identity (Screen) with a Circuit-style factory pattern for decoupled component resolution.
+A multi-library project providing type-safe, MESA-inspired architecture for Jetpack Compose. The libraries enforce strict separation between logic (StateHolder), presentation (UI), and identity (Screen) with a Circuit-style factory pattern for decoupled component resolution.
 
 ## 📚 Libraries
 
@@ -115,7 +115,7 @@ Add the GitHub Packages repository to your `settings.gradle.kts` or root `build.
 ```kotlin
 repositories {
     maven {
-        url = uri("https://maven.pkg.github.com/jkjamies/Trapeze")
+        url = uri("https://maven.pkg.github.com/jkjamies/MESA-Android")
         credentials {
             username = providers.gradleProperty("gpr.user").orNull
                 ?: System.getenv("GITHUB_ACTOR")
