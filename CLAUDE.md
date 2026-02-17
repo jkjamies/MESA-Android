@@ -1,6 +1,34 @@
-# MESA-Android Project Guide
+# CLAUDE.md
 
-> **For AI Agents**: This document provides comprehensive context for understanding and contributing to the MESA-Android codebase. Read this entire document before making changes.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Build & Test Commands
+
+```bash
+# Build everything
+./gradlew build
+
+# Run all JVM unit tests (Strata + Trapeze)
+./gradlew test
+
+# Run all Android instrumented tests (requires emulator/device)
+./gradlew connectedAndroidTest
+
+# Run tests for a specific module
+./gradlew :strata:test                                          # Strata (pure Kotlin/JVM)
+./gradlew :trapeze:test                                         # Trapeze JVM tests
+./gradlew :trapeze:connectedAndroidTest                         # Trapeze Compose tests
+./gradlew :trapeze-navigation:connectedAndroidTest              # Navigation tests
+./gradlew :features:counter:presentation:connectedAndroidTest   # Counter feature tests
+./gradlew :features:summary:presentation:connectedAndroidTest   # Summary feature tests
+
+# Run a single JVM test class
+./gradlew :strata:test --tests "com.jkjamies.strata.StrataInteractorTest"
+
+# Run a single Android test class
+./gradlew :trapeze:connectedAndroidTest \
+  -Pandroid.testInstrumentationRunnerArguments.class=com.jkjamies.trapeze.TrapezeCompositionLocalsTest
+```
 
 ## Project Overview
 A Pure-Compose driven architectural library implementing the **MESA framework** (Modular, Explicit, State-driven, Architecture). The library facilitates a rigid UDF (Unidirectional Data Flow) where the UI is a stateless projection of a single State object.

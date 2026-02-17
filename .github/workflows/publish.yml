@@ -16,14 +16,14 @@ name: Publish Libraries
 
 on:
   release:
-    types: [created]
+    types: [published]
 
 jobs:
   publish:
     runs-on: ubuntu-latest
 
     permissions:
-      contents: read
+      contents: write
       packages: write
 
     steps:
@@ -38,20 +38,74 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Publish Trapeze
-        run: ./gradlew :trapeze:publishReleasePublicationToGitHubPackagesRepository
+      - name: Check and Publish Trapeze
+        run: |
+          VERSION=$(grep 'publishingVersion' trapeze/gradle.properties | cut -d'=' -f2 | tr -d '[:space:]')
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            "https://maven.pkg.github.com/jkjamies/MESA-Android/com/jkjamies/trapeze/$VERSION/trapeze-$VERSION.pom")
+          if [ "$STATUS" = "200" ]; then
+            echo "::notice::trapeze:$VERSION already published, skipping"
+          else
+            echo "Publishing trapeze:$VERSION"
+            ./gradlew :trapeze:publishReleasePublicationToGitHubPackagesRepository
+          fi
         env:
           GITHUB_ACTOR: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Publish Trapeze Navigation
-        run: ./gradlew :trapeze-navigation:publishReleasePublicationToGitHubPackagesRepository
+      - name: Check and Publish Trapeze Navigation
+        run: |
+          VERSION=$(grep 'publishingVersion' trapeze-navigation/gradle.properties | cut -d'=' -f2 | tr -d '[:space:]')
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            "https://maven.pkg.github.com/jkjamies/MESA-Android/com/jkjamies/trapeze-navigation/$VERSION/trapeze-navigation-$VERSION.pom")
+          if [ "$STATUS" = "200" ]; then
+            echo "::notice::trapeze-navigation:$VERSION already published, skipping"
+          else
+            echo "Publishing trapeze-navigation:$VERSION"
+            ./gradlew :trapeze-navigation:publishReleasePublicationToGitHubPackagesRepository
+          fi
         env:
           GITHUB_ACTOR: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Publish Strata
-        run: ./gradlew :strata:publishReleasePublicationToGitHubPackagesRepository
+      - name: Check and Publish Strata
+        run: |
+          VERSION=$(grep 'publishingVersion' strata/gradle.properties | cut -d'=' -f2 | tr -d '[:space:]')
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            "https://maven.pkg.github.com/jkjamies/MESA-Android/com/jkjamies/strata/$VERSION/strata-$VERSION.pom")
+          if [ "$STATUS" = "200" ]; then
+            echo "::notice::strata:$VERSION already published, skipping"
+          else
+            echo "Publishing strata:$VERSION"
+            ./gradlew :strata:publishReleasePublicationToGitHubPackagesRepository
+          fi
         env:
           GITHUB_ACTOR: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update CHANGELOG.md
+        run: |
+          RELEASE_TAG="${{ github.event.release.tag_name }}"
+          RELEASE_DATE=$(date +%Y-%m-%d)
+          RELEASE_URL="${{ github.event.release.html_url }}"
+          RELEASE_BODY=$(cat <<'BODY_EOF'
+          ${{ github.event.release.body }}
+          BODY_EOF
+          )
+
+          ENTRY="## [$RELEASE_TAG]($RELEASE_URL) - $RELEASE_DATE"$'\n\n'"$RELEASE_BODY"$'\n'
+
+          # Insert after the marker comment
+          sed -i '/<!-- Release entries will be automatically prepended below this line -->/a\' CHANGELOG.md
+          sed -i "/<!-- Release entries will be automatically prepended below this line -->/r /dev/stdin" CHANGELOG.md <<< "$ENTRY"
+
+      - name: Commit CHANGELOG
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add CHANGELOG.md
+          git diff --cached --quiet && echo "No changelog changes to commit" || \
+            (git commit -m "Update CHANGELOG.md for ${{ github.event.release.tag_name }}" && git push)
