@@ -31,16 +31,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Read module versions
+      - name: Read BOM version
         id: versions
         run: |
-          TRAPEZE_V=$(grep 'publishingVersion' trapeze/gradle.properties | cut -d'=' -f2 | tr -d '[:space:]')
-          NAV_V=$(grep 'publishingVersion' trapeze-navigation/gradle.properties | cut -d'=' -f2 | tr -d '[:space:]')
-          STRATA_V=$(grep 'publishingVersion' strata/gradle.properties | cut -d'=' -f2 | tr -d '[:space:]')
-          TAG="trapeze-${TRAPEZE_V}+nav-${NAV_V}+strata-${STRATA_V}"
-          echo "trapeze=$TRAPEZE_V" >> "$GITHUB_OUTPUT"
-          echo "nav=$NAV_V" >> "$GITHUB_OUTPUT"
-          echo "strata=$STRATA_V" >> "$GITHUB_OUTPUT"
+          BOM_V=$(grep 'publishingVersion' mesa-bom/gradle.properties | cut -d'=' -f2 | tr -d '[:space:]')
+          TAG="v${BOM_V}"
+          echo "bom=$BOM_V" >> "$GITHUB_OUTPUT"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 
       - name: Delete existing draft release with same tag
@@ -57,7 +53,7 @@ jobs:
         run: |
           gh release create "${{ steps.versions.outputs.tag }}" \
             --draft \
-            --title "${{ steps.versions.outputs.tag }}" \
+            --title "MESA ${{ steps.versions.outputs.tag }}" \
             --generate-notes \
             --notes-start-tag "$(gh release list --limit 1 --exclude-drafts --json tagName --jq '.[0].tagName // empty')" \
             --target main
@@ -127,6 +123,22 @@ jobs:
           else
             echo "Publishing strata:$VERSION"
             ./gradlew :strata:publishReleasePublicationToGitHubPackagesRepository
+          fi
+        env:
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check and Publish MESA BOM
+        run: |
+          VERSION=$(grep 'publishingVersion' mesa-bom/gradle.properties | cut -d'=' -f2 | tr -d '[:space:]')
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            "https://maven.pkg.github.com/jkjamies/MESA-Android/com/jkjamies/mesa-bom/$VERSION/mesa-bom-$VERSION.pom")
+          if [ "$STATUS" = "200" ]; then
+            echo "::notice::mesa-bom:$VERSION already published, skipping"
+          else
+            echo "Publishing mesa-bom:$VERSION"
+            ./gradlew :mesa-bom:publishReleasePublicationToGitHubPackagesRepository
           fi
         env:
           GITHUB_ACTOR: ${{ github.actor }}
