@@ -39,6 +39,7 @@ A Pure-Compose driven architectural library implementing the **MESA framework** 
 | **Trapeze** | `com.jkjamies:trapeze` | Core architecture | `TrapezeStateHolder`, `TrapezeState`, `TrapezeScreen`, `TrapezeEvent`, `TrapezeContent`, `Trapeze`, `TrapezeCompositionLocals`, `TrapezeMessage`, `TrapezeMessageManager` |
 | **Trapeze Navigation** | `com.jkjamies:trapeze-navigation` | Navigation layer | `NavigableTrapezeContent`, `TrapezeBackStack`, `TrapezeNavigator`, `LocalTrapezeNavigator` |
 | **Strata** | `com.jkjamies:strata` | Business logic layer | `StrataInteractor`, `StrataSubjectInteractor`, `StrataResult`, `strataLaunch` |
+| **MESA BOM** | `com.jkjamies:mesa-bom` | Bill of Materials | Aligns versions of all MESA libraries |
 
 ## MESA Pillars
 - **Modular**: Feature isolation by design; components are decoupled and portable.
@@ -353,14 +354,27 @@ This split is necessary because `androidTest` requires JUnit4 as the test runner
 | `:trapeze` | `com.jkjamies` | `trapeze` | `0.1.0` |
 | `:trapeze-navigation` | `com.jkjamies` | `trapeze-navigation` | `0.1.0` |
 | `:strata` | `com.jkjamies` | `strata` | `0.1.0` |
+| `:mesa-bom` | `com.jkjamies` | `mesa-bom` | `0.1.0` |
 
 ### Versioning
-Each module is versioned **independently** via its own `gradle.properties` file:
+Each library module is versioned **independently** via its own `gradle.properties` file:
 - `trapeze/gradle.properties`
 - `trapeze-navigation/gradle.properties`
 - `strata/gradle.properties`
 
+The BOM module (`mesa-bom/gradle.properties`) has its own version that drives release tags (`v{BOM_VERSION}`). Bump the BOM version when creating a new release.
+
 To bump a version, update the `publishingVersion` property in the relevant file.
+
+### Consumer Usage (BOM)
+```kotlin
+dependencies {
+    implementation(platform("com.jkjamies:mesa-bom:0.1.0"))
+    implementation("com.jkjamies:trapeze")              // version from BOM
+    implementation("com.jkjamies:trapeze-navigation")   // version from BOM
+    implementation("com.jkjamies:strata")               // version from BOM
+}
+```
 
 ### Publishing Workflow
 Artifacts are published to **GitHub Packages** automatically via GitHub Actions when a **release is created** on the repository. The workflow is defined in `.github/workflows/publish.yml`.
@@ -371,6 +385,7 @@ To verify publishing locally (publishes to `~/.m2/repository`):
 ./gradlew :trapeze:publishReleasePublicationToMavenLocal
 ./gradlew :trapeze-navigation:publishReleasePublicationToMavenLocal
 ./gradlew :strata:publishReleasePublicationToMavenLocal
+./gradlew :mesa-bom:publishReleasePublicationToMavenLocal
 ```
 
 ### Key Files

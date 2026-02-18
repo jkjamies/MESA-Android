@@ -23,6 +23,7 @@ val publishingName: String by project
 val publishingDescription: String by project
 
 val isAndroidLibrary = plugins.hasPlugin("com.android.library")
+val isJavaPlatform = plugins.hasPlugin("java-platform")
 
 afterEvaluate {
     configure<PublishingExtension> {
@@ -32,10 +33,10 @@ afterEvaluate {
                 artifactId = publishingArtifactId
                 version = publishingVersion
 
-                if (isAndroidLibrary) {
-                    from(components["release"])
-                } else {
-                    from(components["java"])
+                when {
+                    isJavaPlatform -> from(components["javaPlatform"])
+                    isAndroidLibrary -> from(components["release"])
+                    else -> from(components["java"])
                 }
 
                 pom {
