@@ -19,6 +19,7 @@ package com.jkjamies.strata
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.test.TestScope
@@ -50,6 +51,55 @@ class StrataLaunchTest : BehaviorSpec({
 
                 shouldThrow<IllegalStateException> {
                     scope.strataLaunch { }
+                }
+            }
+        }
+    }
+
+    Given("strataLaunchWithResult") {
+        When("the block succeeds") {
+            Then("it returns a Success result") {
+                coroutineScope {
+                    val deferred = strataLaunchWithResult { 42 }
+                    val result = deferred.await()
+                    result.shouldBeInstanceOf<StrataResult.Success<Int>>()
+                    result.data shouldBe 42
+                }
+            }
+        }
+
+        When("the block throws a StrataException") {
+            Then("it returns a Failure with the exception") {
+                coroutineScope {
+                    val error = object : StrataException("domain error") {}
+                    val deferred = strataLaunchWithResult<Int> { throw error }
+                    val result = deferred.await()
+                    result.shouldBeInstanceOf<StrataResult.Failure>()
+                    result.error shouldBe error
+                }
+            }
+        }
+
+        When("the block throws an unexpected exception") {
+            Then("it returns a Failure with StrataExecutionException") {
+                coroutineScope {
+                    val deferred = strataLaunchWithResult<Int> {
+                        throw RuntimeException("unexpected")
+                    }
+                    val result = deferred.await()
+                    result.shouldBeInstanceOf<StrataResult.Failure>()
+                    result.error.shouldBeInstanceOf<StrataExecutionException>()
+                }
+            }
+        }
+
+        When("the scope is cancelled") {
+            Then("it throws IllegalStateException") {
+                val scope = TestScope()
+                scope.cancel()
+
+                shouldThrow<IllegalStateException> {
+                    scope.strataLaunchWithResult { 1 }
                 }
             }
         }

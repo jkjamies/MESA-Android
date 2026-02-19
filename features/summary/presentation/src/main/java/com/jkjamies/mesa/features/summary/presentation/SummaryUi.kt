@@ -46,12 +46,24 @@ fun SummaryUi(modifier: Modifier = Modifier, state: SummaryState) {
                 text = "Final Count: ${state.finalCount}",
                 style = MaterialTheme.typography.displayMedium
             )
-            state.lastSavedValue?.let { saved ->
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "Last Saved: ${state.lastSavedValue ?: "None"}",
+                style = MaterialTheme.typography.bodyLarge
+            )
+            state.trapezeMessage?.let { message ->
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = "Last Saved: $saved",
-                    style = MaterialTheme.typography.bodyLarge
+                    text = message.message,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = if (message.message.startsWith("Save failed"))
+                        MaterialTheme.colorScheme.error
+                    else
+                        MaterialTheme.colorScheme.primary
                 )
+                Button(onClick = { state.eventSink(SummaryEvent.ClearMessage(message.id)) }) {
+                    Text("Dismiss")
+                }
             }
             Spacer(modifier = Modifier.height(32.dp))
             Button(onClick = { state.eventSink(SummaryEvent.Back) }) {

@@ -55,4 +55,40 @@ public sealed interface StrataResult<out T> {
      * Returns the encapsulated value if this instance represents [Success] or `null` if it is [Failure].
      */
     fun getOrNull(): T? = (this as? Success)?.data
+
+    /**
+     * Returns a new [StrataResult] with the encapsulated value transformed by [transform]
+     * if this instance represents [Success], or the original [Failure] unchanged.
+     */
+    fun <R> map(transform: (T) -> R): StrataResult<R> = when (this) {
+        is Success -> Success(transform(data))
+        is Failure -> this
+    }
+
+    /**
+     * Returns the result of [onSuccess] for the encapsulated value if this instance represents
+     * [Success] or the result of [onFailure] for the encapsulated error if it is [Failure].
+     */
+    fun <R> fold(onSuccess: (T) -> R, onFailure: (StrataException) -> R): R = when (this) {
+        is Success -> onSuccess(data)
+        is Failure -> onFailure(error)
+    }
+}
+
+/**
+ * Returns the encapsulated value if this instance represents [StrataResult.Success]
+ * or [default] if it is [StrataResult.Failure].
+ */
+public fun <T> StrataResult<T>.getOrDefault(default: T): T = when (this) {
+    is StrataResult.Success -> data
+    is StrataResult.Failure -> default
+}
+
+/**
+ * Returns the encapsulated value if this instance represents [StrataResult.Success]
+ * or the result of [transform] applied to the [StrataException] if it is [StrataResult.Failure].
+ */
+public fun <T> StrataResult<T>.getOrElse(transform: (StrataException) -> T): T = when (this) {
+    is StrataResult.Success -> data
+    is StrataResult.Failure -> transform(error)
 }

@@ -20,10 +20,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import com.jkjamies.trapeze.TrapezeMessage
+import com.jkjamies.trapeze.TrapezeMessageManager
 import com.jkjamies.trapeze.TrapezeNavigator
 import com.jkjamies.trapeze.TrapezeStateHolder
 import com.jkjamies.mesa.features.summary.api.ObserveLastSavedValue
 import com.jkjamies.mesa.features.summary.api.SaveSummaryValue
+import com.jkjamies.strata.getOrDefault
 import com.jkjamies.strata.strataLaunch
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
@@ -57,6 +61,8 @@ class SummaryStateHolder constructor(
 
         val lastSavedValue by observeLastSavedValue.value.flow.collectAsState(initial = null)
         val saveSummaryLoading by saveSummaryValue.value.inProgress.collectAsState(initial = false)
+        val messageManager = remember { TrapezeMessageManager() }
+        val trapezeMessage by messageManager.message.collectAsState(initial = null)
 
         val eventSink = wrapEventSink<SummaryEvent> { event ->
             when (event) {
@@ -66,10 +72,19 @@ class SummaryStateHolder constructor(
                 }
                 SummaryEvent.SaveValue -> {
                     strataLaunch {
-                        saveSummaryValue.value.invoke(screen.finalCount).onFailure {
-                            it.printStackTrace()
-                        }
+                        val result = saveSummaryValue.value.invoke(screen.finalCount)
+                        // Demonstrate map: transform Success<Unit> into Success<Int> carrying the saved count
+                        val savedCount = result.map { screen.finalCount }.getOrDefault(0)
+                        // Demonstrate fold: produce a user-facing message for both outcomes
+                        val message = result.fold(
+                            onSuccess = { "Saved $savedCount successfully!" },
+                            onFailure = { error -> "Save failed: ${error.message ?: "Unknown error"}" }
+                        )
+                        messageManager.emitMessage(TrapezeMessage(message))
                     }
+                }
+                is SummaryEvent.ClearMessage -> {
+                    messageManager.clearMessage(event.id)
                 }
             }
         }
@@ -78,6 +93,7 @@ class SummaryStateHolder constructor(
             finalCount = screen.finalCount,
             lastSavedValue = lastSavedValue,
             saveInProgress = saveSummaryLoading,
+            trapezeMessage = trapezeMessage,
             eventSink = eventSink
         )
     }

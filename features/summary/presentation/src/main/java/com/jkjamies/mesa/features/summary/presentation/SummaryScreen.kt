@@ -18,8 +18,10 @@ package com.jkjamies.mesa.features.summary.presentation
 
 import android.os.Parcelable
 import com.jkjamies.trapeze.TrapezeEvent
+import com.jkjamies.trapeze.TrapezeMessage
 import com.jkjamies.trapeze.TrapezeScreen
 import com.jkjamies.trapeze.TrapezeState
+import kotlin.uuid.Uuid
 import kotlinx.parcelize.Parcelize
 
 @Parcelize
@@ -29,12 +31,13 @@ data class SummaryState(
     val finalCount: Int,
     val lastSavedValue: Int?,
     val saveInProgress: Boolean,
+    val trapezeMessage: TrapezeMessage? = null,
     val eventSink: (SummaryEvent) -> Unit
 ) : TrapezeState
 
 sealed interface SummaryEvent : TrapezeEvent {
-    // No events for now, just a display screen, but good practice to have the interface
     data object Back : SummaryEvent
     data object PrintValue : SummaryEvent
     data object SaveValue : SummaryEvent
+    data class ClearMessage(val id: Uuid) : SummaryEvent
 }

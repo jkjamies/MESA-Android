@@ -348,6 +348,35 @@ class ObserveNote @Inject constructor(
 }
 ```
 
+### Launch Utilities
+
+`strataLaunch` runs on `Dispatchers.Default` by default (override via `context` parameter):
+```kotlin
+// Default dispatcher
+strataLaunch {
+    saveData(params).onFailure { error: StrataException -> /* handle */ }
+}
+
+// Override dispatcher
+strataLaunch(Dispatchers.Main) { /* runs on main thread */ }
+```
+
+`strataLaunchWithResult` combines launch + automatic error wrapping, returning `Deferred<StrataResult<T>>`:
+```kotlin
+val deferred = strataLaunchWithResult { fetchData(params) }
+val result = deferred.await()
+```
+
+### StrataResult Extensions
+
+| Extension | Description |
+|-----------|-------------|
+| `getOrNull()` | Returns value or null on failure |
+| `getOrDefault(default)` | Returns value or a provided default on failure |
+| `getOrElse { error -> }` | Returns value or computes fallback from the error |
+| `map { }` | Transforms success value, passes failure through |
+| `fold(onSuccess, onFailure)` | Produces a single value for both outcomes |
+
 ### Usage in StateHolder
 ```kotlin
 class NoteStateHolder @AssistedInject constructor(
@@ -369,9 +398,14 @@ class NoteStateHolder @AssistedInject constructor(
             eventSink = wrapEventSink { event ->
                 when (event) {
                     is NoteEvent.Save -> strataLaunch {
-                        saveNote.value(event.params).onFailure { error ->
-                            // Handle error
-                        }
+                        val result = saveNote.value(event.params)
+                        // map + getOrDefault: safely extract a value with fallback
+                        val savedId = result.map { event.params.id }.getOrDefault("")
+                        // fold: produce a message for both outcomes
+                        val message = result.fold(
+                            onSuccess = { "Saved $savedId successfully!" },
+                            onFailure = { error -> "Save failed: ${error.message}" }
+                        )
                     }
                 }
             }
