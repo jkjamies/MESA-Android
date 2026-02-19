@@ -61,4 +61,40 @@ class SummaryStateHolderTest {
 
         navigator.events.last() shouldBe "Pop"
     }
+
+    @Test
+    fun givenASummaryScreen_whenSaveValueSucceeds_thenSuccessMessageIsEmitted() {
+        val navigator = FakeTrapezeNavigator()
+        val save = FakeSaveSummaryValue(shouldFail = false)
+        val observe = FakeObserveLastSavedValue()
+        val holder = SummaryStateHolder(navigator, lazy { save }, lazy { observe })
+
+        lateinit var state: SummaryState
+        composeTestRule.setContent {
+            state = holder.produceState(SummaryScreen(finalCount = 5))
+        }
+
+        state.eventSink(SummaryEvent.SaveValue)
+        composeTestRule.waitUntil(timeoutMillis = 3_000) { state.trapezeMessage != null }
+
+        state.trapezeMessage!!.message.contains("successfully") shouldBe true
+    }
+
+    @Test
+    fun givenASummaryScreen_whenSaveValueFails_thenFailureMessageIsEmitted() {
+        val navigator = FakeTrapezeNavigator()
+        val save = FakeSaveSummaryValue(shouldFail = true)
+        val observe = FakeObserveLastSavedValue()
+        val holder = SummaryStateHolder(navigator, lazy { save }, lazy { observe })
+
+        lateinit var state: SummaryState
+        composeTestRule.setContent {
+            state = holder.produceState(SummaryScreen(finalCount = 5))
+        }
+
+        state.eventSink(SummaryEvent.SaveValue)
+        composeTestRule.waitUntil(timeoutMillis = 3_000) { state.trapezeMessage != null }
+
+        state.trapezeMessage!!.message.contains("failed") shouldBe true
+    }
 }

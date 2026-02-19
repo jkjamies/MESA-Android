@@ -102,4 +102,84 @@ class StrataResultTest : BehaviorSpec({
             }
         }
     }
+
+    Given("getOrDefault") {
+        When("result is Success") {
+            Then("it returns the value") {
+                val result: StrataResult<String> = StrataResult.Success("hello")
+                result.getOrDefault("fallback") shouldBe "hello"
+            }
+        }
+
+        When("result is Failure") {
+            Then("it returns the default") {
+                val result: StrataResult<String> = StrataResult.Failure(
+                    object : StrataException("err") {}
+                )
+                result.getOrDefault("fallback") shouldBe "fallback"
+            }
+        }
+    }
+
+    Given("getOrElse") {
+        When("result is Success") {
+            Then("it returns the value without calling transform") {
+                val result: StrataResult<String> = StrataResult.Success("hello")
+                result.getOrElse { "recovered" } shouldBe "hello"
+            }
+        }
+
+        When("result is Failure") {
+            Then("it returns the transformed error") {
+                val error = object : StrataException("specific") {}
+                val result: StrataResult<String> = StrataResult.Failure(error)
+                result.getOrElse { it.message ?: "unknown" } shouldBe "specific"
+            }
+        }
+    }
+
+    Given("map") {
+        When("result is Success") {
+            Then("it transforms the value") {
+                val result: StrataResult<Int> = StrataResult.Success(5)
+                val mapped = result.map { it * 2 }
+                mapped.getOrNull() shouldBe 10
+            }
+        }
+
+        When("result is Failure") {
+            Then("it returns the original failure") {
+                val error = object : StrataException("err") {}
+                val result: StrataResult<Int> = StrataResult.Failure(error)
+                val mapped = result.map { it * 2 }
+                mapped.getOrNull() shouldBe null
+                (mapped as StrataResult.Failure).error shouldBe error
+            }
+        }
+    }
+
+    Given("fold") {
+        When("result is Success") {
+            Then("it applies onSuccess") {
+                val result: StrataResult<Int> = StrataResult.Success(5)
+                val folded = result.fold(
+                    onSuccess = { "value=$it" },
+                    onFailure = { "error=${it.message}" }
+                )
+                folded shouldBe "value=5"
+            }
+        }
+
+        When("result is Failure") {
+            Then("it applies onFailure") {
+                val error = object : StrataException("boom") {}
+                val result: StrataResult<Int> = StrataResult.Failure(error)
+                val folded = result.fold(
+                    onSuccess = { "value=$it" },
+                    onFailure = { "error=${it.message}" }
+                )
+                folded shouldBe "error=boom"
+            }
+        }
+    }
 })

@@ -206,12 +206,56 @@ features/foo/
 | `StrataInteractor<P, R>` | One-shot async (API calls, DB writes) | `StrataResult<R>` |
 | `StrataSubjectInteractor<P, T>` | Streams/flows (observe data) | `Flow<T>` via `.flow` |
 
-### Error Handling
+### Launch Utilities
+
+`strataLaunch` runs on `Dispatchers.Default` by default (override via `context` parameter):
+```kotlin
+// Default dispatcher
+strataLaunch {
+    saveData(params).onFailure { error: StrataException -> /* handle */ }
+}
+
+// Override dispatcher
+strataLaunch(Dispatchers.Main) {
+    // runs on main thread
+}
+```
+
+`strataLaunchWithResult` combines launch + automatic error wrapping, returning `Deferred<StrataResult<T>>`:
+```kotlin
+val deferred = strataLaunchWithResult {
+    fetchData(params)  // result is automatically wrapped in StrataResult
+}
+val result = deferred.await()
+```
+
+### StrataResult Extensions
+
+| Extension | Description |
+|-----------|-------------|
+| `onSuccess { }` | Side-effect on success, returns original result |
+| `onFailure { }` | Side-effect on failure, returns original result |
+| `getOrNull()` | Returns value or null on failure |
+| `getOrDefault(default)` | Returns value or a provided default on failure |
+| `getOrElse { error -> }` | Returns value or computes fallback from the error |
+| `map { }` | Transforms success value, passes failure through |
+| `fold(onSuccess, onFailure)` | Produces a single value for both outcomes |
+
 ```kotlin
 strataLaunch {
-    saveData(params).onFailure { error: StrataException ->
-        // Handle error
-    }
+    val result = saveData(params)
+
+    // map: transform Success<Unit> to carry additional context
+    val savedCount = result.map { params.count }.getOrDefault(0)
+
+    // fold: produce a message for both success and failure
+    val message = result.fold(
+        onSuccess = { "Saved $savedCount successfully!" },
+        onFailure = { error -> "Save failed: ${error.message ?: "Unknown error"}" }
+    )
+
+    // getOrElse: compute a fallback from the error
+    val display = result.map { "OK" }.getOrElse { error -> "Error: ${error.message}" }
 }
 ```
 

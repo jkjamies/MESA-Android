@@ -18,10 +18,11 @@ package com.jkjamies.mesa.features.summary.presentation.test
 
 import com.jkjamies.mesa.features.summary.api.SaveSummaryValue
 
-class FakeSaveSummaryValue : SaveSummaryValue() {
+class FakeSaveSummaryValue(private val shouldFail: Boolean = false) : SaveSummaryValue() {
     val savedValues = mutableListOf<Int>()
 
     override suspend fun doWork(params: Int) {
+        if (shouldFail) throw IllegalStateException("Save failed for testing")
         savedValues.add(params)
     }
 }
