@@ -144,38 +144,3 @@ jobs:
         env:
           GITHUB_ACTOR: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Update CHANGELOG.md
-        run: |
-          RELEASE_TAG="${{ github.event.release.tag_name }}"
-          RELEASE_DATE=$(date +%Y-%m-%d)
-          RELEASE_URL="${{ github.event.release.html_url }}"
-          RELEASE_BODY=$(cat <<'BODY_EOF'
-          ${{ github.event.release.body }}
-          BODY_EOF
-          )
-
-          ENTRY="## [$RELEASE_TAG]($RELEASE_URL) - $RELEASE_DATE"$'\n\n'"$RELEASE_BODY"$'\n'
-
-          # Insert after the marker comment
-          sed -i '/<!-- Release entries will be automatically prepended below this line -->/a\' CHANGELOG.md
-          sed -i "/<!-- Release entries will be automatically prepended below this line -->/r /dev/stdin" CHANGELOG.md <<< "$ENTRY"
-
-      - name: Create CHANGELOG PR
-        run: |
-          RELEASE_TAG="${{ github.event.release.tag_name }}"
-          BRANCH="changelog/${RELEASE_TAG}"
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git checkout -b "$BRANCH" origin/main
-          git add CHANGELOG.md
-          git diff --cached --quiet && echo "No changelog changes" && exit 0
-          git commit -m "Update CHANGELOG.md for ${RELEASE_TAG}"
-          git push origin "$BRANCH"
-          gh pr create \
-            --title "Update CHANGELOG.md for ${RELEASE_TAG}" \
-            --body "Automated changelog update from release ${RELEASE_TAG}." \
-            --base main \
-            --head "$BRANCH"
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
