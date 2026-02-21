@@ -67,6 +67,7 @@ jobs:
     permissions:
       contents: write
       packages: write
+      pull-requests: write
 
     steps:
       - uses: actions/checkout@v4
@@ -160,10 +161,21 @@ jobs:
           sed -i '/<!-- Release entries will be automatically prepended below this line -->/a\' CHANGELOG.md
           sed -i "/<!-- Release entries will be automatically prepended below this line -->/r /dev/stdin" CHANGELOG.md <<< "$ENTRY"
 
-      - name: Commit CHANGELOG
+      - name: Create CHANGELOG PR
         run: |
+          RELEASE_TAG="${{ github.event.release.tag_name }}"
+          BRANCH="changelog/${RELEASE_TAG}"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH" origin/main
           git add CHANGELOG.md
-          git diff --cached --quiet && echo "No changelog changes to commit" || \
-            (git commit -m "Update CHANGELOG.md for ${{ github.event.release.tag_name }}" && git push)
+          git diff --cached --quiet && echo "No changelog changes" && exit 0
+          git commit -m "Update CHANGELOG.md for ${RELEASE_TAG}"
+          git push origin "$BRANCH"
+          gh pr create \
+            --title "Update CHANGELOG.md for ${RELEASE_TAG}" \
+            --body "Automated changelog update from release ${RELEASE_TAG}." \
+            --base main \
+            --head "$BRANCH"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
