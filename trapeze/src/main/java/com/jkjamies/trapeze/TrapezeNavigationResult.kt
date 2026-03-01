@@ -14,25 +14,14 @@
  * limitations under the License.
  */
 
-package com.jkjamies.mesa.features.counter.presentation.test
+package com.jkjamies.trapeze
 
-import com.jkjamies.trapeze.TrapezeNavigationResult
-import com.jkjamies.trapeze.TrapezeNavigator
-import com.jkjamies.trapeze.TrapezeScreen
+import android.os.Parcelable
 
-class FakeTrapezeNavigator : TrapezeNavigator {
-    val screens = mutableListOf<TrapezeScreen>()
-    var popCount = 0
-
-    override fun navigate(screen: TrapezeScreen) {
-        screens.add(screen)
-    }
-
-    override fun pop() {
-        popCount++
-    }
-
-    override fun <R : TrapezeNavigationResult> popWithResult(key: String, result: R) {
-        popCount++
-    }
-}
+/**
+ * Marker interface for navigation results that can be passed between screens
+ * via [TrapezeNavigator.popWithResult].
+ *
+ * Implementations must be [Parcelable] to survive process death and configuration changes.
+ */
+public interface TrapezeNavigationResult : Parcelable

@@ -16,6 +16,7 @@
 
 package com.jkjamies.mesa.features.summary.presentation.test
 
+import com.jkjamies.trapeze.TrapezeNavigationResult
 import com.jkjamies.trapeze.TrapezeNavigator
 import com.jkjamies.trapeze.TrapezeScreen
 
@@ -28,5 +29,9 @@ class FakeTrapezeNavigator : TrapezeNavigator {
 
     override fun pop() {
         events.add("Pop")
+    }
+
+    override fun <R : TrapezeNavigationResult> popWithResult(key: String, result: R) {
+        events.add("PopWithResult: $key=$result")
     }
 }

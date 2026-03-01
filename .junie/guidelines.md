@@ -36,8 +36,8 @@ A Pure-Compose driven architectural library implementing the **MESA framework** 
 ## Libraries
 | Library | Artifact | Purpose | Key Exports |
 |---------|----------|---------|-------------|
-| **Trapeze** | `com.jkjamies:trapeze` | Core architecture | `TrapezeStateHolder`, `TrapezeState`, `TrapezeScreen`, `TrapezeEvent`, `TrapezeContent`, `Trapeze`, `TrapezeCompositionLocals`, `TrapezeMessage`, `TrapezeMessageManager` |
-| **Trapeze Navigation** | `com.jkjamies:trapeze-navigation` | Navigation layer | `NavigableTrapezeContent`, `TrapezeBackStack`, `TrapezeNavigator`, `LocalTrapezeNavigator` |
+| **Trapeze** | `com.jkjamies:trapeze` | Core architecture | `TrapezeStateHolder`, `TrapezeState`, `TrapezeScreen`, `TrapezeEvent`, `TrapezeContent`, `Trapeze`, `TrapezeCompositionLocals`, `TrapezeMessage`, `TrapezeMessageManager`, `TrapezeNavigationResult` |
+| **Trapeze Navigation** | `com.jkjamies:trapeze-navigation` | Navigation layer | `NavigableTrapezeContent`, `TrapezeBackStack`, `TrapezeNavigator`, `LocalTrapezeNavigator`, `LocalTrapezeBackStack`, `rememberNavigationResult` |
 | **Strata** | `com.jkjamies:strata` | Business logic layer | `StrataInteractor`, `StrataSubjectInteractor`, `StrataResult`, `strataLaunch` |
 
 ## MESA Pillars
@@ -150,6 +150,9 @@ class FooStateHolder @AssistedInject constructor(
 | `rememberSaveableBackStack(root)` | Creates saveable backstack with root screen |
 | `rememberTrapezeNavigator(backStack)` | Creates navigator backed by backstack |
 | `LocalTrapezeNavigator` | CompositionLocal for accessing navigator |
+| `LocalTrapezeBackStack` | CompositionLocal for accessing backstack (used internally by `rememberNavigationResult`) |
+| `rememberNavigationResult(key)` | Composable that consumes a navigation result by key |
+| `TrapezeNavigationResult` | Marker interface (`Parcelable`) for navigation result data |
 
 ### Usage Pattern
 ```kotlin
@@ -167,8 +170,34 @@ TrapezeCompositionLocals(trapeze) {
 interface TrapezeNavigator {
     fun navigate(screen: TrapezeScreen)
     fun pop()
+    fun <R : TrapezeNavigationResult> popWithResult(key: String, result: R)
 }
 ```
+
+### Navigation Result Passing
+Allows Screen B to return data to Screen A when popping.
+
+**Define a result type:**
+```kotlin
+@Parcelize
+data class EditResult(val name: String) : TrapezeNavigationResult
+```
+
+**Screen B (produces result):**
+```kotlin
+// In StateHolder eventSink
+EditEvent.Save -> navigator.popWithResult("edit_result", EditResult(name))
+```
+
+**Screen A (consumes result):**
+```kotlin
+val editResult = rememberNavigationResult("edit_result")
+LaunchedEffect(editResult) {
+    editResult?.let { result -> name = (result as EditResult).name }
+}
+```
+
+Results are single-consumption (consumed on first read) and survive configuration changes/process death.
 
 ---
 
@@ -394,8 +423,8 @@ This split is necessary because `androidTest` requires JUnit4 as the test runner
 ### Maven Coordinates
 | Module | Group | Artifact | Version |
 |--------|-------|----------|---------|
-| `:trapeze` | `com.jkjamies` | `trapeze` | `0.1.0` |
-| `:trapeze-navigation` | `com.jkjamies` | `trapeze-navigation` | `0.1.0` |
+| `:trapeze` | `com.jkjamies` | `trapeze` | `0.2.0` |
+| `:trapeze-navigation` | `com.jkjamies` | `trapeze-navigation` | `0.2.0` |
 | `:strata` | `com.jkjamies` | `strata` | `0.1.0` |
 
 ### Versioning

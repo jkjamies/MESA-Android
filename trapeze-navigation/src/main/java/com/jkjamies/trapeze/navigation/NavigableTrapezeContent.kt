@@ -65,7 +65,10 @@ public fun NavigableTrapezeContent(
             }
     }
 
-    CompositionLocalProvider(LocalTrapezeNavigator provides navigator) {
+    CompositionLocalProvider(
+        LocalTrapezeNavigator provides navigator,
+        LocalTrapezeBackStack provides backStack
+    ) {
         saveableStateHolder.SaveableStateProvider(key = currentScreen) {
             TrapezeContent(
                 screen = currentScreen,

@@ -6,8 +6,8 @@ A multi-library project providing type-safe, MESA-inspired architecture for Jetp
 
 | Library | Artifact | Purpose | Key Components |
 |---------|----------|---------|----------------|
-| **Trapeze** | `com.jkjamies:trapeze` | Core architecture | `TrapezeStateHolder`, `TrapezeState`, `TrapezeScreen`, `TrapezeEvent`, `TrapezeContent`, `Trapeze`, `TrapezeCompositionLocals`, `TrapezeMessage`, `TrapezeMessageManager` |
-| **Trapeze Navigation** | `com.jkjamies:trapeze-navigation` | Navigation layer | `NavigableTrapezeContent`, `TrapezeBackStack`, `TrapezeNavigator`, `LocalTrapezeNavigator` |
+| **Trapeze** | `com.jkjamies:trapeze` | Core architecture | `TrapezeStateHolder`, `TrapezeState`, `TrapezeScreen`, `TrapezeEvent`, `TrapezeContent`, `Trapeze`, `TrapezeCompositionLocals`, `TrapezeMessage`, `TrapezeMessageManager`, `TrapezeNavigationResult` |
+| **Trapeze Navigation** | `com.jkjamies:trapeze-navigation` | Navigation layer | `NavigableTrapezeContent`, `TrapezeBackStack`, `TrapezeNavigator`, `LocalTrapezeNavigator`, `LocalTrapezeBackStack`, `rememberNavigationResult` |
 | **Strata** | `com.jkjamies:strata` | Business logic | `StrataInteractor`, `StrataSubjectInteractor`, `StrataResult`, `strataLaunch` |
 
 ---
@@ -128,8 +128,8 @@ repositories {
 
 Then add the dependencies:
 ```kotlin
-implementation("com.jkjamies:trapeze:0.1.0")
-implementation("com.jkjamies:trapeze-navigation:0.1.0")
+implementation("com.jkjamies:trapeze:0.2.0")
+implementation("com.jkjamies:trapeze-navigation:0.2.0")
 implementation("com.jkjamies:strata:0.1.0")
 ```
 
@@ -278,8 +278,29 @@ Injectable interface for navigation actions:
 interface TrapezeNavigator {
     fun navigate(screen: TrapezeScreen)
     fun pop()
+    fun <R : TrapezeNavigationResult> popWithResult(key: String, result: R)
 }
 ```
+
+### Navigation Result Passing
+Return data from Screen B to Screen A when popping:
+
+```kotlin
+// Define a result type
+@Parcelize
+data class EditResult(val name: String) : TrapezeNavigationResult
+
+// Screen B: produce result on pop
+EditEvent.Save -> navigator.popWithResult("edit_result", EditResult(name))
+
+// Screen A: consume result
+val editResult = rememberNavigationResult("edit_result")
+LaunchedEffect(editResult) {
+    editResult?.let { result -> name = (result as EditResult).name }
+}
+```
+
+Results are single-consumption and survive configuration changes/process death.
 
 ### Navigation from StateHolder
 ```kotlin

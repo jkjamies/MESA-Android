@@ -21,6 +21,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.staticCompositionLocalOf
+import com.jkjamies.trapeze.TrapezeNavigationResult
 import com.jkjamies.trapeze.TrapezeNavigator
 import com.jkjamies.trapeze.TrapezeScreen
 
@@ -29,6 +30,16 @@ import com.jkjamies.trapeze.TrapezeScreen
  */
 public val LocalTrapezeNavigator = staticCompositionLocalOf<TrapezeNavigator> {
     error("No TrapezeNavigator provided")
+}
+
+/**
+ * CompositionLocal for accessing the current [TrapezeBackStack].
+ *
+ * Used internally by [rememberNavigationResult] to consume results.
+ * The backstack's mutation methods are `internal`, so consumers get read-only access.
+ */
+public val LocalTrapezeBackStack = staticCompositionLocalOf<TrapezeBackStack> {
+    error("No TrapezeBackStack provided")
 }
 
 /**
@@ -50,6 +61,15 @@ public fun rememberTrapezeNavigator(
             }
 
             override fun pop() {
+                if (backStack.size > 1) {
+                    backStack.pop()
+                } else {
+                    currentOnRootPop?.invoke()
+                }
+            }
+
+            override fun <R : TrapezeNavigationResult> popWithResult(key: String, result: R) {
+                backStack.setResult(key, result)
                 if (backStack.size > 1) {
                     backStack.pop()
                 } else {
