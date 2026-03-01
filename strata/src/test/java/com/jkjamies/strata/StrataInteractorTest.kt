@@ -17,11 +17,9 @@
 package com.jkjamies.strata
 
 import app.cash.turbine.test
-import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
-import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -84,11 +82,11 @@ class StrataInteractorTest : BehaviorSpec({
         }
 
         When("invoked with a shorter timeout") {
-            Then("TimeoutCancellationException propagates") {
-                // strataRunCatching rethrows CancellationException (including timeout)
-                shouldThrow<TimeoutCancellationException> {
-                    interactor(Unit, timeout = 1.milliseconds)
-                }
+            Then("it returns Failure with StrataTimeoutException") {
+                val result = interactor(Unit, timeout = 1.milliseconds)
+                result.shouldBeInstanceOf<StrataResult.Failure>()
+                val error = result.error.shouldBeInstanceOf<StrataTimeoutException>()
+                error.duration shouldBe 1.milliseconds
             }
         }
     }
