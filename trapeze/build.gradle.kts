@@ -25,11 +25,7 @@ version = property("publishingVersion") as String
 
 android {
     namespace = "com.jkjamies.trapeze"
-    compileSdk {
-        version = release(36) {
-            minorApiLevel = 1
-        }
-    }
+    compileSdk = 36
 
     defaultConfig {
         minSdk = 27
