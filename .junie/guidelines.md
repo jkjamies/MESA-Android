@@ -17,6 +17,7 @@
 # Run tests for a specific module
 ./gradlew :strata:test                                          # Strata (pure Kotlin/JVM)
 ./gradlew :trapeze:test                                         # Trapeze JVM tests
+./gradlew :trapeze-test:test                                    # Trapeze Test JVM tests
 ./gradlew :trapeze:connectedAndroidTest                         # Trapeze Compose tests
 ./gradlew :trapeze-navigation:connectedAndroidTest              # Navigation tests
 ./gradlew :features:counter:presentation:connectedAndroidTest   # Counter feature tests
@@ -39,6 +40,7 @@ A Pure-Compose driven architectural library implementing the **MESA framework** 
 | **Trapeze** | `com.jkjamies:trapeze` | Core architecture | `TrapezeStateHolder`, `TrapezeState`, `TrapezeScreen`, `TrapezeEvent`, `TrapezeContent`, `Trapeze`, `TrapezeCompositionLocals`, `TrapezeMessage`, `TrapezeMessageManager`, `TrapezeNavigationResult` |
 | **Trapeze Navigation** | `com.jkjamies:trapeze-navigation` | Navigation layer | `NavigableTrapezeContent`, `TrapezeBackStack`, `TrapezeNavigator`, `LocalTrapezeNavigator`, `LocalTrapezeBackStack`, `rememberNavigationResult` |
 | **Strata** | `com.jkjamies:strata` | Business logic layer | `StrataInteractor`, `StrataSubjectInteractor`, `StrataResult`, `strataLaunch` |
+| **Trapeze Test** | `com.jkjamies:trapeze-test` | Test utilities | `TrapezeStateHolder.test`, `FakeTrapezeNavigator`, `TestEventSink`, `TrapezeReceiveTurbine`, `NavigationEvent` |
 
 ## MESA Pillars
 - **Modular**: Feature isolation by design; components are decoupled and portable.
@@ -53,7 +55,7 @@ A Pure-Compose driven architectural library implementing the **MESA framework** 
 ### The Five Components
 | Component | Role | Type Requirements |
 |-----------|------|-------------------|
-| **Screen** | Identity/destination key | `Parcelable`, implements `TrapezeScreen` |
+| **Screen** | Routing key / destination identifier (pure key, not passed into StateHolder) | `Parcelable`, implements `TrapezeScreen` |
 | **State** | Immutable display data + event sink | Implements `TrapezeState`, contains `eventSink: (E) -> Unit` |
 | **Event** | User interactions | Implements `TrapezeEvent`, typically `sealed interface` |
 | **StateHolder** | Logic layer producing State | Extends `TrapezeStateHolder<S, T, E>` |
@@ -101,6 +103,7 @@ interface UiFactory {
 ```
 
 ### Creating Factories (per feature)
+The factory is responsible for extracting navigation args from the screen and passing them as plain constructor params to the StateHolder:
 ```kotlin
 // In features/foo/presentation/FooFactories.kt
 @ContributesIntoSet(AppScope::class)
@@ -109,7 +112,7 @@ class FooStateHolderFactory @Inject constructor(
 ) : Trapeze.StateHolderFactory {
     override fun create(screen: TrapezeScreen, navigator: TrapezeNavigator?): TrapezeStateHolder<*, *, *>? {
         return if (screen is FooScreen && navigator != null) {
-            factory.create(navigator)
+            factory.create(screen.someArg, navigator)  // Extract screen args here
         } else null
     }
 }
@@ -123,17 +126,18 @@ class FooUiFactory @Inject constructor() : Trapeze.UiFactory {
 ```
 
 ### Assisted Inject for StateHolders
-Use `@AssistedInject` for runtime dependencies (navigator, interop), regular injection for graph dependencies (use cases):
+Use `@AssistedInject` for runtime dependencies (extracted screen args, navigator, interop), regular injection for graph dependencies (use cases). The screen type parameter `T` preserves compile-time coupling, but the screen instance is never stored:
 
 ```kotlin
 class FooStateHolder @AssistedInject constructor(
+    @Assisted private val someArg: Int,                 // Extracted from screen by factory
     @Assisted private val navigator: TrapezeNavigator,  // Runtime - from factory call
     private val fooUseCase: Lazy<FooUseCase>            // Graph - from DI
 ) : TrapezeStateHolder<FooScreen, FooState, FooEvent>() {
-    
+
     @AssistedFactory
     fun interface Factory {
-        fun create(navigator: TrapezeNavigator): FooStateHolder
+        fun create(someArg: Int, navigator: TrapezeNavigator): FooStateHolder
     }
 }
 ```
@@ -416,6 +420,26 @@ state.trapezeMessage?.let { msg ->
 
 This split is necessary because `androidTest` requires JUnit4 as the test runner, while Kotest BehaviorSpec runs on JUnit Platform (JUnit5) which is only available in JVM `test/` source sets.
 
+### Trapeze Test Library (`trapeze-test`)
+Shared test utilities for fast, JVM-only StateHolder testing:
+
+- **`TrapezeStateHolder.test {}`**: Molecule-backed extension that runs `produceState` in a headless Compose runtime and pipes state through Turbine with distinct-until-changed filtering.
+- **`FakeTrapezeNavigator`**: Shared fake with synchronous assertions (`navigatedScreens`, `popCount`, `results`) and Turbine-backed async assertions (`awaitNavigate()`, `awaitPop()`, `awaitPopWithResult()`).
+- **`TestEventSink`**: Records events for assertion, usable as an `eventSink` lambda.
+- **`NavigationEvent`**: Sealed hierarchy (`Navigate`, `Pop`, `PopWithResult`) recording all navigator actions.
+
+```kotlin
+// Example: JVM StateHolder test with Molecule + Turbine
+val holder = MyStateHolder(initialCount = 0, navigator = FakeTrapezeNavigator())
+holder.test {
+    val initial = awaitItem()
+    initial.count shouldBe 0
+
+    initial.eventSink(MyEvent.Increment)
+    awaitItem().count shouldBe 1
+}
+```
+
 ---
 
 ## Publishing
@@ -426,12 +450,14 @@ This split is necessary because `androidTest` requires JUnit4 as the test runner
 | `:trapeze` | `com.jkjamies` | `trapeze` | `0.2.0` |
 | `:trapeze-navigation` | `com.jkjamies` | `trapeze-navigation` | `0.2.0` |
 | `:strata` | `com.jkjamies` | `strata` | `0.1.0` |
+| `:trapeze-test` | `com.jkjamies` | `trapeze-test` | `0.1.0` |
 
 ### Versioning
 Each module is versioned **independently** via its own `gradle.properties` file:
 - `trapeze/gradle.properties`
 - `trapeze-navigation/gradle.properties`
 - `strata/gradle.properties`
+- `trapeze-test/gradle.properties`
 
 To bump a version, update the `publishingVersion` property in the relevant file.
 
@@ -444,6 +470,7 @@ To verify publishing locally (publishes to `~/.m2/repository`):
 ./gradlew :trapeze:publishReleasePublicationToMavenLocal
 ./gradlew :trapeze-navigation:publishReleasePublicationToMavenLocal
 ./gradlew :strata:publishReleasePublicationToMavenLocal
+./gradlew :trapeze-test:publishReleasePublicationToMavenLocal
 ```
 
 ### Key Files

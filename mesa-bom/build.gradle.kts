@@ -29,6 +29,7 @@ dependencies {
         api("com.jkjamies:trapeze:${moduleVersion("trapeze")}")
         api("com.jkjamies:trapeze-navigation:${moduleVersion("trapeze-navigation")}")
         api("com.jkjamies:strata:${moduleVersion("strata")}")
+        api("com.jkjamies:trapeze-test:${moduleVersion("trapeze-test")}")
     }
 }
 

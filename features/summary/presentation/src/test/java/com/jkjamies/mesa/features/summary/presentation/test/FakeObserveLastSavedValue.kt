@@ -16,22 +16,12 @@
 
 package com.jkjamies.mesa.features.summary.presentation.test
 
-import com.jkjamies.trapeze.TrapezeNavigationResult
-import com.jkjamies.trapeze.TrapezeNavigator
-import com.jkjamies.trapeze.TrapezeScreen
+import com.jkjamies.mesa.features.summary.api.ObserveLastSavedValue
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 
-class FakeTrapezeNavigator : TrapezeNavigator {
-    val events = mutableListOf<String>()
+class FakeObserveLastSavedValue : ObserveLastSavedValue() {
+    val valueFlow = MutableStateFlow<Int?>(null)
 
-    override fun navigate(screen: TrapezeScreen) {
-        events.add("Navigate: $screen")
-    }
-
-    override fun pop() {
-        events.add("Pop")
-    }
-
-    override fun <R : TrapezeNavigationResult> popWithResult(key: String, result: R) {
-        events.add("PopWithResult: $key=$result")
-    }
+    override fun createObservable(params: Unit): Flow<Int?> = valueFlow
 }

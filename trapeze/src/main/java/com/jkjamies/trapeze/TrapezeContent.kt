@@ -50,7 +50,6 @@ public fun TrapezeContent(
     @Suppress("UNCHECKED_CAST")
     TrapezeRenderer(
         modifier = modifier,
-        screen = screen,
         stateHolder = stateHolder as TrapezeStateHolder<TrapezeScreen, TrapezeState, TrapezeEvent>,
         ui = ui as TrapezeUi<TrapezeState>
     )
@@ -63,10 +62,9 @@ public fun TrapezeContent(
 @Composable
 internal fun <T : TrapezeScreen, S : TrapezeState, E : TrapezeEvent> TrapezeRenderer(
     modifier: Modifier,
-    screen: T,
     stateHolder: TrapezeStateHolder<T, S, E>,
     ui: TrapezeUi<S>
 ) {
-    val state = stateHolder.produceState(screen)
+    val state = stateHolder.produceState()
     ui(modifier, state)
 }

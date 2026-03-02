@@ -37,7 +37,7 @@ class SummaryStateHolderFactory(
         navigator: TrapezeNavigator?
     ): TrapezeStateHolder<*, *, *>? {
         return if (screen is SummaryScreen && navigator != null) {
-            factory.create(navigator)
+            factory.create(screen.finalCount, navigator)
         } else null
     }
 }

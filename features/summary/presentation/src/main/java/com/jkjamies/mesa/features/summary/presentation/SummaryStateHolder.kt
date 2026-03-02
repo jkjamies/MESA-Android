@@ -40,6 +40,7 @@ import dev.zacsweers.metro.AssistedInject
  */
 @AssistedInject
 class SummaryStateHolder constructor(
+    @Assisted private val finalCount: Int,
     @Assisted private val navigator: TrapezeNavigator,
     private val saveSummaryValue: Lazy<SaveSummaryValue>,
     private val observeLastSavedValue: Lazy<ObserveLastSavedValue>
@@ -47,14 +48,11 @@ class SummaryStateHolder constructor(
 
     @AssistedFactory
     fun interface Factory {
-        fun create(navigator: TrapezeNavigator): SummaryStateHolder
+        fun create(finalCount: Int, navigator: TrapezeNavigator): SummaryStateHolder
     }
 
-    /**
-     * Produces the [SummaryState] for the given [screen].
-     */
     @Composable
-    override fun produceState(screen: SummaryScreen): SummaryState {
+    override fun produceState(): SummaryState {
         LaunchedEffect(Unit) {
             observeLastSavedValue.value.invoke(Unit)
         }
@@ -68,13 +66,13 @@ class SummaryStateHolder constructor(
             when (event) {
                 SummaryEvent.Back -> navigator.pop()
                 SummaryEvent.PrintValue -> {
-                    println("Value: ${screen.finalCount}")
+                    println("Value: ${finalCount}")
                 }
                 SummaryEvent.SaveValue -> {
                     strataLaunch {
-                        val result = saveSummaryValue.value.invoke(screen.finalCount)
+                        val result = saveSummaryValue.value.invoke(finalCount)
                         // Demonstrate map: transform Success<Unit> into Success<Int> carrying the saved count
-                        val savedCount = result.map { screen.finalCount }.getOrDefault(0)
+                        val savedCount = result.map { finalCount }.getOrDefault(0)
                         // Demonstrate fold: produce a user-facing message for both outcomes
                         val message = result.fold(
                             onSuccess = { "Saved $savedCount successfully!" },
@@ -90,7 +88,7 @@ class SummaryStateHolder constructor(
         }
 
         return SummaryState(
-            finalCount = screen.finalCount,
+            finalCount = finalCount,
             lastSavedValue = lastSavedValue,
             saveInProgress = saveSummaryLoading,
             trapezeMessage = trapezeMessage,

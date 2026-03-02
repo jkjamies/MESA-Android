@@ -19,7 +19,8 @@ package com.jkjamies.mesa.features.summary.presentation
 import androidx.compose.ui.test.junit4.createComposeRule
 import com.jkjamies.mesa.features.summary.presentation.test.FakeSaveSummaryValue
 import com.jkjamies.mesa.features.summary.presentation.test.FakeObserveLastSavedValue
-import com.jkjamies.mesa.features.summary.presentation.test.FakeTrapezeNavigator
+import com.jkjamies.trapeze.test.FakeTrapezeNavigator
+import com.jkjamies.trapeze.test.NavigationEvent
 import io.kotest.matchers.shouldBe
 import org.junit.Rule
 import org.junit.Test
@@ -34,11 +35,11 @@ class SummaryStateHolderTest {
         val navigator = FakeTrapezeNavigator()
         val save = FakeSaveSummaryValue()
         val observe = FakeObserveLastSavedValue()
-        val holder = SummaryStateHolder(navigator, lazy { save }, lazy { observe })
+        val holder = SummaryStateHolder(42, navigator, lazy { save }, lazy { observe })
 
         lateinit var state: SummaryState
         composeTestRule.setContent {
-            state = holder.produceState(SummaryScreen(finalCount = 42))
+            state = holder.produceState()
         }
 
         state.finalCount shouldBe 42
@@ -49,17 +50,17 @@ class SummaryStateHolderTest {
         val navigator = FakeTrapezeNavigator()
         val save = FakeSaveSummaryValue()
         val observe = FakeObserveLastSavedValue()
-        val holder = SummaryStateHolder(navigator, lazy { save }, lazy { observe })
+        val holder = SummaryStateHolder(10, navigator, lazy { save }, lazy { observe })
 
         lateinit var state: SummaryState
         composeTestRule.setContent {
-            state = holder.produceState(SummaryScreen(finalCount = 10))
+            state = holder.produceState()
         }
 
         state.eventSink(SummaryEvent.Back)
         composeTestRule.waitForIdle()
 
-        navigator.events.last() shouldBe "Pop"
+        navigator.events.last() shouldBe NavigationEvent.Pop
     }
 
     @Test
@@ -67,11 +68,11 @@ class SummaryStateHolderTest {
         val navigator = FakeTrapezeNavigator()
         val save = FakeSaveSummaryValue(shouldFail = false)
         val observe = FakeObserveLastSavedValue()
-        val holder = SummaryStateHolder(navigator, lazy { save }, lazy { observe })
+        val holder = SummaryStateHolder(5, navigator, lazy { save }, lazy { observe })
 
         lateinit var state: SummaryState
         composeTestRule.setContent {
-            state = holder.produceState(SummaryScreen(finalCount = 5))
+            state = holder.produceState()
         }
 
         state.eventSink(SummaryEvent.SaveValue)
@@ -85,11 +86,11 @@ class SummaryStateHolderTest {
         val navigator = FakeTrapezeNavigator()
         val save = FakeSaveSummaryValue(shouldFail = true)
         val observe = FakeObserveLastSavedValue()
-        val holder = SummaryStateHolder(navigator, lazy { save }, lazy { observe })
+        val holder = SummaryStateHolder(5, navigator, lazy { save }, lazy { observe })
 
         lateinit var state: SummaryState
         composeTestRule.setContent {
-            state = holder.produceState(SummaryScreen(finalCount = 5))
+            state = holder.produceState()
         }
 
         state.eventSink(SummaryEvent.SaveValue)

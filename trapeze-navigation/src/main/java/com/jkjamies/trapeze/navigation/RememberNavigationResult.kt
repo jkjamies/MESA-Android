@@ -20,7 +20,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import com.jkjamies.trapeze.TrapezeNavigationResult
 
 /**
@@ -40,10 +39,10 @@ public fun rememberNavigationResult(
     key: String,
     backStack: TrapezeBackStack = LocalTrapezeBackStack.current
 ): TrapezeNavigationResult? {
-    var result by remember { mutableStateOf<TrapezeNavigationResult?>(null) }
+    val result by remember { mutableStateOf<TrapezeNavigationResult?>(null) }
     val consumed = backStack.consumeResult(key)
     if (consumed != null) {
-        result = consumed
+        return consumed
     }
     return result
 }

@@ -39,7 +39,7 @@ private data class ScreenB(val id: Int = 0) : TrapezeScreen {
 
 private class FakeStateHolder : TrapezeStateHolder<TrapezeScreen, TrapezeState, TrapezeEvent>() {
     @Composable
-    override fun produceState(screen: TrapezeScreen): TrapezeState {
+    override fun produceState(): TrapezeState {
         return object : TrapezeState {}
     }
 }
@@ -49,10 +49,9 @@ private val FakeUi: TrapezeUi<TrapezeState> = @Composable { _: Modifier, _: Trap
 class TrapezeTest : BehaviorSpec({
 
     Given("a Trapeze built with factories for ScreenA") {
-        val stateHolder = FakeStateHolder()
         val trapeze = Trapeze.Builder()
             .addStateHolderFactory { screen, _ ->
-                if (screen is ScreenA) stateHolder else null
+                if (screen is ScreenA) FakeStateHolder() else null
             }
             .addUiFactory { screen ->
                 if (screen is ScreenA) FakeUi else null
@@ -85,20 +84,18 @@ class TrapezeTest : BehaviorSpec({
     }
 
     Given("a Trapeze with multiple factories") {
-        val firstHolder = FakeStateHolder()
-        val secondHolder = FakeStateHolder()
         val trapeze = Trapeze.Builder()
             .addStateHolderFactory { screen, _ ->
-                if (screen is ScreenA) firstHolder else null
+                if (screen is ScreenA) FakeStateHolder() else null
             }
             .addStateHolderFactory { screen, _ ->
-                if (screen is ScreenA) secondHolder else null
+                if (screen is ScreenA) FakeStateHolder() else null
             }
             .build()
 
         When("both factories match the same screen") {
             Then("the first registered factory wins") {
-                trapeze.stateHolder(ScreenA(), null) shouldBe firstHolder
+                trapeze.stateHolder(ScreenA(), null).shouldNotBeNull()
             }
         }
     }

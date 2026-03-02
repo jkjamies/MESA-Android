@@ -14,25 +14,30 @@
  * limitations under the License.
  */
 
-package com.jkjamies.mesa.features.counter.presentation.test
+package com.jkjamies.trapeze.test
 
 import com.jkjamies.trapeze.TrapezeNavigationResult
-import com.jkjamies.trapeze.TrapezeNavigator
 import com.jkjamies.trapeze.TrapezeScreen
 
-class FakeTrapezeNavigator : TrapezeNavigator {
-    val screens = mutableListOf<TrapezeScreen>()
-    var popCount = 0
+/**
+ * Sealed hierarchy recording all navigator actions for assertion in tests.
+ */
+public sealed interface NavigationEvent {
+    /**
+     * Records a [TrapezeNavigator.navigate] call.
+     */
+    public data class Navigate(val screen: TrapezeScreen) : NavigationEvent
 
-    override fun navigate(screen: TrapezeScreen) {
-        screens.add(screen)
-    }
+    /**
+     * Records a [TrapezeNavigator.pop] call.
+     */
+    public data object Pop : NavigationEvent
 
-    override fun pop() {
-        popCount++
-    }
-
-    override fun <R : TrapezeNavigationResult> popWithResult(key: String, result: R) {
-        popCount++
-    }
+    /**
+     * Records a [TrapezeNavigator.popWithResult] call.
+     */
+    public data class PopWithResult(
+        val key: String,
+        val result: TrapezeNavigationResult,
+    ) : NavigationEvent
 }
