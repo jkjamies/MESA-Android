@@ -16,18 +16,13 @@
 
 package com.jkjamies.mesa.features.counter.presentation.test
 
-import com.jkjamies.trapeze.TrapezeNavigator
-import com.jkjamies.trapeze.TrapezeScreen
+import com.jkjamies.mesa.core.presentation.AppInterop
+import com.jkjamies.mesa.core.presentation.AppInteropEvent
 
-class FakeTrapezeNavigator : TrapezeNavigator {
-    val screens = mutableListOf<TrapezeScreen>()
-    var popCount = 0
+class FakeAppInterop : AppInterop {
+    val events = mutableListOf<AppInteropEvent>()
 
-    override fun navigate(screen: TrapezeScreen) {
-        screens.add(screen)
-    }
-
-    override fun pop() {
-        popCount++
+    override fun send(event: AppInteropEvent) {
+        events.add(event)
     }
 }

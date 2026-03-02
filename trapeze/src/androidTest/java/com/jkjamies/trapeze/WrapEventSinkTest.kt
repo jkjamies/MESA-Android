@@ -38,7 +38,7 @@ class WrapEventSinkTest {
 
         val holder = object : TrapezeStateHolder<TestScreen, TestState, TestEvent>() {
             @Composable
-            override fun produceState(screen: TestScreen): TestState {
+            override fun produceState(): TestState {
                 var count by remember { mutableIntStateOf(0) }
                 val sink = wrapEventSink<TestEvent> {
                     count++
@@ -50,7 +50,7 @@ class WrapEventSinkTest {
 
         lateinit var state: TestState
         composeTestRule.setContent {
-            state = holder.produceState(TestScreen)
+            state = holder.produceState()
         }
 
         state.eventSink(TestEvent.Action)

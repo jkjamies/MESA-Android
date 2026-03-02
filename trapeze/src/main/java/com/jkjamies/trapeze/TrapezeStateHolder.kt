@@ -29,13 +29,13 @@ import kotlinx.coroutines.CoroutineScope
  * Use [wrapEventSink] inside [produceState] to create a coroutine-safe event callback
  * that silently drops events when the composition's [CoroutineScope] is no longer active.
  *
- * @param T The [TrapezeScreen] type this holder is associated with.
+ * @param T The [TrapezeScreen] type this holder is associated with (compile-time coupling only).
  * @param S The [TrapezeState] type this holder produces.
  * @param E The [TrapezeEvent] type this holder handles.
  */
 public abstract class TrapezeStateHolder<T : TrapezeScreen, S : TrapezeState, E : TrapezeEvent> {
     @Composable
-    public abstract fun produceState(screen: T): S
+    public abstract fun produceState(): S
 
     @Composable
     protected inline fun <reified EV : E> wrapEventSink(

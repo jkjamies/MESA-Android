@@ -17,6 +17,7 @@
 package com.jkjamies.strata
 
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.debounce
@@ -90,10 +91,14 @@ public abstract class StrataInteractor<in P, R> {
         timeout: Duration = DefaultTimeout,
         userInitiated: Boolean = params.isUserInitiated,
     ): StrataResult<R> = withLoader(userInitiated) {
-        strataRunCatching {
-            withTimeout(timeout) {
-                doWork(params)
+        try {
+            strataRunCatching {
+                withTimeout(timeout) {
+                    doWork(params)
+                }
             }
+        } catch (e: TimeoutCancellationException) {
+            StrataResult.Failure(StrataTimeoutException(timeout, e))
         }
     }
 

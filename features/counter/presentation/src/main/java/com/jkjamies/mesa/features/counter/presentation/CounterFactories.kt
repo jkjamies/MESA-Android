@@ -39,7 +39,7 @@ class CounterStateHolderFactory(
         navigator: TrapezeNavigator?
     ): TrapezeStateHolder<*, *, *>? {
         return if (screen is CounterScreen && navigator != null) {
-            factory.create(appInterop, navigator)
+            factory.create(screen.initialCount, appInterop, navigator)
         } else null
     }
 }

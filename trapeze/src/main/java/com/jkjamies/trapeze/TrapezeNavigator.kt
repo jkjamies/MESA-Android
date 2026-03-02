@@ -31,4 +31,14 @@ public interface TrapezeNavigator {
      * Pops the current screen from the navigation stack.
      */
     public fun pop()
+
+    /**
+     * Pops the current screen and delivers [result] to the previous screen under the given [key].
+     *
+     * The previous screen can consume the result using `rememberNavigationResult<R>(key)`.
+     *
+     * @param key A unique key identifying this result. Must match between producer and consumer.
+     * @param result The result data to pass back.
+     */
+    public fun <R : TrapezeNavigationResult> popWithResult(key: String, result: R)
 }

@@ -16,14 +16,16 @@
 
 package com.jkjamies.trapeze.navigation
 
+import android.os.Bundle
+import android.os.Parcelable
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.Saver
-import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import com.jkjamies.trapeze.TrapezeNavigationResult
 import com.jkjamies.trapeze.TrapezeScreen
 
 /**
@@ -34,13 +36,14 @@ import com.jkjamies.trapeze.TrapezeScreen
 @Stable
 public class TrapezeBackStack internal constructor(root: TrapezeScreen) {
     private var _stack by mutableStateOf(listOf(root))
-    
+    private var _results by mutableStateOf<Map<String, TrapezeNavigationResult>>(emptyMap())
+
     /** The root (start) screen of this backstack. */
     public val root: TrapezeScreen get() = _stack.first()
-    
+
     /** The currently active screen. */
     public val current: TrapezeScreen get() = _stack.last()
-    
+
     /** The number of screens in the backstack. */
     public val size: Int get() = _stack.size
 
@@ -56,18 +59,61 @@ public class TrapezeBackStack internal constructor(root: TrapezeScreen) {
         return false
     }
 
+    internal fun setResult(key: String, result: TrapezeNavigationResult) {
+        _results = _results + (key to result)
+    }
+
+    internal fun consumeResult(key: String): TrapezeNavigationResult? {
+        val result = _results[key]
+        if (result != null) {
+            _results = _results - key
+        }
+        return result
+    }
+
+    internal fun popWithResult(key: String, result: TrapezeNavigationResult): Boolean {
+        setResult(key, result)
+        return pop()
+    }
+
     internal fun asList(): List<TrapezeScreen> = _stack
 
     public companion object {
         /**
          * Saver for [TrapezeBackStack] to persist across configuration changes.
          */
-        public fun saver(): Saver<TrapezeBackStack, *> = listSaver(
-            save = { backStack -> backStack.asList() },
-            restore = { list ->
-                TrapezeBackStack(list.first()).apply {
-                    list.drop(1).forEach { push(it) }
+        public fun saver(): Saver<TrapezeBackStack, *> = Saver(
+            save = { backStack ->
+                val bundle = Bundle()
+                bundle.putParcelableArrayList(
+                    "stack",
+                    ArrayList(backStack.asList())
+                )
+                val resultsBundle = Bundle()
+                backStack._results.forEach { (key, value) ->
+                    resultsBundle.putParcelable(key, value)
                 }
+                bundle.putBundle("results", resultsBundle)
+                bundle
+            },
+            restore = { bundle ->
+                @Suppress("DEPRECATION")
+                val stack = bundle.getParcelableArrayList<Parcelable>("stack")
+                    ?.filterIsInstance<TrapezeScreen>()
+                    ?: return@Saver null
+                val backStack = TrapezeBackStack(stack.first())
+                stack.drop(1).forEach { backStack.push(it) }
+                val resultsBundle = bundle.getBundle("results")
+                if (resultsBundle != null) {
+                    for (key in resultsBundle.keySet()) {
+                        @Suppress("DEPRECATION")
+                        val result = resultsBundle.getParcelable<Parcelable>(key)
+                        if (result is TrapezeNavigationResult) {
+                            backStack.setResult(key, result)
+                        }
+                    }
+                }
+                backStack
             }
         )
     }

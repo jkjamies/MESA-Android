@@ -17,6 +17,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 # Run tests for a specific module
 ./gradlew :strata:test                                          # Strata (pure Kotlin/JVM)
 ./gradlew :trapeze:test                                         # Trapeze JVM tests
+./gradlew :trapeze-test:test                                    # Trapeze Test JVM tests
 ./gradlew :trapeze:connectedAndroidTest                         # Trapeze Compose tests
 ./gradlew :trapeze-navigation:connectedAndroidTest              # Navigation tests
 ./gradlew :features:counter:presentation:connectedAndroidTest   # Counter feature tests
@@ -36,9 +37,10 @@ A Pure-Compose driven architectural library implementing the **MESA framework** 
 ## Libraries
 | Library | Artifact | Purpose | Key Exports |
 |---------|----------|---------|-------------|
-| **Trapeze** | `com.jkjamies:trapeze` | Core architecture | `TrapezeStateHolder`, `TrapezeState`, `TrapezeScreen`, `TrapezeEvent`, `TrapezeContent`, `Trapeze`, `TrapezeCompositionLocals`, `TrapezeMessage`, `TrapezeMessageManager` |
-| **Trapeze Navigation** | `com.jkjamies:trapeze-navigation` | Navigation layer | `NavigableTrapezeContent`, `TrapezeBackStack`, `TrapezeNavigator`, `LocalTrapezeNavigator` |
+| **Trapeze** | `com.jkjamies:trapeze` | Core architecture | `TrapezeStateHolder`, `TrapezeState`, `TrapezeScreen`, `TrapezeEvent`, `TrapezeContent`, `Trapeze`, `TrapezeCompositionLocals`, `TrapezeMessage`, `TrapezeMessageManager`, `TrapezeNavigationResult` |
+| **Trapeze Navigation** | `com.jkjamies:trapeze-navigation` | Navigation layer | `NavigableTrapezeContent`, `TrapezeBackStack`, `TrapezeNavigator`, `LocalTrapezeNavigator`, `LocalTrapezeBackStack`, `rememberNavigationResult` |
 | **Strata** | `com.jkjamies:strata` | Business logic layer | `StrataInteractor`, `StrataSubjectInteractor`, `StrataResult`, `strataLaunch` |
+| **Trapeze Test** | `com.jkjamies:trapeze-test` | Test utilities | `TrapezeStateHolder.test`, `FakeTrapezeNavigator`, `TestEventSink`, `TrapezeReceiveTurbine`, `NavigationEvent` |
 | **MESA BOM** | `com.jkjamies:mesa-bom` | Bill of Materials | Aligns versions of all MESA libraries |
 
 ## MESA Pillars
@@ -54,7 +56,7 @@ A Pure-Compose driven architectural library implementing the **MESA framework** 
 ### The Five Components
 | Component | Role | Type Requirements |
 |-----------|------|-------------------|
-| **Screen** | Identity/destination key | `Parcelable`, implements `TrapezeScreen` |
+| **Screen** | Routing key / destination identifier (pure key, not passed into StateHolder) | `Parcelable`, implements `TrapezeScreen` |
 | **State** | Immutable display data + event sink | Implements `TrapezeState`, contains `eventSink: (E) -> Unit` |
 | **Event** | User interactions | Implements `TrapezeEvent`, typically `sealed interface` |
 | **StateHolder** | Logic layer producing State | Extends `TrapezeStateHolder<S, T, E>` |
@@ -102,6 +104,7 @@ interface UiFactory {
 ```
 
 ### Creating Factories (per feature)
+The factory is responsible for extracting navigation args from the screen and passing them as plain constructor params to the StateHolder:
 ```kotlin
 // In features/foo/presentation/FooFactories.kt
 @ContributesIntoSet(AppScope::class)
@@ -110,7 +113,7 @@ class FooStateHolderFactory @Inject constructor(
 ) : Trapeze.StateHolderFactory {
     override fun create(screen: TrapezeScreen, navigator: TrapezeNavigator?): TrapezeStateHolder<*, *, *>? {
         return if (screen is FooScreen && navigator != null) {
-            factory.create(navigator)
+            factory.create(screen.someArg, navigator)  // Extract screen args here
         } else null
     }
 }
@@ -124,17 +127,18 @@ class FooUiFactory @Inject constructor() : Trapeze.UiFactory {
 ```
 
 ### Assisted Inject for StateHolders
-Use `@AssistedInject` for runtime dependencies (navigator, interop), regular injection for graph dependencies (use cases):
+Use `@AssistedInject` for runtime dependencies (extracted screen args, navigator, interop), regular injection for graph dependencies (use cases). The screen type parameter `T` preserves compile-time coupling, but the screen instance is never stored:
 
 ```kotlin
 class FooStateHolder @AssistedInject constructor(
+    @Assisted private val someArg: Int,                 // Extracted from screen by factory
     @Assisted private val navigator: TrapezeNavigator,  // Runtime - from factory call
     private val fooUseCase: Lazy<FooUseCase>            // Graph - from DI
 ) : TrapezeStateHolder<FooScreen, FooState, FooEvent>() {
-    
+
     @AssistedFactory
     fun interface Factory {
-        fun create(navigator: TrapezeNavigator): FooStateHolder
+        fun create(someArg: Int, navigator: TrapezeNavigator): FooStateHolder
     }
 }
 ```
@@ -151,6 +155,9 @@ class FooStateHolder @AssistedInject constructor(
 | `rememberSaveableBackStack(root)` | Creates saveable backstack with root screen |
 | `rememberTrapezeNavigator(backStack)` | Creates navigator backed by backstack |
 | `LocalTrapezeNavigator` | CompositionLocal for accessing navigator |
+| `LocalTrapezeBackStack` | CompositionLocal for accessing backstack (used internally by `rememberNavigationResult`) |
+| `rememberNavigationResult(key)` | Composable that consumes a navigation result by key |
+| `TrapezeNavigationResult` | Marker interface (`Parcelable`) for navigation result data |
 
 ### Usage Pattern
 ```kotlin
@@ -168,8 +175,34 @@ TrapezeCompositionLocals(trapeze) {
 interface TrapezeNavigator {
     fun navigate(screen: TrapezeScreen)
     fun pop()
+    fun <R : TrapezeNavigationResult> popWithResult(key: String, result: R)
 }
 ```
+
+### Navigation Result Passing
+Allows Screen B to return data to Screen A when popping.
+
+**Define a result type:**
+```kotlin
+@Parcelize
+data class EditResult(val name: String) : TrapezeNavigationResult
+```
+
+**Screen B (produces result):**
+```kotlin
+// In StateHolder eventSink
+EditEvent.Save -> navigator.popWithResult("edit_result", EditResult(name))
+```
+
+**Screen A (consumes result):**
+```kotlin
+val editResult = rememberNavigationResult("edit_result")
+LaunchedEffect(editResult) {
+    editResult?.let { result -> (result as? EditResult)?.let { name = it.name } }
+}
+```
+
+Results are single-consumption (consumed on first read) and survive configuration changes/process death.
 
 ---
 
@@ -388,6 +421,26 @@ state.trapezeMessage?.let { msg ->
 
 This split is necessary because `androidTest` requires JUnit4 as the test runner, while Kotest BehaviorSpec runs on JUnit Platform (JUnit5) which is only available in JVM `test/` source sets.
 
+### Trapeze Test Library (`trapeze-test`)
+Shared test utilities for fast, JVM-only StateHolder testing:
+
+- **`TrapezeStateHolder.test {}`**: Molecule-backed extension that runs `produceState` in a headless Compose runtime and pipes state through Turbine with distinct-until-changed filtering.
+- **`FakeTrapezeNavigator`**: Shared fake with synchronous assertions (`navigatedScreens`, `popCount`, `results`) and Turbine-backed async assertions (`awaitNavigate()`, `awaitPop()`, `awaitPopWithResult()`).
+- **`TestEventSink`**: Records events for assertion, usable as an `eventSink` lambda.
+- **`NavigationEvent`**: Sealed hierarchy (`Navigate`, `Pop`, `PopWithResult`) recording all navigator actions.
+
+```kotlin
+// Example: JVM StateHolder test with Molecule + Turbine
+val holder = MyStateHolder(initialCount = 0, navigator = FakeTrapezeNavigator())
+holder.test {
+    val initial = awaitItem()
+    initial.count shouldBe 0
+
+    initial.eventSink(MyEvent.Increment)
+    awaitItem().count shouldBe 1
+}
+```
+
 ---
 
 ## Publishing
@@ -395,16 +448,18 @@ This split is necessary because `androidTest` requires JUnit4 as the test runner
 ### Maven Coordinates
 | Module | Group | Artifact | Version |
 |--------|-------|----------|---------|
-| `:trapeze` | `com.jkjamies` | `trapeze` | `0.1.0` |
-| `:trapeze-navigation` | `com.jkjamies` | `trapeze-navigation` | `0.1.0` |
+| `:trapeze` | `com.jkjamies` | `trapeze` | `0.2.0` |
+| `:trapeze-navigation` | `com.jkjamies` | `trapeze-navigation` | `0.2.0` |
 | `:strata` | `com.jkjamies` | `strata` | `0.1.0` |
-| `:mesa-bom` | `com.jkjamies` | `mesa-bom` | `0.1.0` |
+| `:trapeze-test` | `com.jkjamies` | `trapeze-test` | `0.1.0` |
+| `:mesa-bom` | `com.jkjamies` | `mesa-bom` | `0.2.0` |
 
 ### Versioning
 Each library module is versioned **independently** via its own `gradle.properties` file:
 - `trapeze/gradle.properties`
 - `trapeze-navigation/gradle.properties`
 - `strata/gradle.properties`
+- `trapeze-test/gradle.properties`
 
 The BOM module (`mesa-bom/gradle.properties`) has its own version that drives release tags (`v{BOM_VERSION}`). Bump the BOM version when creating a new release.
 
@@ -413,7 +468,7 @@ To bump a version, update the `publishingVersion` property in the relevant file.
 ### Consumer Usage (BOM)
 ```kotlin
 dependencies {
-    implementation(platform("com.jkjamies:mesa-bom:0.1.0"))
+    implementation(platform("com.jkjamies:mesa-bom:0.2.0"))
     implementation("com.jkjamies:trapeze")              // version from BOM
     implementation("com.jkjamies:trapeze-navigation")   // version from BOM
     implementation("com.jkjamies:strata")               // version from BOM
@@ -429,6 +484,7 @@ To verify publishing locally (publishes to `~/.m2/repository`):
 ./gradlew :trapeze:publishReleasePublicationToMavenLocal
 ./gradlew :trapeze-navigation:publishReleasePublicationToMavenLocal
 ./gradlew :strata:publishReleasePublicationToMavenLocal
+./gradlew :trapeze-test:publishReleasePublicationToMavenLocal
 ./gradlew :mesa-bom:publishReleasePublicationToMavenLocal
 ```
 

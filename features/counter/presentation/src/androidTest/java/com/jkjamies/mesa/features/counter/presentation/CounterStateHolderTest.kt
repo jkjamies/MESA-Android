@@ -18,7 +18,7 @@ package com.jkjamies.mesa.features.counter.presentation
 
 import androidx.compose.ui.test.junit4.createComposeRule
 import com.jkjamies.mesa.features.counter.presentation.test.FakeAppInterop
-import com.jkjamies.mesa.features.counter.presentation.test.FakeTrapezeNavigator
+import com.jkjamies.trapeze.test.FakeTrapezeNavigator
 import com.jkjamies.mesa.features.summary.presentation.SummaryScreen
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -33,17 +33,18 @@ class CounterStateHolderTest {
     val composeTestRule = createComposeRule()
 
     private fun createHolder(
+        initialCount: Int = 0,
         navigator: FakeTrapezeNavigator = FakeTrapezeNavigator(),
         interop: FakeAppInterop = FakeAppInterop()
-    ) = Triple(CounterStateHolder(interop, navigator), navigator, interop)
+    ) = Triple(CounterStateHolder(initialCount, interop, navigator), navigator, interop)
 
     @Test
     fun givenACounterScreen_whenProduceStateIsCalled_thenInitialCountMatchesScreen() {
-        val (holder, _, _) = createHolder()
+        val (holder, _, _) = createHolder(initialCount = 5)
 
         lateinit var state: CounterState
         composeTestRule.setContent {
-            state = holder.produceState(CounterScreen(initialCount = 5))
+            state = holder.produceState()
         }
 
         state.count shouldBe 5
@@ -51,11 +52,11 @@ class CounterStateHolderTest {
 
     @Test
     fun givenACounterScreen_whenIncrementEventIsSent_thenCountIncreases() {
-        val (holder, _, _) = createHolder()
+        val (holder, _, _) = createHolder(initialCount = 0)
 
         lateinit var state: CounterState
         composeTestRule.setContent {
-            state = holder.produceState(CounterScreen(initialCount = 0))
+            state = holder.produceState()
         }
 
         state.eventSink(CounterEvent.Increment)
@@ -66,11 +67,11 @@ class CounterStateHolderTest {
 
     @Test
     fun givenACounterScreen_whenDecrementEventIsSent_thenCountDecreases() {
-        val (holder, _, _) = createHolder()
+        val (holder, _, _) = createHolder(initialCount = 5)
 
         lateinit var state: CounterState
         composeTestRule.setContent {
-            state = holder.produceState(CounterScreen(initialCount = 5))
+            state = holder.produceState()
         }
 
         state.eventSink(CounterEvent.Decrement)
@@ -81,11 +82,11 @@ class CounterStateHolderTest {
 
     @Test
     fun givenACounterScreen_whenDivideEventIsSent_thenCountIsHalved() {
-        val (holder, _, _) = createHolder()
+        val (holder, _, _) = createHolder(initialCount = 10)
 
         lateinit var state: CounterState
         composeTestRule.setContent {
-            state = holder.produceState(CounterScreen(initialCount = 10))
+            state = holder.produceState()
         }
 
         state.eventSink(CounterEvent.Divide)
@@ -97,28 +98,28 @@ class CounterStateHolderTest {
     @Test
     fun givenACounterScreen_whenGoToSummaryEventIsSent_thenNavigatorReceivesSummaryScreen() {
         val navigator = FakeTrapezeNavigator()
-        val holder = CounterStateHolder(FakeAppInterop(), navigator)
+        val holder = CounterStateHolder(42, FakeAppInterop(), navigator)
 
         lateinit var state: CounterState
         composeTestRule.setContent {
-            state = holder.produceState(CounterScreen(initialCount = 42))
+            state = holder.produceState()
         }
 
         state.eventSink(CounterEvent.GoToSummary)
         composeTestRule.waitForIdle()
 
-        navigator.screens.last().shouldBeInstanceOf<SummaryScreen>()
-        (navigator.screens.last() as SummaryScreen).finalCount shouldBe 42
+        navigator.navigatedScreens.last().shouldBeInstanceOf<SummaryScreen>()
+        (navigator.navigatedScreens.last() as SummaryScreen).finalCount shouldBe 42
     }
 
     @Test
     fun givenACounterScreen_whenGetHelpEventIsSent_thenInteropReceivesEvent() {
         val interop = FakeAppInterop()
-        val holder = CounterStateHolder(interop, FakeTrapezeNavigator())
+        val holder = CounterStateHolder(0, interop, FakeTrapezeNavigator())
 
         lateinit var state: CounterState
         composeTestRule.setContent {
-            state = holder.produceState(CounterScreen())
+            state = holder.produceState()
         }
 
         state.eventSink(CounterEvent.GetHelp)
@@ -133,7 +134,7 @@ class CounterStateHolderTest {
 
         lateinit var state: CounterState
         composeTestRule.setContent {
-            state = holder.produceState(CounterScreen())
+            state = holder.produceState()
         }
 
         state.trapezeMessage.shouldBeNull()
@@ -151,7 +152,7 @@ class CounterStateHolderTest {
 
         lateinit var state: CounterState
         composeTestRule.setContent {
-            state = holder.produceState(CounterScreen())
+            state = holder.produceState()
         }
 
         state.eventSink(CounterEvent.ThrowError)

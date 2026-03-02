@@ -66,6 +66,20 @@ public sealed interface StrataResult<out T> {
     }
 
     /**
+     * Returns a new [StrataResult] produced by [transform] if this instance represents [Success],
+     * or the original [Failure] unchanged.
+     *
+     * Use this to chain dependent operations that each return a [StrataResult]:
+     * ```
+     * val profile = fetchUser(id).flatMap { user -> fetchProfile(user.profileId) }
+     * ```
+     */
+    fun <R> flatMap(transform: (T) -> StrataResult<R>): StrataResult<R> = when (this) {
+        is Success -> transform(data)
+        is Failure -> this
+    }
+
+    /**
      * Returns the result of [onSuccess] for the encapsulated value if this instance represents
      * [Success] or the result of [onFailure] for the encapsulated error if it is [Failure].
      */
@@ -90,5 +104,21 @@ public fun <T> StrataResult<T>.getOrDefault(default: T): T = when (this) {
  */
 public fun <T> StrataResult<T>.getOrElse(transform: (StrataException) -> T): T = when (this) {
     is StrataResult.Success -> data
+    is StrataResult.Failure -> transform(error)
+}
+
+/**
+ * Returns the original [StrataResult] if it represents [StrataResult.Success],
+ * or the result of [transform] applied to the [StrataException] if it is [StrataResult.Failure].
+ *
+ * Use this in a StateHolder to recover from one use case failure with a different use case:
+ * ```
+ * strataLaunch {
+ *     val result = primaryUseCase(params).recover { fallbackUseCase(params) }
+ * }
+ * ```
+ */
+public suspend fun <T> StrataResult<T>.recover(transform: suspend (StrataException) -> StrataResult<T>): StrataResult<T> = when (this) {
+    is StrataResult.Success -> this
     is StrataResult.Failure -> transform(error)
 }

@@ -6,9 +6,10 @@ A multi-library project providing type-safe, MESA-inspired architecture for Jetp
 
 | Library | Artifact | Purpose | Key Components |
 |---------|----------|---------|----------------|
-| **Trapeze** | `com.jkjamies:trapeze` | Core architecture | `TrapezeStateHolder`, `TrapezeState`, `TrapezeScreen`, `TrapezeEvent`, `TrapezeContent`, `Trapeze`, `TrapezeCompositionLocals`, `TrapezeMessage`, `TrapezeMessageManager` |
-| **Trapeze Navigation** | `com.jkjamies:trapeze-navigation` | Navigation layer | `NavigableTrapezeContent`, `TrapezeBackStack`, `TrapezeNavigator`, `LocalTrapezeNavigator` |
+| **Trapeze** | `com.jkjamies:trapeze` | Core architecture | `TrapezeStateHolder`, `TrapezeState`, `TrapezeScreen`, `TrapezeEvent`, `TrapezeContent`, `Trapeze`, `TrapezeCompositionLocals`, `TrapezeMessage`, `TrapezeMessageManager`, `TrapezeNavigationResult` |
+| **Trapeze Navigation** | `com.jkjamies:trapeze-navigation` | Navigation layer | `NavigableTrapezeContent`, `TrapezeBackStack`, `TrapezeNavigator`, `LocalTrapezeNavigator`, `LocalTrapezeBackStack`, `rememberNavigationResult` |
 | **Strata** | `com.jkjamies:strata` | Business logic | `StrataInteractor`, `StrataSubjectInteractor`, `StrataResult`, `strataLaunch` |
+| **Trapeze Test** | `com.jkjamies:trapeze-test` | Test utilities | `TrapezeStateHolder.test`, `FakeTrapezeNavigator`, `TestEventSink`, `TrapezeReceiveTurbine`, `NavigationEvent` |
 
 ---
 
@@ -20,7 +21,7 @@ Trapeze implements the **MESA pattern** (Modular, Explicit, State-driven, Archit
 
 | Component | Role | Requirements |
 |-----------|------|--------------|
-| **Screen** | Identity/destination key | `Parcelable`, implements `TrapezeScreen` |
+| **Screen** | Routing key / destination identifier (pure key, not passed into StateHolder) | `Parcelable`, implements `TrapezeScreen` |
 | **State** | Immutable display data + event sink | Implements `TrapezeState` |
 | **Event** | User interactions | Implements `TrapezeEvent` |
 | **StateHolder** | Logic layer producing State | Extends `TrapezeStateHolder<S, T, E>` |
@@ -128,9 +129,10 @@ repositories {
 
 Then add the dependencies:
 ```kotlin
-implementation("com.jkjamies:trapeze:0.1.0")
-implementation("com.jkjamies:trapeze-navigation:0.1.0")
+implementation("com.jkjamies:trapeze:0.2.0")
+implementation("com.jkjamies:trapeze-navigation:0.2.0")
 implementation("com.jkjamies:strata:0.1.0")
+testImplementation("com.jkjamies:trapeze-test:0.1.0")
 ```
 
 > **Note**: GitHub Packages requires authentication even for public packages. Create a [personal access token](https://github.com/settings/tokens) with `read:packages` scope and set `gpr.user` / `gpr.token` in your `~/.gradle/gradle.properties`.
@@ -140,6 +142,7 @@ implementation("com.jkjamies:strata:0.1.0")
 implementation(project(":trapeze"))
 implementation(project(":trapeze-navigation"))
 implementation(project(":strata"))
+testImplementation(project(":trapeze-test"))
 ```
 
 ### 2. Configure DI Graph (Metro)
@@ -197,14 +200,16 @@ sealed interface CounterEvent : TrapezeEvent {
 ```
 
 ### Step 2: Create StateHolder with Assisted Inject
+The factory extracts screen args and passes them as plain constructor params. The screen type `T` preserves compile-time coupling, but the screen instance is never stored:
 ```kotlin
 class CounterStateHolder @AssistedInject constructor(
-    @Assisted private val navigator: TrapezeNavigator  // Runtime dependency
+    @Assisted private val initialCount: Int,            // Extracted from screen by factory
+    @Assisted private val navigator: TrapezeNavigator   // Runtime dependency
 ) : TrapezeStateHolder<CounterScreen, CounterState, CounterEvent>() {
 
     @Composable
-    override fun produceState(screen: CounterScreen): CounterState {
-        var count by rememberSaveable { mutableIntStateOf(screen.initialCount) }
+    override fun produceState(): CounterState {
+        var count by rememberSaveable { mutableIntStateOf(initialCount) }
 
         return CounterState(
             count = count,
@@ -219,7 +224,7 @@ class CounterStateHolder @AssistedInject constructor(
 
     @AssistedFactory
     fun interface Factory {
-        fun create(navigator: TrapezeNavigator): CounterStateHolder
+        fun create(initialCount: Int, navigator: TrapezeNavigator): CounterStateHolder
     }
 }
 ```
@@ -253,7 +258,7 @@ class CounterStateHolderFactory @Inject constructor(
         navigator: TrapezeNavigator?
     ): TrapezeStateHolder<*, *, *>? {
         return if (screen is CounterScreen && navigator != null) {
-            factory.create(navigator)
+            factory.create(screen.initialCount, navigator)  // Extract screen args here
         } else null
     }
 }
@@ -278,17 +283,39 @@ Injectable interface for navigation actions:
 interface TrapezeNavigator {
     fun navigate(screen: TrapezeScreen)
     fun pop()
+    fun <R : TrapezeNavigationResult> popWithResult(key: String, result: R)
 }
 ```
+
+### Navigation Result Passing
+Return data from Screen B to Screen A when popping:
+
+```kotlin
+// Define a result type
+@Parcelize
+data class EditResult(val name: String) : TrapezeNavigationResult
+
+// Screen B: produce result on pop
+EditEvent.Save -> navigator.popWithResult("edit_result", EditResult(name))
+
+// Screen A: consume result
+val editResult = rememberNavigationResult("edit_result")
+LaunchedEffect(editResult) {
+    editResult?.let { result -> (result as? EditResult)?.let { name = it.name } }
+}
+```
+
+Results are single-consumption and survive configuration changes/process death.
 
 ### Navigation from StateHolder
 ```kotlin
 class CounterStateHolder @AssistedInject constructor(
+    @Assisted private val initialCount: Int,
     @Assisted private val navigator: TrapezeNavigator
 ) : TrapezeStateHolder<CounterScreen, CounterState, CounterEvent>() {
 
     @Composable
-    override fun produceState(screen: CounterScreen): CounterState {
+    override fun produceState(): CounterState {
         return CounterState(
             // ...
             eventSink = wrapEventSink { event ->
@@ -380,16 +407,17 @@ val result = deferred.await()
 ### Usage in StateHolder
 ```kotlin
 class NoteStateHolder @AssistedInject constructor(
+    @Assisted private val noteId: String,               // Extracted from screen by factory
     @Assisted private val navigator: TrapezeNavigator,
     private val saveNote: Lazy<SaveNote>,
     private val observeNote: Lazy<ObserveNote>
 ) : TrapezeStateHolder<NoteScreen, NoteState, NoteEvent>() {
 
     @Composable
-    override fun produceState(screen: NoteScreen): NoteState {
+    override fun produceState(): NoteState {
         // Trigger stream observation
-        LaunchedEffect(screen.noteId) {
-            observeNote.value(screen.noteId)
+        LaunchedEffect(noteId) {
+            observeNote.value(noteId)
         }
         val note by observeNote.value.flow.collectAsState(initial = null)
 

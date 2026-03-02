@@ -128,6 +128,22 @@ jobs:
           GITHUB_ACTOR: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Check and Publish Trapeze Test
+        run: |
+          VERSION=$(grep 'publishingVersion' trapeze-test/gradle.properties | cut -d'=' -f2 | tr -d '[:space:]')
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            "https://maven.pkg.github.com/jkjamies/MESA-Android/com/jkjamies/trapeze-test/$VERSION/trapeze-test-$VERSION.pom")
+          if [ "$STATUS" = "200" ]; then
+            echo "::notice::trapeze-test:$VERSION already published, skipping"
+          else
+            echo "Publishing trapeze-test:$VERSION"
+            ./gradlew :trapeze-test:publishReleasePublicationToGitHubPackagesRepository
+          fi
+        env:
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Check and Publish MESA BOM
         run: |
           VERSION=$(grep 'publishingVersion' mesa-bom/gradle.properties | cut -d'=' -f2 | tr -d '[:space:]')

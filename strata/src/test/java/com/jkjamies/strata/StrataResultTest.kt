@@ -158,6 +158,74 @@ class StrataResultTest : BehaviorSpec({
         }
     }
 
+    Given("flatMap") {
+        When("result is Success") {
+            Then("it applies the transform and returns the new result") {
+                val result: StrataResult<Int> = StrataResult.Success(5)
+                val chained = result.flatMap { StrataResult.Success(it * 2) }
+                chained.getOrNull() shouldBe 10
+            }
+        }
+
+        When("result is Success and transform returns Failure") {
+            Then("it returns the Failure from the transform") {
+                val error = object : StrataException("transform failed") {}
+                val result: StrataResult<Int> = StrataResult.Success(5)
+                val chained = result.flatMap { StrataResult.Failure(error) }
+                chained.getOrNull() shouldBe null
+                (chained as StrataResult.Failure).error shouldBe error
+            }
+        }
+
+        When("result is Failure") {
+            Then("it returns the original Failure without calling transform") {
+                val error = object : StrataException("original") {}
+                val result: StrataResult<Int> = StrataResult.Failure(error)
+                var transformCalled = false
+                val chained = result.flatMap {
+                    transformCalled = true
+                    StrataResult.Success(it * 2)
+                }
+                transformCalled shouldBe false
+                (chained as StrataResult.Failure).error shouldBe error
+            }
+        }
+    }
+
+    Given("recover") {
+        When("result is Success") {
+            Then("it returns the original Success without calling transform") {
+                val result: StrataResult<String> = StrataResult.Success("hello")
+                var transformCalled = false
+                val recovered = result.recover {
+                    transformCalled = true
+                    StrataResult.Success("fallback")
+                }
+                transformCalled shouldBe false
+                recovered.getOrNull() shouldBe "hello"
+            }
+        }
+
+        When("result is Failure and recover returns Success") {
+            Then("it returns the recovered Success") {
+                val error = object : StrataException("err") {}
+                val result: StrataResult<String> = StrataResult.Failure(error)
+                val recovered = result.recover { StrataResult.Success("recovered") }
+                recovered.getOrNull() shouldBe "recovered"
+            }
+        }
+
+        When("result is Failure and recover returns Failure") {
+            Then("it returns the new Failure") {
+                val originalError = object : StrataException("original") {}
+                val recoveryError = object : StrataException("recovery also failed") {}
+                val result: StrataResult<String> = StrataResult.Failure(originalError)
+                val recovered = result.recover { StrataResult.Failure(recoveryError) }
+                (recovered as StrataResult.Failure).error shouldBe recoveryError
+            }
+        }
+    }
+
     Given("fold") {
         When("result is Success") {
             Then("it applies onSuccess") {

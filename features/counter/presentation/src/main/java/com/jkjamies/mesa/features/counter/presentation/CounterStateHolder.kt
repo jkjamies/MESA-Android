@@ -40,18 +40,19 @@ import dev.zacsweers.metro.AssistedInject
  */
 @AssistedInject
 class CounterStateHolder constructor(
+    @Assisted private val initialCount: Int,
     @Assisted private val interop: AppInterop,
     @Assisted private val navigator: TrapezeNavigator
 ) : TrapezeStateHolder<CounterScreen, CounterState, CounterEvent>() {
 
     @AssistedFactory
     fun interface Factory {
-        fun create(interop: AppInterop, navigator: TrapezeNavigator): CounterStateHolder
+        fun create(initialCount: Int, interop: AppInterop, navigator: TrapezeNavigator): CounterStateHolder
     }
 
     @Composable
-    override fun produceState(screen: CounterScreen): CounterState {
-        var count by rememberSaveable { mutableIntStateOf(screen.initialCount) }
+    override fun produceState(): CounterState {
+        var count by rememberSaveable { mutableIntStateOf(initialCount) }
         val trapezeMessageManager = remember { TrapezeMessageManager() }
         val trapezeMessage by trapezeMessageManager.message.collectAsState(initial = null)
 
