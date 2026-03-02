@@ -29,6 +29,7 @@ public class TrapezeReceiveTurbine<T>(
     private val delegate: ReceiveTurbine<T>,
 ) : ReceiveTurbine<T> by delegate {
 
+    private var hasLastItem: Boolean = false
     private var lastItem: T? = null
 
     /**
@@ -39,10 +40,10 @@ public class TrapezeReceiveTurbine<T>(
      */
     override suspend fun awaitItem(): T {
         while (true) {
-            val last = lastItem
             val next = delegate.awaitItem()
-            lastItem = next
-            if (last == null || last != next) {
+            if (!hasLastItem || lastItem != next) {
+                lastItem = next
+                hasLastItem = true
                 return next
             }
         }
@@ -53,7 +54,7 @@ public class TrapezeReceiveTurbine<T>(
      */
     public suspend fun awaitUnchanged() {
         val next = delegate.awaitItem()
-        if (next != lastItem) {
+        if (!hasLastItem || next != lastItem) {
             throw AssertionError(
                 "Expected unchanged item but received $next. Previous was $lastItem."
             )

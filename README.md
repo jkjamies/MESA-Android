@@ -301,7 +301,7 @@ EditEvent.Save -> navigator.popWithResult("edit_result", EditResult(name))
 // Screen A: consume result
 val editResult = rememberNavigationResult("edit_result")
 LaunchedEffect(editResult) {
-    editResult?.let { result -> name = (result as EditResult).name }
+    editResult?.let { result -> (result as? EditResult)?.let { name = it.name } }
 }
 ```
 

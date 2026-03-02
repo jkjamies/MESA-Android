@@ -84,18 +84,20 @@ class TrapezeTest : BehaviorSpec({
     }
 
     Given("a Trapeze with multiple factories") {
+        val firstHolder = FakeStateHolder()
+        val secondHolder = FakeStateHolder()
         val trapeze = Trapeze.Builder()
             .addStateHolderFactory { screen, _ ->
-                if (screen is ScreenA) FakeStateHolder() else null
+                if (screen is ScreenA) firstHolder else null
             }
             .addStateHolderFactory { screen, _ ->
-                if (screen is ScreenA) FakeStateHolder() else null
+                if (screen is ScreenA) secondHolder else null
             }
             .build()
 
         When("both factories match the same screen") {
             Then("the first registered factory wins") {
-                trapeze.stateHolder(ScreenA(), null).shouldNotBeNull()
+                trapeze.stateHolder(ScreenA(), null) shouldBe firstHolder
             }
         }
     }
