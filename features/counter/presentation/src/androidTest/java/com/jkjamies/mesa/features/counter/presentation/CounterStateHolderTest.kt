@@ -17,7 +17,7 @@
 package com.jkjamies.mesa.features.counter.presentation
 
 import androidx.compose.ui.test.junit4.createComposeRule
-import com.jkjamies.mesa.features.counter.presentation.test.FakeAppInterop
+import com.jkjamies.mesa.features.counter.presentation.fakes.FakeAppInterop
 import com.jkjamies.trapeze.test.FakeTrapezeNavigator
 import com.jkjamies.mesa.features.summary.presentation.SummaryScreen
 import io.kotest.matchers.nulls.shouldBeNull

@@ -17,8 +17,8 @@
 package com.jkjamies.mesa.features.summary.presentation
 
 import androidx.compose.ui.test.junit4.createComposeRule
-import com.jkjamies.mesa.features.summary.presentation.test.FakeSaveSummaryValue
-import com.jkjamies.mesa.features.summary.presentation.test.FakeObserveLastSavedValue
+import com.jkjamies.mesa.features.summary.presentation.fakes.FakeSaveSummaryValue
+import com.jkjamies.mesa.features.summary.presentation.fakes.FakeObserveLastSavedValue
 import com.jkjamies.trapeze.test.FakeTrapezeNavigator
 import com.jkjamies.trapeze.test.NavigationEvent
 import io.kotest.matchers.shouldBe
