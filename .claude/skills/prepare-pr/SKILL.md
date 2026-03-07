@@ -1,13 +1,13 @@
 ---
 name: prepare-pr
-description: Thorough PR preparation - deep review of changed implementation, conventions, test coverage, and improvement suggestions
+description: Thorough pre-merge audit — dependency graph, correctness, conventions, security, test coverage, and improvement suggestions
 disable-model-invocation: true
 argument-hint: ""
 ---
 
 # Prepare PR
 
-Perform a thorough review of the current changes. Start from the diff, then follow the dependency graph to understand how the changes fit into the broader system. Check correctness, code quality, MESA conventions, test coverage, and suggest improvements.
+Perform a thorough pre-merge audit of the current changes. Start from the diff, then follow the dependency graph to understand how the changes fit into the broader system. Check correctness, security, MESA conventions, test coverage, and suggest improvements.
 
 **Scope:** $ARGUMENTS
 
@@ -60,8 +60,16 @@ Present findings with checkboxes as you go:
 - [ ] No blocking calls on the main thread
 - [ ] Resources cleaned up (no leaked coroutines, listeners, or streams)
 
+### Security
+- [ ] No hardcoded API keys, tokens, passwords, or secrets
+- [ ] No secrets logged or included in error messages
+- [ ] No sensitive data in `rememberSaveable` state
+- [ ] Input from external sources (Intents, deep links, user input) validated at system boundaries
+- [ ] No unsafe deserialization of untrusted data
+
+For a deeper security audit, run `/security-check`.
+
 ### General Quality
-- [ ] No obvious security concerns (hardcoded secrets, injection, insecure data handling) — for a thorough audit, run `/security-check`
 - [ ] No TODO/FIXME left unaddressed without a tracking issue
 - [ ] Code compiles without warnings where possible
 - [ ] No unused imports or dead code introduced
@@ -120,7 +128,7 @@ Present findings with checkboxes as you go:
 - [ ] All events and state transitions in changed code are covered
 - [ ] Error paths and edge cases are tested
 - [ ] Navigation flows are tested
-- [ ] Fakes exist for new dependencies in `test/` subpackage
+- [ ] Fakes exist for new dependencies in `fakes/` subpackage
 
 ### UI Tests (`src/androidTest/`)
 - [ ] `{Name}Ui.kt` has `{Name}UiTest.kt` (JUnit4 + robot pattern)

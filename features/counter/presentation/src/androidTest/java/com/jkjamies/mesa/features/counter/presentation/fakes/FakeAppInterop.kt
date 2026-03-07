@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package com.jkjamies.mesa.features.summary.presentation.test
+package com.jkjamies.mesa.features.counter.presentation.fakes
 
-import com.jkjamies.mesa.features.summary.api.SaveSummaryValue
+import com.jkjamies.mesa.core.presentation.AppInterop
+import com.jkjamies.mesa.core.presentation.AppInteropEvent
 
-class FakeSaveSummaryValue(private val shouldFail: Boolean = false) : SaveSummaryValue() {
-    val savedValues = mutableListOf<Int>()
+class FakeAppInterop : AppInterop {
+    val events = mutableListOf<AppInteropEvent>()
 
-    override suspend fun doWork(params: Int) {
-        if (shouldFail) throw IllegalStateException("Save failed for testing")
-        savedValues.add(params)
+    override fun send(event: AppInteropEvent) {
+        events.add(event)
     }
 }

@@ -91,7 +91,7 @@ class <InteractorName>Impl @Inject constructor(
 
 Create the Fake in both `src/test/` and `src/androidTest/` test subpackages where test files exist for the feature (they do not share code).
 
-Place at: `<test-source>/java/<package>/presentation/test/Fake<InteractorName>.kt` (or the appropriate module's test directory if consumed elsewhere)
+Place in the consuming module's test directory under a `fakes/` subpackage (e.g., `<consuming-module>/src/test/java/<package>/<layer>/fakes/Fake<InteractorName>.kt`). Typically this is the `presentation` module's test source, but use whichever module actually depends on the interactor.
 
 **StrataInteractor Fake:**
 ```kotlin

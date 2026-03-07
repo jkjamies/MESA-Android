@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-package com.jkjamies.mesa.features.summary.presentation.test
+package com.jkjamies.mesa.features.summary.presentation.fakes
 
-import com.jkjamies.mesa.features.summary.api.ObserveLastSavedValue
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
+import com.jkjamies.mesa.features.summary.api.SaveSummaryValue
 
-class FakeObserveLastSavedValue : ObserveLastSavedValue() {
-    val valueFlow = MutableStateFlow<Int?>(null)
+class FakeSaveSummaryValue(private val shouldFail: Boolean = false) : SaveSummaryValue() {
+    val savedValues = mutableListOf<Int>()
 
-    override fun createObservable(params: Unit): Flow<Int?> = valueFlow
+    override suspend fun doWork(params: Int) {
+        if (shouldFail) throw IllegalStateException("Save failed for testing")
+        savedValues.add(params)
+    }
 }

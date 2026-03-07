@@ -1,13 +1,13 @@
 ---
 name: review
-description: Review the current git diff for code quality, correctness, MESA conventions, and missing tests
+description: Quick review of the current diff for bugs, logic errors, convention violations, and test gaps
 disable-model-invocation: true
 argument-hint: "[--staged | --uncommitted]"
 ---
 
 # Review Changes
 
-Review the current diff for correctness, code quality, convention violations, and missing test coverage. While this is diff-focused, read the full changed files to understand context and catch broken logic.
+Quick feedback on the current diff. Focus on catching bugs, logic errors, and convention violations. Keep output concise — this is a development pulse check, not a pre-merge audit.
 
 **Scope:** $ARGUMENTS
 
@@ -22,107 +22,81 @@ Determine which diff to review:
 
 Also run `git status` to identify new untracked files included in the changes.
 
-Read the diff output AND the full content of each changed file so you can assess whether the changed code is correct in context (e.g., a new event handler that references state incorrectly, logic that doesn't match its intent, off-by-one errors, etc.).
+Read the diff output AND the full content of each changed file so you can assess whether the changed code is correct in context.
 
 ---
 
-## Step 2: Correctness & Logic Review
+## Step 2: Scan for Issues
 
-For each changed file, verify the implementation is sound. Present findings with checkboxes as you go:
+Read each changed file and look for actual problems. Do NOT present an exhaustive checklist — only report issues you find. Look for:
 
-### Logic & Correctness
-- [ ] No broken logic (incorrect conditionals, wrong operator, inverted checks)
-- [ ] No off-by-one errors or boundary issues
-- [ ] No race conditions or concurrency issues
-- [ ] No null safety issues (unguarded `!!`, missing null checks)
-- [ ] No unreachable code or dead branches
-- [ ] Error paths handled correctly (not swallowed silently)
-- [ ] State mutations are correct and complete (no partial updates that leave inconsistent state)
-- [ ] Event handling covers all sealed interface cases (no missing `when` branches)
+- Broken logic (incorrect conditionals, wrong operator, inverted checks)
+- Off-by-one errors or boundary issues
+- Race conditions or concurrency issues
+- Null safety issues (unguarded `!!`, missing null checks)
+- Unreachable code or dead branches
+- Swallowed errors
+- Incomplete state mutations
+- Missing `when` branches for sealed interfaces
+- Unnecessary allocations in Compose recomposition paths
+- Incorrect `remember` / `rememberSaveable` usage
+- Blocking calls on the main thread
+- Leaked coroutines, listeners, or streams
 
-### Best Practices
-- [ ] No hardcoded values that should be constants or parameters
-- [ ] No unnecessary object allocations in hot paths (Compose recomposition, loops)
-- [ ] `remember` and `rememberSaveable` used correctly in Composables
-- [ ] Coroutine scopes and dispatchers used appropriately
-- [ ] No blocking calls on the main thread
-- [ ] Resources cleaned up (no leaked coroutines, listeners, or streams)
-
-### General Quality
-- [ ] No obvious security concerns (hardcoded secrets, injection, insecure data handling) — for a thorough audit, run `/security-check`
-- [ ] No TODO/FIXME left unaddressed
-- [ ] No unused imports or dead code introduced
-- [ ] Code is clear and readable
+If no issues are found, say so briefly.
 
 ---
 
-## Step 3: Convention Review
+## Step 3: Convention Check
 
-Present findings with checkboxes as you go:
+Verify MESA conventions are followed. Present as a concise pass/fail list — only include items relevant to the changed code:
 
-### MESA / Trapeze Conventions
-- [ ] UDF flow respected: UI -> Event -> eventSink -> StateHolder -> State -> UI
-- [ ] Stateless UI: Composables hold no business logic or persistent state
-- [ ] No ViewModels: Logic is in `TrapezeStateHolder`
+- [ ] UDF flow: UI → Event → eventSink → StateHolder → State → UI
+- [ ] Stateless UI: Composables hold no business logic
+- [ ] No ViewModels: Logic in `TrapezeStateHolder`
 - [ ] Interfaces injected, not concrete implementations
 - [ ] Heavy dependencies use `Lazy<T>`
-- [ ] Event sink wrapped with `wrapEventSink()` in StateHolder
+- [ ] Event sink wrapped with `wrapEventSink()`
 - [ ] Screen instance never stored in StateHolder
-- [ ] StateHolders use `@AssistedInject` with factory pattern
-
-### Strata Conventions
-- [ ] Interactors return `StrataResult`, not raw exceptions
-- [ ] `StrataSubjectInteractor` triggered in UI/Logic layer, not in `init`
+- [ ] `@AssistedInject` with factory pattern for StateHolders
+- [ ] Interactors return `StrataResult`
+- [ ] `StrataSubjectInteractor` triggered in UI/Logic layer, not `init`
 - [ ] `strataLaunch` used for coroutine work
+- [ ] Module boundaries respected (`api/` clean, `presentation/` doesn't touch `data/`)
+- [ ] New source files have Apache 2.0 license header
 
-### Module Boundaries
-- [ ] `api/` modules have no internal dependencies
-- [ ] `presentation/` does not depend on `data/`
-- [ ] `domain/` does not depend on `presentation/`
-
-### License
-- [ ] New source files have the Apache 2.0 license header
+Skip items that don't apply to the changed files.
 
 ---
 
-## Step 4: Test Coverage Check
+## Step 4: Test Gaps
 
-For each changed or new source file in the diff, check for both unit tests and UI tests:
+For each changed or new source file, briefly note missing or incomplete test coverage. Keep it to one or two lines per gap — just identify what's missing:
 
-### Unit Tests (`src/test/`)
-- [ ] `{Name}StateHolder.kt` has `{Name}StateHolderTest.kt` (BehaviorSpec + Turbine)
-- [ ] `{Name}Interactor.kt` / `{Name}UseCase.kt` has `{Name}Test.kt` (BehaviorSpec)
-- [ ] `{Name}Repository.kt` has `{Name}Test.kt` (BehaviorSpec)
-- [ ] Existing unit tests cover new behaviors introduced in the diff (new events, state transitions, error paths)
-- [ ] Fakes exist for new dependencies in `test/` subpackage
+- Missing test files (e.g., "No unit test for `FooStateHolder`")
+- Uncovered new behavior (e.g., "New `Delete` event not tested in `BarStateHolderTest`")
+- Missing fakes for new dependencies
 
-### UI Tests (`src/androidTest/`)
-- [ ] `{Name}Ui.kt` has `{Name}UiTest.kt` (JUnit4 + robot pattern)
-- [ ] `robot/{Name}UiRobot.kt` exists
-- [ ] `testdata/{Name}UiTestData.kt` exists
-- [ ] Existing UI tests cover new UI elements or interactions introduced in the diff
-
-Flag any gaps.
+Do not suggest running other skills or provide detailed instructions on how to write the tests.
 
 ---
 
 ## Step 5: Report
 
+Keep the report compact:
+
 ### Summary
 One or two sentences on what changed and overall quality.
 
-### Checklist Results
-Show the completed checklists from Steps 2-4 with pass/fail/not-applicable indicators.
-
 ### Issues
-List actual issues found, by severity:
-- **Blocking:** Must fix (bugs, broken logic, security, broken conventions)
-- **Warning:** Should fix (style issues, potential problems, best practice violations)
-- **Suggestion:** Nice to have
+List problems found in Step 2, grouped by severity:
+- **Blocking:** Must fix (bugs, broken logic, broken conventions)
+- **Warning:** Should fix (potential problems, best practice violations)
 
-### Missing Tests
-For each file missing tests or with uncovered new behavior:
-- File path and what is missing (unit test, UI test, or specific test cases)
-- Suggest running `/add-tests @<filepath>` to generate them
+If none, say "No issues found."
 
-If no issues are found, say so.
+### Conventions
+Show the pass/fail list from Step 3. Omit items marked N/A.
+
+### Test Gaps
+List gaps from Step 4. If coverage looks complete, say so.

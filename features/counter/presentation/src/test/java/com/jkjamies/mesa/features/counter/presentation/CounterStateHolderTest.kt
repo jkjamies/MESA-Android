@@ -16,7 +16,7 @@
 
 package com.jkjamies.mesa.features.counter.presentation
 
-import com.jkjamies.mesa.features.counter.presentation.test.FakeAppInterop
+import com.jkjamies.mesa.features.counter.presentation.fakes.FakeAppInterop
 import com.jkjamies.mesa.features.summary.presentation.SummaryScreen
 import com.jkjamies.trapeze.test.FakeTrapezeNavigator
 import com.jkjamies.trapeze.test.NavigationEvent

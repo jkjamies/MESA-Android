@@ -46,7 +46,7 @@ Determine which test types apply:
 
 ---
 
-## Step 2: Check for Existing Tests
+## Step 3: Check for Existing Tests
 
 Search for existing test files:
 - For `{Name}StateHolder.kt` → look for `{Name}StateHolderTest.kt` in `src/test/`
@@ -54,7 +54,7 @@ Search for existing test files:
 - For `{Name}Interactor.kt` / `{Name}UseCase.kt` → look for `{Name}Test.kt` in `src/test/`
 - For `{Name}Repository.kt` → look for `{Name}Test.kt` in `src/test/`
 
-Also check for existing Fake files in the `test/` subpackage.
+Also check for existing Fake files in the `fakes/` subpackage.
 
 **If test files exist:** Read them and compare against the implementation to identify:
 - Events or state transitions not covered
@@ -66,16 +66,16 @@ Also check for existing Fake files in the `test/` subpackage.
 
 ---
 
-## Step 3: Directory Structure
+## Step 4: Directory Structure
 
 ### Unit Tests (`src/test/`)
 
-Mirror the implementation package structure. Place fakes in a `test/` subpackage:
+Mirror the implementation package structure. Place fakes in a `fakes/` subpackage:
 
 ```
 src/test/java/<package>/
   ├── {Name}Test.kt
-  └── test/
+  └── fakes/
       └── Fake{Dependency}.kt
 ```
 
@@ -101,7 +101,7 @@ src/androidTest/java/<package>/
 
 ---
 
-## Step 4: Generate / Update Unit Tests (JVM)
+## Step 5: Generate / Update Unit Tests (JVM)
 
 ### Conventions
 
@@ -165,15 +165,15 @@ class {Name}Test : BehaviorSpec({
 
 ### Fake Creation
 
-When dependencies need faking, create Fake classes in a `test/` subpackage:
+When dependencies need faking, create Fake classes in a `fakes/` subpackage:
 
 - Extend the abstract class or implement the interface directly
 - Provide controllable state (e.g., `shouldFail: Boolean` constructor param, `MutableStateFlow` for observables, `mutableListOf` to record calls)
-- If the same Fake is needed in both `src/test/` and `src/androidTest/`, create it in both source sets (they do not share code)
+- If the same Fake is needed in both `src/test/` and `src/androidTest/`, create it in both source sets under their respective `fakes/` subpackages (they do not share code)
 
 ---
 
-## Step 5: Generate / Update UI Tests (Android Instrumented)
+## Step 6: Generate / Update UI Tests (Android Instrumented)
 
 ### Conventions
 
@@ -277,7 +277,7 @@ When a test file exists but is missing the robot pattern structure:
 
 ---
 
-## Step 6: License Header
+## Step 7: License Header
 
 All generated files MUST include the Apache 2.0 license header:
 
@@ -301,7 +301,7 @@ All generated files MUST include the Apache 2.0 license header:
 
 ---
 
-## Step 7: Verify
+## Step 8: Verify
 
 After generating or updating tests, attempt to compile:
 - Unit tests: `./gradlew :<module>:testDebugUnitTest`

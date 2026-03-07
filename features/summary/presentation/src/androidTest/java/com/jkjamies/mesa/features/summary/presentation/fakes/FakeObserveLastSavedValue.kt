@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-package com.jkjamies.mesa.features.counter.presentation.test
+package com.jkjamies.mesa.features.summary.presentation.fakes
 
-import com.jkjamies.mesa.core.presentation.AppInterop
-import com.jkjamies.mesa.core.presentation.AppInteropEvent
+import com.jkjamies.mesa.features.summary.api.ObserveLastSavedValue
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 
-class FakeAppInterop : AppInterop {
-    val events = mutableListOf<AppInteropEvent>()
+class FakeObserveLastSavedValue : ObserveLastSavedValue() {
+    val valueFlow = MutableStateFlow<Int?>(null)
 
-    override fun send(event: AppInteropEvent) {
-        events.add(event)
-    }
+    override fun createObservable(params: Unit): Flow<Int?> = valueFlow
 }
