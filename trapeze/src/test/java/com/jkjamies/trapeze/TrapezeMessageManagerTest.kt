@@ -94,6 +94,62 @@ class TrapezeMessageManagerTest : BehaviorSpec({
         }
     }
 
+    Given("a manager with multiple messages to clearAll") {
+        When("clearAll is called") {
+            Then("message flow emits null") {
+                val manager = TrapezeMessageManager()
+                val msg1 = TrapezeMessage("first")
+                val msg2 = TrapezeMessage("second")
+
+                manager.message.test {
+                    awaitItem() shouldBe null
+
+                    manager.emitMessage(msg1)
+                    awaitItem() shouldBe msg1
+
+                    manager.emitMessage(msg2)
+
+                    manager.clearAll()
+                    awaitItem() shouldBe null
+                }
+            }
+        }
+
+        When("clearAll is called on an empty queue") {
+            Then("it is a no-op and message flow stays null") {
+                val manager = TrapezeMessageManager()
+
+                manager.message.test {
+                    awaitItem() shouldBe null
+
+                    manager.clearAll()
+                    expectNoEvents()
+                }
+            }
+        }
+
+        When("a new message is emitted after clearAll") {
+            Then("the new message is emitted correctly") {
+                val manager = TrapezeMessageManager()
+                val msg1 = TrapezeMessage("old")
+                val msg2 = TrapezeMessage("new")
+
+                manager.message.test {
+                    awaitItem() shouldBe null
+
+                    manager.emitMessage(msg1)
+                    awaitItem() shouldBe msg1
+
+                    manager.clearAll()
+                    awaitItem() shouldBe null
+
+                    manager.emitMessage(msg2)
+                    awaitItem() shouldBe msg2
+                }
+            }
+        }
+    }
+
     Given("a TrapezeMessage created from a Throwable") {
         When("the throwable has a message") {
             Then("the TrapezeMessage uses the throwable message") {

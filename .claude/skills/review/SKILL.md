@@ -77,6 +77,8 @@ For each changed or new source file, briefly note missing or incomplete test cov
 - Uncovered new behavior (e.g., "New `Delete` event not tested in `BarStateHolderTest`")
 - Missing fakes for new dependencies
 
+**Only report gaps.** Do NOT list what IS covered or confirm adequate coverage. If there are no gaps, just say "No test gaps found." — do not enumerate the tests that exist.
+
 Do not suggest running other skills or provide detailed instructions on how to write the tests.
 
 ---
@@ -99,4 +101,4 @@ If none, say "No issues found."
 Show the pass/fail list from Step 3. Omit items marked N/A.
 
 ### Test Gaps
-List gaps from Step 4. If coverage looks complete, say so.
+List only gaps from Step 4. Do not list what is already covered. If no gaps, say "No test gaps found."

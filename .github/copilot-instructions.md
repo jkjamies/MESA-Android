@@ -175,6 +175,8 @@ interface TrapezeNavigator {
     fun navigate(screen: TrapezeScreen)
     fun pop()
     fun <R : TrapezeNavigationResult> popWithResult(key: String, result: R)
+    fun popToRoot()
+    fun popTo(screen: TrapezeScreen): Boolean
 }
 ```
 
@@ -397,6 +399,9 @@ val message by messageManager.message.collectAsState(initial = null)
 
 // Emit a message
 messageManager.emitMessage(TrapezeMessage(Throwable("Something went wrong")))
+
+// Clear all messages
+messageManager.clearAll()
 ```
 
 **UI:**
@@ -424,9 +429,9 @@ This split is necessary because `androidTest` requires JUnit4 as the test runner
 Shared test utilities for fast, JVM-only StateHolder testing:
 
 - **`TrapezeStateHolder.test {}`**: Molecule-backed extension that runs `produceState` in a headless Compose runtime and pipes state through Turbine with distinct-until-changed filtering.
-- **`FakeTrapezeNavigator`**: Shared fake with synchronous assertions (`navigatedScreens`, `popCount`, `results`) and Turbine-backed async assertions (`awaitNavigate()`, `awaitPop()`, `awaitPopWithResult()`).
+- **`FakeTrapezeNavigator`**: Shared fake with synchronous assertions (`navigatedScreens`, `popCount`, `results`) and Turbine-backed async assertions (`awaitNavigate()`, `awaitPop()`, `awaitPopWithResult()`, `awaitPopToRoot()`, `awaitPopTo()`). Accepts `popToReturns` constructor parameter (default `true`) to control `popTo` return value.
 - **`TestEventSink`**: Records events for assertion, usable as an `eventSink` lambda.
-- **`NavigationEvent`**: Sealed hierarchy (`Navigate`, `Pop`, `PopWithResult`) recording all navigator actions.
+- **`NavigationEvent`**: Sealed hierarchy (`Navigate`, `Pop`, `PopWithResult`, `PopToRoot`, `PopTo`) recording all navigator actions.
 
 ```kotlin
 // Example: JVM StateHolder test with Molecule + Turbine

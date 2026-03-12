@@ -76,6 +76,14 @@ public fun rememberTrapezeNavigator(
                     currentOnRootPop?.invoke()
                 }
             }
+
+            override fun popToRoot() {
+                backStack.popToRoot()
+            }
+
+            override fun popTo(screen: TrapezeScreen): Boolean {
+                return backStack.popTo(screen)
+            }
         }
     }
 }

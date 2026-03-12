@@ -284,6 +284,8 @@ interface TrapezeNavigator {
     fun navigate(screen: TrapezeScreen)
     fun pop()
     fun <R : TrapezeNavigationResult> popWithResult(key: String, result: R)
+    fun popToRoot()
+    fun popTo(screen: TrapezeScreen): Boolean
 }
 ```
 
@@ -531,6 +533,9 @@ val message by messageManager.message.collectAsState(initial = null)
 
 // Emit a message
 messageManager.emitMessage(TrapezeMessage(Throwable("Something went wrong")))
+
+// Clear all messages
+messageManager.clearAll()
 ```
 
 **UI:**

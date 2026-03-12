@@ -73,6 +73,51 @@ class TrapezeNavigatorTest {
     }
 
     @Test
+    fun givenANavigator_whenPopToRootIsCalled_thenBackStackIsClearedToRoot() {
+        val backStack = TrapezeBackStack(NavScreen(1))
+        backStack.push(NavScreen(2))
+        backStack.push(NavScreen(3))
+        lateinit var navigator: TrapezeNavigator
+
+        composeTestRule.setContent {
+            navigator = rememberTrapezeNavigator(backStack)
+        }
+
+        composeTestRule.runOnIdle {
+            navigator.popToRoot()
+        }
+
+        composeTestRule.runOnIdle {
+            backStack.current shouldBe NavScreen(1)
+            backStack.size shouldBe 1
+        }
+    }
+
+    @Test
+    fun givenANavigator_whenPopToIsCalled_thenBackStackPopsToCorrectScreen() {
+        val backStack = TrapezeBackStack(NavScreen(1))
+        backStack.push(NavScreen(2))
+        backStack.push(NavScreen(3))
+        backStack.push(NavScreen(4))
+        lateinit var navigator: TrapezeNavigator
+
+        composeTestRule.setContent {
+            navigator = rememberTrapezeNavigator(backStack)
+        }
+
+        var result = false
+        composeTestRule.runOnIdle {
+            result = navigator.popTo(NavScreen(2))
+        }
+
+        composeTestRule.runOnIdle {
+            result shouldBe true
+            backStack.current shouldBe NavScreen(2)
+            backStack.size shouldBe 2
+        }
+    }
+
+    @Test
     fun givenANavigatorAtRoot_whenPopIsCalled_thenOnRootPopIsInvoked() {
         val backStack = TrapezeBackStack(NavScreen(1))
         var rootPopCalled = false
