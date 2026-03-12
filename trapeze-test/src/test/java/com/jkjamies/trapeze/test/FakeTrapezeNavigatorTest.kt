@@ -72,12 +72,43 @@ class FakeTrapezeNavigatorTest : BehaviorSpec({
             }
         }
 
+        When("popToRoot is called") {
+            navigator.popToRoot()
+
+            Then("the events list contains a PopToRoot event") {
+                navigator.events.last().shouldBeInstanceOf<NavigationEvent.PopToRoot>()
+            }
+
+            Then("popCount increases") {
+                navigator.popCount shouldBe 3
+            }
+        }
+
+        When("popTo is called") {
+            val result = navigator.popTo(TestScreen("home"))
+
+            Then("it returns true by default") {
+                result shouldBe true
+            }
+
+            Then("the events list contains a PopTo event with the correct screen") {
+                navigator.events.last().shouldBeInstanceOf<NavigationEvent.PopTo>()
+                (navigator.events.last() as NavigationEvent.PopTo).screen shouldBe TestScreen("home")
+            }
+
+            Then("popCount increases") {
+                navigator.popCount shouldBe 4
+            }
+        }
+
         When("events are recorded in sequence") {
             Then("events list preserves order") {
-                navigator.events.size shouldBe 3
+                navigator.events.size shouldBe 5
                 navigator.events[0].shouldBeInstanceOf<NavigationEvent.Navigate>()
                 navigator.events[1].shouldBeInstanceOf<NavigationEvent.Pop>()
                 navigator.events[2].shouldBeInstanceOf<NavigationEvent.PopWithResult>()
+                navigator.events[3].shouldBeInstanceOf<NavigationEvent.PopToRoot>()
+                navigator.events[4].shouldBeInstanceOf<NavigationEvent.PopTo>()
             }
         }
     }
@@ -107,10 +138,40 @@ class FakeTrapezeNavigatorTest : BehaviorSpec({
             }
         }
 
+        When("popToRoot is called") {
+            Then("awaitPopToRoot completes without error") {
+                navigator.popToRoot()
+                navigator.awaitPopToRoot()
+            }
+        }
+
+        When("popTo is called") {
+            Then("awaitPopTo returns the target screen") {
+                navigator.popTo(TestScreen("target"))
+                navigator.awaitPopTo() shouldBe TestScreen("target")
+            }
+        }
+
         When("awaitEvent is called") {
             Then("it returns the next event regardless of type") {
                 navigator.navigate(TestScreen("any"))
                 navigator.awaitEvent().shouldBeInstanceOf<NavigationEvent.Navigate>()
+            }
+        }
+    }
+    Given("a FakeTrapezeNavigator with popToReturns set to false") {
+        val navigator = FakeTrapezeNavigator(popToReturns = false)
+
+        When("popTo is called") {
+            val result = navigator.popTo(TestScreen("missing"))
+
+            Then("it returns false") {
+                result shouldBe false
+            }
+
+            Then("the event is still recorded") {
+                navigator.events.last().shouldBeInstanceOf<NavigationEvent.PopTo>()
+                (navigator.events.last() as NavigationEvent.PopTo).screen shouldBe TestScreen("missing")
             }
         }
     }

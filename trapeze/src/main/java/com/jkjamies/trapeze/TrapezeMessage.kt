@@ -78,6 +78,13 @@ public class TrapezeMessageManager {
         }
     }
 
+    /**
+     * Clears all messages from the queue.
+     */
+    public fun clearAll() {
+        _message.update { emptyList() }
+    }
+
     private companion object {
         const val MAX_QUEUE_SIZE = 10
     }

@@ -40,4 +40,14 @@ public sealed interface NavigationEvent {
         val key: String,
         val result: TrapezeNavigationResult,
     ) : NavigationEvent
+
+    /**
+     * Records a [TrapezeNavigator.popToRoot] call.
+     */
+    public data object PopToRoot : NavigationEvent
+
+    /**
+     * Records a [TrapezeNavigator.popTo] call.
+     */
+    public data class PopTo(val screen: TrapezeScreen) : NavigationEvent
 }

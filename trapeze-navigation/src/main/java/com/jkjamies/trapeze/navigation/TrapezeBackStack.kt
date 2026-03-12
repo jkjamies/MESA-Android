@@ -76,6 +76,21 @@ public class TrapezeBackStack internal constructor(root: TrapezeScreen) {
         return pop()
     }
 
+    internal fun popToRoot() {
+        if (_stack.size > 1) {
+            _stack = listOf(_stack.first())
+        }
+    }
+
+    internal fun popTo(screen: TrapezeScreen): Boolean {
+        val index = _stack.lastIndexOf(screen)
+        if (index < 0) return false
+        if (index < _stack.size - 1) {
+            _stack = _stack.take(index + 1)
+        }
+        return true
+    }
+
     internal fun asList(): List<TrapezeScreen> = _stack
 
     public companion object {

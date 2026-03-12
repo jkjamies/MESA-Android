@@ -41,4 +41,19 @@ public interface TrapezeNavigator {
      * @param result The result data to pass back.
      */
     public fun <R : TrapezeNavigationResult> popWithResult(key: String, result: R)
+
+    /**
+     * Pops the entire backstack to the root screen.
+     */
+    public fun popToRoot() {}
+
+    /**
+     * Pops the backstack to the given [screen].
+     *
+     * If the screen is not found in the backstack, this is a no-op.
+     * If the screen appears multiple times, pops to the most recent (last) occurrence.
+     *
+     * @return `true` if the screen was found and the backstack was updated, `false` otherwise.
+     */
+    public fun popTo(screen: TrapezeScreen): Boolean = false
 }

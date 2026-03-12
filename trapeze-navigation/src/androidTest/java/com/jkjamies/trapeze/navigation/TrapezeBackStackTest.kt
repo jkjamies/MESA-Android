@@ -78,6 +78,95 @@ class TrapezeBackStackTest {
     }
 
     @Test
+    fun givenABackStackWithMultipleScreens_whenPopToRoot_thenOnlyRootRemains() {
+        val backStack = TrapezeBackStack(TestScreen(1))
+        backStack.push(TestScreen(2))
+        backStack.push(TestScreen(3))
+
+        backStack.popToRoot()
+
+        backStack.size shouldBe 1
+        backStack.current shouldBe TestScreen(1)
+        backStack.root shouldBe TestScreen(1)
+    }
+
+    @Test
+    fun givenABackStackAtRoot_whenPopToRoot_thenItIsANoOp() {
+        val backStack = TrapezeBackStack(TestScreen(1))
+
+        backStack.popToRoot()
+
+        backStack.size shouldBe 1
+        backStack.current shouldBe TestScreen(1)
+    }
+
+    @Test
+    fun givenABackStackWithMultipleScreens_whenPopToExistingScreen_thenIntermediateScreensAreRemoved() {
+        val backStack = TrapezeBackStack(TestScreen(1))
+        backStack.push(TestScreen(2))
+        backStack.push(TestScreen(3))
+        backStack.push(TestScreen(4))
+
+        val result = backStack.popTo(TestScreen(2))
+
+        result shouldBe true
+        backStack.size shouldBe 2
+        backStack.current shouldBe TestScreen(2)
+        backStack.root shouldBe TestScreen(1)
+    }
+
+    @Test
+    fun givenABackStack_whenPopToNonExistentScreen_thenItIsANoOp() {
+        val backStack = TrapezeBackStack(TestScreen(1))
+        backStack.push(TestScreen(2))
+
+        val result = backStack.popTo(TestScreen(99))
+
+        result shouldBe false
+        backStack.size shouldBe 2
+        backStack.current shouldBe TestScreen(2)
+    }
+
+    @Test
+    fun givenABackStackWithDuplicateScreens_whenPopTo_thenItPopsToTheMostRecentOccurrence() {
+        val backStack = TrapezeBackStack(TestScreen(1))
+        backStack.push(TestScreen(2))
+        backStack.push(TestScreen(1))
+        backStack.push(TestScreen(3))
+
+        val result = backStack.popTo(TestScreen(1))
+
+        result shouldBe true
+        backStack.size shouldBe 3
+        backStack.current shouldBe TestScreen(1)
+    }
+
+    @Test
+    fun givenABackStackWithMultipleScreens_whenPopToRoot_thenItIsEquivalentToPopToRoot() {
+        val backStack = TrapezeBackStack(TestScreen(1))
+        backStack.push(TestScreen(2))
+        backStack.push(TestScreen(3))
+
+        val result = backStack.popTo(TestScreen(1))
+
+        result shouldBe true
+        backStack.size shouldBe 1
+        backStack.current shouldBe TestScreen(1)
+    }
+
+    @Test
+    fun givenABackStack_whenPopToCurrentScreen_thenItIsANoOp() {
+        val backStack = TrapezeBackStack(TestScreen(1))
+        backStack.push(TestScreen(2))
+
+        val result = backStack.popTo(TestScreen(2))
+
+        result shouldBe true
+        backStack.size shouldBe 2
+        backStack.current shouldBe TestScreen(2)
+    }
+
+    @Test
     fun givenABackStack_whenSavedAndRestored_thenStateIsPreserved() {
         val original = TrapezeBackStack(TestScreen(1))
         original.push(TestScreen(2))

@@ -27,7 +27,10 @@ import com.jkjamies.trapeze.TrapezeScreen
  * All navigator actions are recorded in [events] for synchronous assertion and also
  * emitted to an internal [Turbine] for async `await*` assertions.
  */
-public class FakeTrapezeNavigator : TrapezeNavigator {
+public class FakeTrapezeNavigator(
+    /** Value returned by [popTo]. Defaults to `true`. Set to `false` to simulate a missing screen. */
+    public var popToReturns: Boolean = true,
+) : TrapezeNavigator {
     private val _events = mutableListOf<NavigationEvent>()
     private val turbine = Turbine<NavigationEvent>()
 
@@ -38,9 +41,14 @@ public class FakeTrapezeNavigator : TrapezeNavigator {
     public val navigatedScreens: List<TrapezeScreen>
         get() = _events.filterIsInstance<NavigationEvent.Navigate>().map { it.screen }
 
-    /** Number of times [pop] or [popWithResult] was called. */
+    /** Number of times [pop], [popWithResult], [popToRoot], or [popTo] was called. */
     public val popCount: Int
-        get() = _events.count { it is NavigationEvent.Pop || it is NavigationEvent.PopWithResult }
+        get() = _events.count {
+            it is NavigationEvent.Pop ||
+                it is NavigationEvent.PopWithResult ||
+                it is NavigationEvent.PopToRoot ||
+                it is NavigationEvent.PopTo
+        }
 
     /** Map of all results delivered via [popWithResult], keyed by result key. */
     public val results: Map<String, TrapezeNavigationResult>
@@ -65,6 +73,19 @@ public class FakeTrapezeNavigator : TrapezeNavigator {
         turbine.add(event)
     }
 
+    override fun popToRoot() {
+        val event = NavigationEvent.PopToRoot
+        _events.add(event)
+        turbine.add(event)
+    }
+
+    override fun popTo(screen: TrapezeScreen): Boolean {
+        val event = NavigationEvent.PopTo(screen)
+        _events.add(event)
+        turbine.add(event)
+        return popToReturns
+    }
+
     /** Awaits the next [NavigationEvent] of any type. */
     public suspend fun awaitEvent(): NavigationEvent = turbine.awaitItem()
 
@@ -82,6 +103,15 @@ public class FakeTrapezeNavigator : TrapezeNavigator {
         val event = turbine.awaitItem() as NavigationEvent.PopWithResult
         return event.key to event.result
     }
+
+    /** Awaits the next [NavigationEvent.PopToRoot]. */
+    public suspend fun awaitPopToRoot() {
+        turbine.awaitItem() as NavigationEvent.PopToRoot
+    }
+
+    /** Awaits the next [NavigationEvent.PopTo] and returns the target screen. */
+    public suspend fun awaitPopTo(): TrapezeScreen =
+        (turbine.awaitItem() as NavigationEvent.PopTo).screen
 
     /** Asserts that no events have been emitted to the turbine. */
     public fun expectNoEvents() {
