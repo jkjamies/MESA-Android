@@ -30,9 +30,10 @@ pluginManagement {
 plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
 }
-// Note: repositoriesMode FAIL_ON_PROJECT_REPOS is omitted because the KMP plugin
+// Note: PREFER_SETTINGS is used instead of FAIL_ON_PROJECT_REPOS because the KMP plugin
 // requires project-level repository declarations for certain platform-specific artifacts.
 dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
     repositories {
         google()
         mavenCentral()

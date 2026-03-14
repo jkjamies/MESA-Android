@@ -56,6 +56,7 @@ kotlin {
             dependencies {
                 implementation(libs.androidx.compose.ui.test.junit4)
                 implementation(libs.kotest.assertions.core)
+                implementation(libs.androidx.compose.ui.test.manifest)
             }
         }
     }
@@ -84,10 +85,6 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-}
-
-dependencies {
-    debugImplementation(libs.androidx.compose.ui.test.manifest)
 }
 
 tasks.named<Test>("jvmTest") {
