@@ -14,13 +14,46 @@
  * limitations under the License.
  */
 
+@file:OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
+
 plugins {
+    alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.android.library)
+    alias(libs.plugins.jetbrains.compose)
     alias(libs.plugins.kotlin.compose)
 }
 
 group = property("publishingGroup") as String
 version = property("publishingVersion") as String
+
+kotlin {
+    jvmToolchain(17)
+
+    androidTarget {
+        publishLibraryVariants("release")
+    }
+    jvm()
+    iosArm64()
+    iosSimulatorArm64()
+    iosX64()
+    macosArm64()
+    macosX64()
+    wasmJs { browser() }
+
+    sourceSets {
+        commonMain.dependencies {
+            api(project(":trapeze"))
+            api(libs.turbine)
+            api(libs.kotlinx.coroutines.test)
+            implementation(libs.molecule.runtime)
+            implementation(compose.runtime)
+        }
+        jvmTest.dependencies {
+            implementation(libs.kotest.runner.junit5)
+            implementation(libs.kotest.assertions.core)
+        }
+    }
+}
 
 android {
     namespace = "com.jkjamies.trapeze.test"
@@ -44,31 +77,8 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    testOptions {
-        unitTests {
-            isReturnDefaultValues = true
-            all {
-                it.useJUnitPlatform()
-            }
-        }
-    }
-    publishing {
-        singleVariant("release") {
-            withSourcesJar()
-        }
-    }
 }
 
-dependencies {
-    api(project(":trapeze"))
-    api(libs.turbine)
-    api(libs.kotlinx.coroutines.test)
-    implementation(libs.molecule.runtime)
-    implementation(platform(libs.androidx.compose.bom))
-    implementation(libs.androidx.compose.ui)
-
-    testImplementation(libs.kotest.runner.junit5)
-    testImplementation(libs.kotest.assertions.core)
-}
+tasks.named<Test>("jvmTest") { useJUnitPlatform() }
 
 apply(from = rootProject.file("gradle/publishing.gradle.kts"))

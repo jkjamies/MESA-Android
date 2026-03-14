@@ -90,7 +90,7 @@ jobs:
             echo "::notice::trapeze:$VERSION already published, skipping"
           else
             echo "Publishing trapeze:$VERSION"
-            ./gradlew :trapeze:publishReleasePublicationToGitHubPackagesRepository
+            ./gradlew :trapeze:publishAllPublicationsToGitHubPackagesRepository
           fi
         env:
           GITHUB_ACTOR: ${{ github.actor }}
@@ -106,7 +106,7 @@ jobs:
             echo "::notice::trapeze-navigation:$VERSION already published, skipping"
           else
             echo "Publishing trapeze-navigation:$VERSION"
-            ./gradlew :trapeze-navigation:publishReleasePublicationToGitHubPackagesRepository
+            ./gradlew :trapeze-navigation:publishAllPublicationsToGitHubPackagesRepository
           fi
         env:
           GITHUB_ACTOR: ${{ github.actor }}
@@ -122,7 +122,7 @@ jobs:
             echo "::notice::strata:$VERSION already published, skipping"
           else
             echo "Publishing strata:$VERSION"
-            ./gradlew :strata:publishReleasePublicationToGitHubPackagesRepository
+            ./gradlew :strata:publishAllPublicationsToGitHubPackagesRepository
           fi
         env:
           GITHUB_ACTOR: ${{ github.actor }}
@@ -138,7 +138,7 @@ jobs:
             echo "::notice::trapeze-test:$VERSION already published, skipping"
           else
             echo "Publishing trapeze-test:$VERSION"
-            ./gradlew :trapeze-test:publishReleasePublicationToGitHubPackagesRepository
+            ./gradlew :trapeze-test:publishAllPublicationsToGitHubPackagesRepository
           fi
         env:
           GITHUB_ACTOR: ${{ github.actor }}

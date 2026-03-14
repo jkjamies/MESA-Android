@@ -14,14 +14,48 @@
  * limitations under the License.
  */
 
+@file:OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
+
 plugins {
+    alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.android.library)
+    alias(libs.plugins.jetbrains.compose)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.parcelize)
 }
 
 group = property("publishingGroup") as String
 version = property("publishingVersion") as String
+
+kotlin {
+    jvmToolchain(17)
+
+    androidTarget {
+        publishLibraryVariants("release")
+    }
+    jvm()
+    iosArm64()
+    iosSimulatorArm64()
+    iosX64()
+    macosArm64()
+    macosX64()
+    wasmJs { browser() }
+
+    sourceSets {
+        commonMain.dependencies {
+            implementation(project(":trapeze"))
+            implementation(compose.runtime)
+            implementation(compose.ui)
+        }
+        val androidInstrumentedTest by getting {
+            dependencies {
+                implementation(libs.androidx.compose.ui.test.junit4)
+                implementation(libs.kotest.assertions.core)
+                implementation(libs.androidx.compose.ui.test.manifest)
+            }
+        }
+    }
+}
 
 android {
     namespace = "com.jkjamies.trapeze.navigation"
@@ -46,23 +80,6 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    publishing {
-        singleVariant("release") {
-            withSourcesJar()
-        }
-    }
-}
-
-dependencies {
-    implementation(project(":trapeze"))
-    implementation(libs.androidx.core.ktx)
-    implementation(platform(libs.androidx.compose.bom))
-    implementation(libs.androidx.compose.ui)
-    implementation(libs.androidx.compose.material3)
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
-    androidTestImplementation(libs.kotest.assertions.core)
-    debugImplementation(libs.androidx.compose.ui.test.manifest)
 }
 
 apply(from = rootProject.file("gradle/publishing.gradle.kts"))

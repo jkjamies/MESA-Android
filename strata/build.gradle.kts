@@ -14,32 +14,46 @@
  * limitations under the License.
  */
 
+@file:OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
+
 plugins {
-    alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.kotlin.multiplatform)
 }
 
 group = property("publishingGroup") as String
 version = property("publishingVersion") as String
 
-java {
-    withSourcesJar()
-}
-
 kotlin {
     jvmToolchain(17)
+
+    jvm()
+    iosArm64()
+    iosSimulatorArm64()
+    iosX64()
+    macosArm64()
+    macosX64()
+    linuxX64()
+    mingwX64()
+    wasmJs {
+        browser()
+    }
+
+    sourceSets {
+        commonMain.dependencies {
+            implementation(libs.kotlinx.coroutines.core)
+        }
+        jvmTest.dependencies {
+            implementation(libs.kotlinx.coroutines.test)
+            implementation(libs.kotest.runner.junit5)
+            implementation(libs.kotest.assertions.core)
+            implementation(libs.kotest.property)
+            implementation(libs.turbine)
+        }
+    }
 }
 
-tasks.withType<Test> {
+tasks.named<Test>("jvmTest") {
     useJUnitPlatform()
-}
-
-dependencies {
-    implementation(libs.kotlinx.coroutines.core)
-    testImplementation(libs.kotlinx.coroutines.test)
-    testImplementation(libs.kotest.runner.junit5)
-    testImplementation(libs.kotest.assertions.core)
-    testImplementation(libs.kotest.property)
-    testImplementation(libs.turbine)
 }
 
 apply(from = rootProject.file("gradle/publishing.gradle.kts"))

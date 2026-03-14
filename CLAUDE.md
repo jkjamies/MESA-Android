@@ -8,23 +8,23 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 # Build everything
 ./gradlew build
 
-# Run all JVM unit tests (Strata + Trapeze)
-./gradlew test
+# Run all checks (all platform-specific test tasks + verification)
+./gradlew check
 
 # Run all Android instrumented tests (requires emulator/device)
 ./gradlew connectedAndroidTest
 
 # Run tests for a specific module
-./gradlew :strata:test                                          # Strata (pure Kotlin/JVM)
-./gradlew :trapeze:test                                         # Trapeze JVM tests
-./gradlew :trapeze-test:test                                    # Trapeze Test JVM tests
+./gradlew :strata:jvmTest                                       # Strata (pure Kotlin/JVM)
+./gradlew :trapeze:jvmTest                                      # Trapeze JVM tests
+./gradlew :trapeze-test:jvmTest                                 # Trapeze Test JVM tests
 ./gradlew :trapeze:connectedAndroidTest                         # Trapeze Compose tests
 ./gradlew :trapeze-navigation:connectedAndroidTest              # Navigation tests
 ./gradlew :features:counter:presentation:connectedAndroidTest   # Counter feature tests
 ./gradlew :features:summary:presentation:connectedAndroidTest   # Summary feature tests
 
 # Run a single JVM test class
-./gradlew :strata:test --tests "com.jkjamies.strata.StrataInteractorTest"
+./gradlew :strata:jvmTest --tests "com.jkjamies.strata.StrataInteractorTest"
 
 # Run a single Android test class
 ./gradlew :trapeze:connectedAndroidTest \
@@ -56,7 +56,7 @@ A Pure-Compose driven architectural library implementing the **MESA framework** 
 ### The Five Components
 | Component | Role | Type Requirements |
 |-----------|------|-------------------|
-| **Screen** | Routing key / destination identifier (pure key, not passed into StateHolder) | `Parcelable`, implements `TrapezeScreen` |
+| **Screen** | Routing key / destination identifier (pure key, not passed into StateHolder) | Implements `TrapezeScreen` (`Parcelable` on Android via `expect/actual`, plain interface on other platforms) |
 | **State** | Immutable display data + event sink | Implements `TrapezeState`, contains `eventSink: (E) -> Unit` |
 | **Event** | User interactions | Implements `TrapezeEvent`, typically `sealed interface` |
 | **StateHolder** | Logic layer producing State | Extends `TrapezeStateHolder<S, T, E>` |
@@ -151,13 +151,13 @@ class FooStateHolder @AssistedInject constructor(
 | Component | Purpose |
 |-----------|---------|
 | `NavigableTrapezeContent` | Main entry point - renders current screen from backstack |
-| `TrapezeBackStack` | Saveable navigation stack with Parcelable support |
+| `TrapezeBackStack` | Saveable navigation stack (Parcelable-backed on Android, in-memory on other platforms) |
 | `rememberSaveableBackStack(root)` | Creates saveable backstack with root screen |
 | `rememberTrapezeNavigator(backStack)` | Creates navigator backed by backstack |
 | `LocalTrapezeNavigator` | CompositionLocal for accessing navigator |
 | `LocalTrapezeBackStack` | CompositionLocal for accessing backstack (used internally by `rememberNavigationResult`) |
 | `rememberNavigationResult(key)` | Composable that consumes a navigation result by key |
-| `TrapezeNavigationResult` | Marker interface (`Parcelable`) for navigation result data |
+| `TrapezeNavigationResult` | Marker interface (`Parcelable` on Android via `expect/actual`, plain interface on other platforms) |
 
 ### Usage Pattern
 ```kotlin
@@ -204,7 +204,7 @@ LaunchedEffect(editResult) {
 }
 ```
 
-Results are single-consumption (consumed on first read) and survive configuration changes/process death.
+Results are single-consumption (consumed on first read) and survive configuration changes/process death on Android.
 
 ---
 
@@ -421,8 +421,8 @@ state.trapezeMessage?.let { msg ->
 ## Testing
 
 ### Test Style
-- **JVM tests** (`src/test/`): Use **Kotest BehaviorSpec** (Given/When/Then) with `coroutineTestScope = true` for virtual time control. Used by Trapeze core and Strata modules.
-- **Android instrumented tests** (`src/androidTest/`): Use **JUnit4** with `createComposeRule()` and **kotest assertions** (`shouldBe`, `shouldBeInstanceOf`, etc.). Required for tests that need a real Compose runtime (TrapezeNavigation, feature modules, Trapeze core Compose tests).
+- **JVM tests** (`src/jvmTest/`): Use **Kotest BehaviorSpec** (Given/When/Then) with `coroutineTestScope = true` for virtual time control. Used by Trapeze core, Strata, and Trapeze Test modules.
+- **Android instrumented tests** (`src/androidInstrumentedTest/`): Use **JUnit4** with `createComposeRule()` and **kotest assertions** (`shouldBe`, `shouldBeInstanceOf`, etc.). Required for tests that need a real Compose runtime (TrapezeNavigation, feature modules, Trapeze core Compose tests).
 
 This split is necessary because `androidTest` requires JUnit4 as the test runner, while Kotest BehaviorSpec runs on JUnit Platform (JUnit5) which is only available in JVM `test/` source sets.
 
@@ -455,7 +455,7 @@ holder.test {
 |--------|-------|----------|---------|
 | `:trapeze` | `com.jkjamies` | `trapeze` | `0.2.0` |
 | `:trapeze-navigation` | `com.jkjamies` | `trapeze-navigation` | `0.2.0` |
-| `:strata` | `com.jkjamies` | `strata` | `0.1.0` |
+| `:strata` | `com.jkjamies` | `strata` | `0.2.0` |
 | `:trapeze-test` | `com.jkjamies` | `trapeze-test` | `0.1.0` |
 | `:mesa-bom` | `com.jkjamies` | `mesa-bom` | `0.2.0` |
 
@@ -486,11 +486,11 @@ Artifacts are published to **GitHub Packages** automatically via GitHub Actions 
 ### Local Verification
 To verify publishing locally (publishes to `~/.m2/repository`):
 ```bash
-./gradlew :trapeze:publishReleasePublicationToMavenLocal
-./gradlew :trapeze-navigation:publishReleasePublicationToMavenLocal
-./gradlew :strata:publishReleasePublicationToMavenLocal
-./gradlew :trapeze-test:publishReleasePublicationToMavenLocal
-./gradlew :mesa-bom:publishReleasePublicationToMavenLocal
+./gradlew :trapeze:publishToMavenLocal
+./gradlew :trapeze-navigation:publishToMavenLocal
+./gradlew :strata:publishToMavenLocal
+./gradlew :trapeze-test:publishToMavenLocal
+./gradlew :mesa-bom:publishToMavenLocal
 ```
 
 ### Key Files

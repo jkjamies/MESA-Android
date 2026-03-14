@@ -1,8 +1,26 @@
-# MESA-Android
+# MESA
 
-A multi-library project providing type-safe, MESA-inspired architecture for Jetpack Compose. The libraries enforce strict separation between logic (StateHolder), presentation (UI), and identity (Screen) with a Circuit-style factory pattern for decoupled component resolution.
+A multi-library project providing type-safe, MESA-inspired architecture for Compose Multiplatform. The libraries enforce strict separation between logic (StateHolder), presentation (UI), and identity (Screen) with a Circuit-style factory pattern for decoupled component resolution.
 
-## 📚 Libraries
+## Supported Platforms
+
+| Platform | Strata | Trapeze | Trapeze Navigation | Trapeze Test |
+|----------|--------|---------|--------------------|--------------|
+| Android | Yes | Yes | Yes | Yes |
+| JVM (Desktop) | Yes | Yes | Yes | Yes |
+| iOS | Yes | Yes | Yes | Yes |
+| macOS | Yes | Yes | Yes | Yes |
+| WASM | Yes | Yes | Yes | Yes |
+| Linux (native) | Yes | - | - | - |
+| Windows (native) | Yes | - | - | - |
+
+> Compose-dependent modules (Trapeze, Trapeze Navigation, Trapeze Test) target platforms supported by JetBrains Compose Multiplatform. Desktop Linux/Windows are supported via the JVM target. Strata has no Compose dependency and additionally supports native Linux/Windows targets.
+
+Platform-specific concerns like `Parcelable` are handled via `expect/actual` declarations following the [Circuit](https://github.com/slackhq/circuit) pattern: `TrapezeScreen` and `TrapezeNavigationResult` extend `Parcelable` on Android, and are plain interfaces on all other platforms.
+
+---
+
+## Libraries
 
 | Library | Artifact | Purpose | Key Components |
 |---------|----------|---------|----------------|
@@ -10,10 +28,11 @@ A multi-library project providing type-safe, MESA-inspired architecture for Jetp
 | **Trapeze Navigation** | `com.jkjamies:trapeze-navigation` | Navigation layer | `NavigableTrapezeContent`, `TrapezeBackStack`, `TrapezeNavigator`, `LocalTrapezeNavigator`, `LocalTrapezeBackStack`, `rememberNavigationResult` |
 | **Strata** | `com.jkjamies:strata` | Business logic | `StrataInteractor`, `StrataSubjectInteractor`, `StrataResult`, `strataLaunch` |
 | **Trapeze Test** | `com.jkjamies:trapeze-test` | Test utilities | `TrapezeStateHolder.test`, `FakeTrapezeNavigator`, `TestEventSink`, `TrapezeReceiveTurbine`, `NavigationEvent` |
+| **MESA BOM** | `com.jkjamies:mesa-bom` | Bill of Materials | Aligns versions of all MESA libraries |
 
 ---
 
-## 🏗️ Trapeze Architecture
+## Trapeze Architecture
 
 Trapeze implements the **MESA pattern** (Modular, Explicit, State-driven, Architecture).
 
@@ -21,7 +40,7 @@ Trapeze implements the **MESA pattern** (Modular, Explicit, State-driven, Archit
 
 | Component | Role | Requirements |
 |-----------|------|--------------|
-| **Screen** | Routing key / destination identifier (pure key, not passed into StateHolder) | `Parcelable`, implements `TrapezeScreen` |
+| **Screen** | Routing key / destination identifier (pure key, not passed into StateHolder) | Implements `TrapezeScreen` (`Parcelable` on Android, plain interface on other platforms) |
 | **State** | Immutable display data + event sink | Implements `TrapezeState` |
 | **Event** | User interactions | Implements `TrapezeEvent` |
 | **StateHolder** | Logic layer producing State | Extends `TrapezeStateHolder<S, T, E>` |
@@ -32,13 +51,13 @@ Trapeze implements the **MESA pattern** (Modular, Explicit, State-driven, Archit
 ```mermaid
 %%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#6366f1', 'primaryTextColor': '#fff', 'primaryBorderColor': '#4338ca', 'lineColor': '#64748b', 'secondaryColor': '#f1f5f9', 'tertiaryColor': '#e0e7ff'}}}%%
 flowchart LR
-    A(("👆 User<br/>Action")) --> B["⚡ Event"]
+    A(("User<br/>Action")) --> B["Event"]
     B --> C{"eventSink"}
-    C --> D["🧠 StateHolder<br/>(Logic)"]
-    D --> E["📦 State<br/>(Immutable)"]
-    E --> F(("📱 UI<br/>(Composable)"))
+    C --> D["StateHolder<br/>(Logic)"]
+    D --> E["State<br/>(Immutable)"]
+    E --> F(("UI<br/>(Composable)"))
     F -.-> A
-    
+
     style A fill:#6366f1,stroke:#4338ca,stroke-width:2px,color:#fff,shadow:true
     style F fill:#6366f1,stroke:#4338ca,stroke-width:2px,color:#fff,shadow:true
     style D fill:#10b981,stroke:#059669,stroke-width:2px,color:#fff,shadow:true
@@ -51,35 +70,35 @@ flowchart LR
 ```mermaid
 %%{init: {'theme': 'base', 'themeVariables': { 'clusterBkg': '#f8fafc', 'clusterBorder': '#cbd5e1' }}}%%
 flowchart TB
-    subgraph APP["🏠 App Module"]
+    subgraph APP["App Module"]
         direction TB
         MA["MainActivity"]
         AG["AppGraph<br/>(Metro/DI)"]
     end
-    
-    subgraph CORE["📦 Trapeze Core"]
+
+    subgraph CORE["Trapeze Core"]
         direction TB
         TR["Trapeze<br/>Registry"]
         TC["TrapezeContent"]
         SHF[["StateHolderFactory<br/>(Interface)"]]
         UIF[["UiFactory<br/>(Interface)"]]
     end
-    
-    subgraph NAV["🧭 Navigation"]
+
+    subgraph NAV["Navigation"]
         direction TB
         NC["NavigableTrapezeContent"]
         BS["TrapezeBackStack"]
         TN["TrapezeNavigator"]
     end
-    
-    subgraph FEAT["⚡ Feature Module"]
+
+    subgraph FEAT["Feature Module"]
         direction TB
-        SCR(["Screen<br/>(Parcelable)"])
+        SCR(["Screen"])
         SH["StateHolder<br/>(Implementation)"]
         UI["UI<br/>(Implementation)"]
         FAC>"Factories<br/>(@ContributesIntoSet)"]
     end
-    
+
     MA ==> AG
     AG ==> TR
     NC --> TC
@@ -90,12 +109,12 @@ flowchart TB
     SHF --> SH
     UIF --> UI
     TN --> BS
-    
+
     style APP fill:#f8fafc,stroke:#94a3b8,stroke-width:2px,rx:10
     style CORE fill:#eef2ff,stroke:#6366f1,stroke-width:2px,rx:10
     style NAV fill:#ecfdf5,stroke:#10b981,stroke-width:2px,rx:10
     style FEAT fill:#fffbeb,stroke:#f59e0b,stroke-width:2px,rx:10
-    
+
     style MA fill:#fff,stroke:#334155
     style AG fill:#fff,stroke:#334155,stroke-dasharray: 5 5
 ```
@@ -106,9 +125,20 @@ flowchart TB
 
 
 
-## 🔧 Setup
+## Setup
 
 ### 1. Add Dependencies
+
+**Using the BOM** (recommended):
+```kotlin
+dependencies {
+    implementation(platform("com.jkjamies:mesa-bom:0.2.0"))
+    implementation("com.jkjamies:trapeze")              // version from BOM
+    implementation("com.jkjamies:trapeze-navigation")   // version from BOM
+    implementation("com.jkjamies:strata")               // version from BOM
+    testImplementation("com.jkjamies:trapeze-test")     // version from BOM
+}
+```
 
 **From GitHub Packages** (external consumers):
 
@@ -127,14 +157,6 @@ repositories {
 }
 ```
 
-Then add the dependencies:
-```kotlin
-implementation("com.jkjamies:trapeze:0.2.0")
-implementation("com.jkjamies:trapeze-navigation:0.2.0")
-implementation("com.jkjamies:strata:0.1.0")
-testImplementation("com.jkjamies:trapeze-test:0.1.0")
-```
-
 > **Note**: GitHub Packages requires authentication even for public packages. Create a [personal access token](https://github.com/settings/tokens) with `read:packages` scope and set `gpr.user` / `gpr.token` in your `~/.gradle/gradle.properties`.
 
 **For local/monorepo development**:
@@ -151,7 +173,7 @@ testImplementation(project(":trapeze-test"))
 interface AppGraph : MetroAppComponentProviders {
     @Multibinds val stateHolderFactories: Set<Trapeze.StateHolderFactory>
     @Multibinds val uiFactories: Set<Trapeze.UiFactory>
-    
+
     val trapeze: Trapeze
         @Provides get() = Trapeze.Builder()
             .apply { stateHolderFactories.forEach { addStateHolderFactory(it) } }
@@ -171,7 +193,7 @@ class MainActivity : ComponentActivity() {
             TrapezeCompositionLocals(trapeze) {
                 val backStack = rememberSaveableBackStack(root = HomeScreen)
                 val navigator = rememberTrapezeNavigator(backStack)
-                
+
                 NavigableTrapezeContent(navigator, backStack)
             }
         }
@@ -181,10 +203,11 @@ class MainActivity : ComponentActivity() {
 
 ---
 
-## 💻 Creating a Feature
+## Creating a Feature
 
 ### Step 1: Define Screen, State, Event
 ```kotlin
+// On Android, Screen extends Parcelable via expect/actual
 @Parcelize
 data class CounterScreen(val initialCount: Int) : TrapezeScreen, Parcelable
 
@@ -275,7 +298,7 @@ That's it! The factories are automatically discovered via Metro's aggregation an
 
 ---
 
-## 🧭 Navigation
+## Navigation
 
 ### TrapezeNavigator
 Injectable interface for navigation actions:
@@ -293,7 +316,7 @@ interface TrapezeNavigator {
 Return data from Screen B to Screen A when popping:
 
 ```kotlin
-// Define a result type
+// Define a result type (Parcelable on Android)
 @Parcelize
 data class EditResult(val name: String) : TrapezeNavigationResult
 
@@ -307,7 +330,7 @@ LaunchedEffect(editResult) {
 }
 ```
 
-Results are single-consumption and survive configuration changes/process death.
+Results are single-consumption and survive configuration changes/process death on Android.
 
 ### Navigation from StateHolder
 ```kotlin
@@ -344,7 +367,7 @@ fun SomeComposable() {
 
 ---
 
-## 🧠 Strata (Business Logic)
+## Strata (Business Logic)
 
 Strata standardizes async operations and error handling.
 
@@ -446,7 +469,7 @@ class NoteStateHolder @AssistedInject constructor(
 
 ---
 
-## 🔌 Dependency Injection (Metro)
+## Dependency Injection (Metro)
 
 ### Key Annotations
 
@@ -473,7 +496,7 @@ class FooStateHolder @AssistedInject constructor(
 
 ---
 
-## 📁 Module Structure
+## Module Structure
 
 ### Clean Architecture Layout
 ```
@@ -500,7 +523,7 @@ features/foo/
 
 ---
 
-## 🛡️ Best Practices
+## Best Practices
 
 ### UDF Flow
 Always follow: UI → Event → eventSink → StateHolder → State → UI
@@ -551,7 +574,7 @@ state.trapezeMessage?.let { msg ->
 
 ---
 
-## 📄 License
+## License
 
 ```
 Copyright 2026 Jason Jamieson
