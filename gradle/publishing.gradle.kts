@@ -24,20 +24,15 @@ val publishingDescription: String by project
 
 val isAndroidLibrary = plugins.hasPlugin("com.android.library")
 val isJavaPlatform = plugins.hasPlugin("java-platform")
+val isKotlinMultiplatform = plugins.hasPlugin("org.jetbrains.kotlin.multiplatform")
 
 afterEvaluate {
     configure<PublishingExtension> {
-        publications {
-            create<MavenPublication>("release") {
+        if (isKotlinMultiplatform) {
+            // KMP auto-creates publications per target; configure POM on all of them
+            publications.withType<MavenPublication>().configureEach {
                 groupId = publishingGroup
-                artifactId = publishingArtifactId
                 version = publishingVersion
-
-                when {
-                    isJavaPlatform -> from(components["javaPlatform"])
-                    isAndroidLibrary -> from(components["release"])
-                    else -> from(components["java"])
-                }
 
                 pom {
                     name.set(publishingName)
@@ -62,6 +57,46 @@ afterEvaluate {
                         connection.set("scm:git:git://github.com/jkjamies/MESA-Android.git")
                         developerConnection.set("scm:git:ssh://github.com/jkjamies/MESA-Android.git")
                         url.set("https://github.com/jkjamies/MESA-Android")
+                    }
+                }
+            }
+        } else {
+            publications {
+                create<MavenPublication>("release") {
+                    groupId = publishingGroup
+                    artifactId = publishingArtifactId
+                    version = publishingVersion
+
+                    when {
+                        isJavaPlatform -> from(components["javaPlatform"])
+                        isAndroidLibrary -> from(components["release"])
+                        else -> from(components["java"])
+                    }
+
+                    pom {
+                        name.set(publishingName)
+                        description.set(publishingDescription)
+                        url.set("https://github.com/jkjamies/MESA-Android")
+
+                        licenses {
+                            license {
+                                name.set("The Apache License, Version 2.0")
+                                url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
+                            }
+                        }
+
+                        developers {
+                            developer {
+                                id.set("jkjamies")
+                                name.set("Jason Jamieson")
+                            }
+                        }
+
+                        scm {
+                            connection.set("scm:git:git://github.com/jkjamies/MESA-Android.git")
+                            developerConnection.set("scm:git:ssh://github.com/jkjamies/MESA-Android.git")
+                            url.set("https://github.com/jkjamies/MESA-Android")
+                        }
                     }
                 }
             }
