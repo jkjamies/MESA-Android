@@ -16,7 +16,11 @@
 
 package com.jkjamies.trapeze
 
+private external object console {
+    fun warn(message: String)
+}
+
 @PublishedApi
 internal actual fun trapezeLogWarning(tag: String, message: String) {
-    println("W/$tag: $message")
+    console.warn("W/$tag: $message")
 }

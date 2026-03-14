@@ -22,5 +22,5 @@ import com.jkjamies.trapeze.TrapezeScreen
 
 @Composable
 public actual fun rememberSaveableBackStack(root: TrapezeScreen): TrapezeBackStack {
-    return remember { TrapezeBackStack(root) }
+    return remember(root) { TrapezeBackStack(root) }
 }

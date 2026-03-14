@@ -8,8 +8,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 # Build everything
 ./gradlew build
 
-# Run all JVM unit tests (Strata + Trapeze)
-./gradlew test
+# Run all checks (all platform-specific test tasks + verification)
+./gradlew check
 
 # Run all Android instrumented tests (requires emulator/device)
 ./gradlew connectedAndroidTest
@@ -421,7 +421,7 @@ state.trapezeMessage?.let { msg ->
 ## Testing
 
 ### Test Style
-- **JVM tests** (`src/jvmTest/`): Use **Kotest BehaviorSpec** (Given/When/Then) with `coroutineTestScope = true` for virtual time control. Used by Trapeze core and Strata modules.
+- **JVM tests** (`src/jvmTest/`): Use **Kotest BehaviorSpec** (Given/When/Then) with `coroutineTestScope = true` for virtual time control. Used by Trapeze core, Strata, and Trapeze Test modules.
 - **Android instrumented tests** (`src/androidInstrumentedTest/`): Use **JUnit4** with `createComposeRule()` and **kotest assertions** (`shouldBe`, `shouldBeInstanceOf`, etc.). Required for tests that need a real Compose runtime (TrapezeNavigation, feature modules, Trapeze core Compose tests).
 
 This split is necessary because `androidTest` requires JUnit4 as the test runner, while Kotest BehaviorSpec runs on JUnit Platform (JUnit5) which is only available in JVM `test/` source sets.

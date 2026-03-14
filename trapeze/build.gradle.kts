@@ -29,7 +29,9 @@ version = property("publishingVersion") as String
 kotlin {
     jvmToolchain(17)
 
-    androidTarget()
+    androidTarget {
+        publishLibraryVariants("release")
+    }
     jvm()
     iosArm64()
     iosSimulatorArm64()

@@ -43,7 +43,7 @@ public fun TrapezeContent(
     val stateHolder = remember(screen) { trapeze.stateHolder(screen, navigator) }
     val ui = remember(screen) { trapeze.ui(screen) }
     if (stateHolder == null || ui == null) {
-        trapezeLogWarning("TrapezeContent", "No factory found for screen: $screen")
+        trapezeLogWarning("TrapezeContent", "No factory found for screen: ${screen::class.qualifiedName ?: screen::class.simpleName ?: "Unknown"}")
         return
     }
     @Suppress("UNCHECKED_CAST")

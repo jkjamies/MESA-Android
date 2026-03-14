@@ -45,6 +45,7 @@ public fun TrapezeBackStack.Companion.saver(): Saver<TrapezeBackStack, *> = Save
         @Suppress("DEPRECATION")
         val stack = bundle.getParcelableArrayList<Parcelable>("stack")
             ?.filterIsInstance<TrapezeScreen>()
+            ?.takeIf { it.isNotEmpty() }
             ?: return@Saver null
         val backStack = TrapezeBackStack(stack.first())
         stack.drop(1).forEach { backStack.push(it) }
@@ -64,7 +65,7 @@ public fun TrapezeBackStack.Companion.saver(): Saver<TrapezeBackStack, *> = Save
 
 @Composable
 public actual fun rememberSaveableBackStack(root: TrapezeScreen): TrapezeBackStack {
-    return rememberSaveable(saver = TrapezeBackStack.saver()) {
+    return rememberSaveable(root, saver = TrapezeBackStack.saver()) {
         TrapezeBackStack(root)
     }
 }

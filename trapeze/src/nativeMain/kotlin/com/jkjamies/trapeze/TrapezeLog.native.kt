@@ -16,7 +16,9 @@
 
 package com.jkjamies.trapeze
 
+import platform.Foundation.NSLog
+
 @PublishedApi
 internal actual fun trapezeLogWarning(tag: String, message: String) {
-    println("W/$tag: $message")
+    NSLog("%@", "W/$tag: $message")
 }
