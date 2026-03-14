@@ -86,6 +86,10 @@ android {
     }
 }
 
+dependencies {
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
+}
+
 tasks.named<Test>("jvmTest") {
     useJUnitPlatform()
 }
