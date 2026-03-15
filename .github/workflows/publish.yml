@@ -39,13 +39,14 @@ jobs:
           echo "bom=$BOM_V" >> "$GITHUB_OUTPUT"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 
-      - name: Delete existing draft release with same tag
+      - name: Delete existing draft releases with same tag
         run: |
-          EXISTING=$(gh release view "${{ steps.versions.outputs.tag }}" --json isDraft --jq '.isDraft' 2>/dev/null || echo "")
-          if [ "$EXISTING" = "true" ]; then
-            gh release delete "${{ steps.versions.outputs.tag }}" --yes
-            git push --delete origin "refs/tags/${{ steps.versions.outputs.tag }}" 2>/dev/null || true
-          fi
+          TAG="${{ steps.versions.outputs.tag }}"
+          # Find all draft releases matching this tag and delete them
+          gh release list --json tagName,isDraft --jq '.[] | select(.isDraft and .tagName == "'"$TAG"'") | .tagName' | while read -r t; do
+            echo "Deleting existing draft release: $t"
+            gh release delete "$t" --yes --cleanup-tag
+          done
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

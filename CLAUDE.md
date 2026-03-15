@@ -453,11 +453,11 @@ holder.test {
 ### Maven Coordinates
 | Module | Group | Artifact | Version |
 |--------|-------|----------|---------|
-| `:trapeze` | `com.jkjamies` | `trapeze` | `0.2.0` |
-| `:trapeze-navigation` | `com.jkjamies` | `trapeze-navigation` | `0.2.0` |
-| `:strata` | `com.jkjamies` | `strata` | `0.2.0` |
-| `:trapeze-test` | `com.jkjamies` | `trapeze-test` | `0.1.0` |
-| `:mesa-bom` | `com.jkjamies` | `mesa-bom` | `0.2.0` |
+| `:trapeze` | `com.jkjamies` | `trapeze` | `0.3.0` |
+| `:trapeze-navigation` | `com.jkjamies` | `trapeze-navigation` | `0.3.0` |
+| `:strata` | `com.jkjamies` | `strata` | `0.3.0` |
+| `:trapeze-test` | `com.jkjamies` | `trapeze-test` | `0.2.0` |
+| `:mesa-bom` | `com.jkjamies` | `mesa-bom` | `0.3.0` |
 
 ### Versioning
 Each library module is versioned **independently** via its own `gradle.properties` file:
@@ -473,7 +473,7 @@ To bump a version, update the `publishingVersion` property in the relevant file.
 ### Consumer Usage (BOM)
 ```kotlin
 dependencies {
-    implementation(platform("com.jkjamies:mesa-bom:0.2.0"))
+    implementation(platform("com.jkjamies:mesa-bom:0.3.0"))
     implementation("com.jkjamies:trapeze")              // version from BOM
     implementation("com.jkjamies:trapeze-navigation")   // version from BOM
     implementation("com.jkjamies:strata")               // version from BOM
