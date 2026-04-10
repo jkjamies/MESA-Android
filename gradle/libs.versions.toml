@@ -14,7 +14,7 @@ coroutines = "1.10.2"
 kotest = "6.1.7"
 turbine = "1.2.1"
 composeMultiplatform = "1.10.3"
-metro = "0.11.2"
+metro = "0.13.2"
 molecule = "2.2.0"
 datastore = "1.2.1"
 
