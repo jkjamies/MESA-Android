@@ -25,7 +25,7 @@ Platform-specific concerns like `Parcelable` are handled via `expect/actual` dec
 | Library | Artifact | Purpose | Key Components |
 |---------|----------|---------|----------------|
 | **Trapeze** | `com.jkjamies:trapeze` | Core architecture | `TrapezeStateHolder`, `TrapezeState`, `TrapezeScreen`, `TrapezeEvent`, `TrapezeContent`, `Trapeze`, `TrapezeCompositionLocals`, `TrapezeMessage`, `TrapezeMessageManager`, `TrapezeNavigationResult` |
-| **Trapeze Navigation** | `com.jkjamies:trapeze-navigation` | Navigation layer | `NavigableTrapezeContent`, `TrapezeBackStack`, `TrapezeNavigator`, `LocalTrapezeNavigator`, `LocalTrapezeBackStack`, `rememberNavigationResult` |
+| **Trapeze Navigation** | `com.jkjamies:trapeze-navigation` | Navigation layer | `NavigableTrapezeContent`, `TrapezeBackStack`, `TrapezeNavigator`, `LocalTrapezeNavigator`, `LocalTrapezeBackStack`, `rememberNavigationResult`, `NavigationResultEffect` |
 | **Strata** | `com.jkjamies:strata` | Business logic | `StrataInteractor`, `StrataSubjectInteractor`, `StrataResult`, `strataLaunch` |
 | **Trapeze Test** | `com.jkjamies:trapeze-test` | Test utilities | `TrapezeStateHolder.test`, `FakeTrapezeNavigator`, `TestEventSink`, `TrapezeReceiveTurbine`, `NavigationEvent` |
 | **MESA BOM** | `com.jkjamies:mesa-bom` | Bill of Materials | Aligns versions of all MESA libraries |
@@ -132,7 +132,7 @@ flowchart TB
 **Using the BOM** (recommended):
 ```kotlin
 dependencies {
-    implementation(platform("com.jkjamies:mesa-bom:0.2.0"))
+    implementation(platform("com.jkjamies:mesa-bom:0.3.0"))
     implementation("com.jkjamies:trapeze")              // version from BOM
     implementation("com.jkjamies:trapeze-navigation")   // version from BOM
     implementation("com.jkjamies:strata")               // version from BOM
@@ -330,7 +330,20 @@ LaunchedEffect(editResult) {
 }
 ```
 
-Results are single-consumption and survive configuration changes/process death on Android.
+Or, to react to a result exactly once rather than read it as state:
+
+```kotlin
+NavigationResultEffect("edit_result") { result ->
+    (result as? EditResult)?.let { name = it.name }
+}
+```
+
+Each result is taken off the backstack exactly once. `rememberNavigationResult` then latches
+the delivered value until the screen leaves the composition, so it is safe to read across
+recompositions. Results survive configuration changes and process death on Android.
+
+Calling `popWithResult` while already at the root drops the result — there is no screen left
+to consume it, and retaining it would leak for the lifetime of the backstack.
 
 ### Navigation from StateHolder
 ```kotlin
@@ -517,9 +530,14 @@ features/foo/
 ```
 
 ### Dependency Rules
-- `presentation` → `api`, `domain`
-- `domain` → `api`, `data`
+- `presentation` → `api` (use case abstractions only; implementations are bound at the app graph)
+- `data` → `domain`
+- `domain` → `api`
 - `api` → no internal dependencies
+
+Declare a dependency with `api(...)` whenever its types appear in the module's own public
+API — as a supertype, constructor parameter, or return type. `implementation(...)` keeps
+them off the consumer's compile classpath.
 
 ---
 

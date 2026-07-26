@@ -15,16 +15,16 @@
 ./gradlew connectedAndroidTest
 
 # Run tests for a specific module
-./gradlew :strata:test                                          # Strata (pure Kotlin/JVM)
-./gradlew :trapeze:test                                         # Trapeze JVM tests
-./gradlew :trapeze-test:test                                    # Trapeze Test JVM tests
+./gradlew :strata:jvmTest                                          # Strata (pure Kotlin/JVM)
+./gradlew :trapeze:jvmTest                                         # Trapeze JVM tests
+./gradlew :trapeze-test:jvmTest                                    # Trapeze Test JVM tests
 ./gradlew :trapeze:connectedAndroidTest                         # Trapeze Compose tests
 ./gradlew :trapeze-navigation:connectedAndroidTest              # Navigation tests
 ./gradlew :features:counter:presentation:connectedAndroidTest   # Counter feature tests
 ./gradlew :features:summary:presentation:connectedAndroidTest   # Summary feature tests
 
 # Run a single JVM test class
-./gradlew :strata:test --tests "com.jkjamies.strata.StrataInteractorTest"
+./gradlew :strata:jvmTest --tests "com.jkjamies.strata.StrataInteractorTest"
 
 # Run a single Android test class
 ./gradlew :trapeze:connectedAndroidTest \
@@ -38,7 +38,7 @@ A Pure-Compose driven architectural library implementing the **MESA framework** 
 | Library | Artifact | Purpose | Key Exports |
 |---------|----------|---------|-------------|
 | **Trapeze** | `com.jkjamies:trapeze` | Core architecture | `TrapezeStateHolder`, `TrapezeState`, `TrapezeScreen`, `TrapezeEvent`, `TrapezeContent`, `Trapeze`, `TrapezeCompositionLocals`, `TrapezeMessage`, `TrapezeMessageManager`, `TrapezeNavigationResult` |
-| **Trapeze Navigation** | `com.jkjamies:trapeze-navigation` | Navigation layer | `NavigableTrapezeContent`, `TrapezeBackStack`, `TrapezeNavigator`, `LocalTrapezeNavigator`, `LocalTrapezeBackStack`, `rememberNavigationResult` |
+| **Trapeze Navigation** | `com.jkjamies:trapeze-navigation` | Navigation layer | `NavigableTrapezeContent`, `TrapezeBackStack`, `TrapezeNavigator`, `LocalTrapezeNavigator`, `LocalTrapezeBackStack`, `rememberNavigationResult`, `NavigationResultEffect` |
 | **Strata** | `com.jkjamies:strata` | Business logic layer | `StrataInteractor`, `StrataSubjectInteractor`, `StrataResult`, `strataLaunch` |
 | **Trapeze Test** | `com.jkjamies:trapeze-test` | Test utilities | `TrapezeStateHolder.test`, `FakeTrapezeNavigator`, `TestEventSink`, `TrapezeReceiveTurbine`, `NavigationEvent` |
 
@@ -155,7 +155,8 @@ class FooStateHolder @AssistedInject constructor(
 | `rememberTrapezeNavigator(backStack)` | Creates navigator backed by backstack |
 | `LocalTrapezeNavigator` | CompositionLocal for accessing navigator |
 | `LocalTrapezeBackStack` | CompositionLocal for accessing backstack (used internally by `rememberNavigationResult`) |
-| `rememberNavigationResult(key)` | Composable that consumes a navigation result by key |
+| `rememberNavigationResult(key)` | Composable returning the latest result for a key (latched until the screen leaves composition) |
+| `NavigationResultEffect(key) { }` | Composable that invokes a callback once per delivered result |
 | `TrapezeNavigationResult` | Marker interface (`Parcelable`) for navigation result data |
 
 ### Usage Pattern
@@ -205,7 +206,20 @@ LaunchedEffect(editResult) {
 }
 ```
 
-Results are single-consumption (consumed on first read) and survive configuration changes/process death.
+Or, to react to a result exactly once rather than read it as state:
+
+```kotlin
+NavigationResultEffect("edit_result") { result ->
+    (result as? EditResult)?.let { name = it.name }
+}
+```
+
+Each result is taken off the backstack exactly once. `rememberNavigationResult` then
+latches the delivered value until the screen leaves the composition. Results survive
+configuration changes and process death.
+
+Calling `popWithResult` while already at the root drops the result — there is no screen
+left to consume it.
 
 ---
 
@@ -229,9 +243,14 @@ features/foo/
 ```
 
 ### Dependency Rules
-- `presentation` → depends on → `api`, `domain`
-- `domain` → depends on → `api`, `data`
+- `presentation` → depends on → `api` (use case abstractions only; implementations are bound at the app graph)
+- `data` → depends on → `domain`
+- `domain` → depends on → `api`
 - `api` → no internal dependencies
+
+Dependencies that carry a module's own public types (a supertype, a constructor
+parameter, a return type) must be declared with `api(...)`, not `implementation(...)`,
+or consumers of the published artifact cannot compile against them.
 
 ---
 

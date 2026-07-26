@@ -38,7 +38,7 @@ A Pure-Compose driven architectural library implementing the **MESA framework** 
 | Library | Artifact | Purpose | Key Exports |
 |---------|----------|---------|-------------|
 | **Trapeze** | `com.jkjamies:trapeze` | Core architecture | `TrapezeStateHolder`, `TrapezeState`, `TrapezeScreen`, `TrapezeEvent`, `TrapezeContent`, `Trapeze`, `TrapezeCompositionLocals`, `TrapezeMessage`, `TrapezeMessageManager`, `TrapezeNavigationResult` |
-| **Trapeze Navigation** | `com.jkjamies:trapeze-navigation` | Navigation layer | `NavigableTrapezeContent`, `TrapezeBackStack`, `TrapezeNavigator`, `LocalTrapezeNavigator`, `LocalTrapezeBackStack`, `rememberNavigationResult` |
+| **Trapeze Navigation** | `com.jkjamies:trapeze-navigation` | Navigation layer | `NavigableTrapezeContent`, `TrapezeBackStack`, `TrapezeNavigator`, `LocalTrapezeNavigator`, `LocalTrapezeBackStack`, `rememberNavigationResult`, `NavigationResultEffect` |
 | **Strata** | `com.jkjamies:strata` | Business logic layer | `StrataInteractor`, `StrataSubjectInteractor`, `StrataResult`, `strataLaunch` |
 | **Trapeze Test** | `com.jkjamies:trapeze-test` | Test utilities | `TrapezeStateHolder.test`, `FakeTrapezeNavigator`, `TestEventSink`, `TrapezeReceiveTurbine`, `NavigationEvent` |
 | **MESA BOM** | `com.jkjamies:mesa-bom` | Bill of Materials | Aligns versions of all MESA libraries |
@@ -156,7 +156,8 @@ class FooStateHolder @AssistedInject constructor(
 | `rememberTrapezeNavigator(backStack)` | Creates navigator backed by backstack |
 | `LocalTrapezeNavigator` | CompositionLocal for accessing navigator |
 | `LocalTrapezeBackStack` | CompositionLocal for accessing backstack (used internally by `rememberNavigationResult`) |
-| `rememberNavigationResult(key)` | Composable that consumes a navigation result by key |
+| `rememberNavigationResult(key)` | Composable returning the latest result for a key (latched until the screen leaves composition) |
+| `NavigationResultEffect(key) { }` | Composable that invokes a callback once per delivered result |
 | `TrapezeNavigationResult` | Marker interface (`Parcelable` on Android via `expect/actual`, plain interface on other platforms) |
 
 ### Usage Pattern
@@ -204,7 +205,20 @@ LaunchedEffect(editResult) {
 }
 ```
 
-Results are single-consumption (consumed on first read) and survive configuration changes/process death on Android.
+Or, to react to a result exactly once rather than read it as state:
+
+```kotlin
+NavigationResultEffect("edit_result") { result ->
+    (result as? EditResult)?.let { name = it.name }
+}
+```
+
+Each result is taken off the backstack exactly once. `rememberNavigationResult` then
+latches the delivered value until the screen leaves the composition. Results survive
+configuration changes and process death on Android.
+
+Calling `popWithResult` while already at the root drops the result — there is no screen
+left to consume it.
 
 ---
 
@@ -228,9 +242,14 @@ features/foo/
 ```
 
 ### Dependency Rules
-- `presentation` → depends on → `api`, `domain`
-- `domain` → depends on → `api`, `data`
+- `presentation` → depends on → `api` (use case abstractions only; implementations are bound at the app graph)
+- `data` → depends on → `domain`
+- `domain` → depends on → `api`
 - `api` → no internal dependencies
+
+Dependencies that carry a module's own public types (a supertype, a constructor
+parameter, a return type) must be declared with `api(...)`, not `implementation(...)`,
+or consumers of the published artifact cannot compile against them.
 
 ---
 
