@@ -82,6 +82,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `strataLaunch`/`strataLaunchWithResult` reject a `Job` passed in `context`, which would have
   detached the coroutine from the scope.
 - `GEMINI.md` and `.junie/guidelines.md` now point at `CLAUDE.md` instead of duplicating it.
+- `trapeze-test` moves to 0.3.0, aligning it with the other modules. It sat at 0.2.0 while the
+  library it is built against changed, and the publish workflow skips versions that already
+  exist — so it would never have been republished against the reworked `trapeze`.
 
 ## [0.2.0] - 2026-03-01
 

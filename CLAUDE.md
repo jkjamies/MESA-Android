@@ -538,7 +538,7 @@ holder.test {
 | `:trapeze` | `com.jkjamies` | `trapeze` | `0.3.0` |
 | `:trapeze-navigation` | `com.jkjamies` | `trapeze-navigation` | `0.3.0` |
 | `:strata` | `com.jkjamies` | `strata` | `0.3.0` |
-| `:trapeze-test` | `com.jkjamies` | `trapeze-test` | `0.2.0` |
+| `:trapeze-test` | `com.jkjamies` | `trapeze-test` | `0.3.0` |
 | `:mesa-bom` | `com.jkjamies` | `mesa-bom` | `0.3.0` |
 
 ### Versioning

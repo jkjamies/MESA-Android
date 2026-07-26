@@ -23,6 +23,7 @@ import com.jkjamies.trapeze.test.NavigationEvent
 import com.jkjamies.trapeze.test.test
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.string.shouldContain
 
 class SummaryStateHolderTest : BehaviorSpec({
@@ -84,7 +85,10 @@ class SummaryStateHolderTest : BehaviorSpec({
                     while (updated.trapezeMessage == null) {
                         updated = awaitItem()
                     }
-                    updated.trapezeMessage?.message shouldContain "failed"
+                    val message = updated.trapezeMessage.shouldNotBeNull()
+                    message.message shouldBe "Couldn't save the value."
+                    // The failure is carried for logging, not surfaced in the copy.
+                    message.cause.shouldNotBeNull()
                 }
             }
         }
