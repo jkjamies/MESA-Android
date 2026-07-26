@@ -181,32 +181,31 @@ Activity behaves normally. Pass `handleBack = false` to take over.
 
 ### Retained State and Scopes
 
-`rememberSaveable` covers *state*; it does not cover in-flight *work*. A save started from an
-event sink used to be cancelled by a rotation, because the scope came from
-`rememberCoroutineScope()`.
+Compose ships this. Use it directly — MESA does not wrap it.
 
-`NavigableTrapezeContent` gives each backstack entry a `TrapezeRetainedStore` that survives
-configuration changes and is cleared when the entry is popped:
+`retain { }` (artifact `androidx.compose.runtime:runtime-retain`, Compose 1.10+) sits between
+`remember` and `rememberSaveable`: it survives recomposition *and* Android configuration changes,
+and is retired when the content permanently leaves the composition. No wiring is required.
 
 ```kotlin
 @Composable
 override fun produceState(): FooState {
-    val pager = rememberRetained("pager") { Pager(query) }   // survives rotation
+    val player = retain { ExoPlayer.Builder(appContext).build() }   // survives rotation
     // ...
 }
 ```
 
-`wrapEventSink` launches from that retained scope, so work started by an event survives a
-rotation and is cancelled when the screen is actually gone. On Android the store is held by an
-internal `ViewModel` — the only thing that reliably outlives Activity recreation. You never write
-one; MESA's "no ViewModels" rule is about where your logic lives, not about refusing the
-platform's only retention primitive.
+Rules worth repeating from the Compose docs: retained values live in memory and do **not** survive
+process death (pair with `rememberSaveable` when you need both), and you must never retain a
+`Context`, `View`, `Activity`, `Lifecycle`, or anything holding a reference to one.
 
-Outside a navigation host there is nothing to retain against, so `rememberRetained` degrades to
-`remember` and the scope to `rememberCoroutineScope()`.
+To release resources when a retained object is retired, have it implement `RetainObserver` and
+clean up in `onRetired()`.
 
-Retained values are held in memory and do **not** survive process death. Pair with
-`rememberSaveable` when you need both.
+**Known gap:** `wrapEventSink` still launches from `rememberCoroutineScope()`, so work started by
+an event is cancelled on a configuration change. A retained `CoroutineScope` cancelled via
+`RetainObserver.onRetired()` is the fix; it is not yet implemented. Until then, launch long-running
+work somewhere with a longer lifetime than the composition if losing it on rotation matters.
 
 ### Screen Identity
 

@@ -21,10 +21,10 @@ ordered by how directly they block that.
 | | Count |
 |---|---|
 | Blocks out-of-the-box use | 4 (3 fixed) |
-| Correctness bugs and leaks | 9 (9 fixed) |
+| Correctness bugs and leaks | 9 (8 fixed, 1 partly) |
 | Library-hygiene gaps | 11 (3 fixed) |
 | Security / privacy | 4 (3 fixed) |
-| Missing capabilities | 8 (2 fixed) |
+| Missing capabilities | 8 (1 fixed, 1 deferred to Compose) |
 
 **Status:** everything below is marked FIXED or NOT FIXED against the branch
 `claude/project-architecture-review-0aw4o5`. Two items are deliberately still open —
@@ -34,7 +34,8 @@ The core idea is sound and the code is clean, small, and readable. What is missi
 almost entirely at the edges: **the published artifacts were not consumable, the
 navigation layer had a Compose-contract violation at its centre, the test suite that
 covers navigation never ran, and there was no retained scope** — which the "no ViewModels"
-stance made load-bearing rather than optional. All four are addressed on this branch.
+stance made load-bearing rather than optional. The first three are fixed on this branch; the
+fourth is answered by Compose's own `retain` API rather than by MESA.
 
 ---
 
@@ -228,43 +229,38 @@ size unchanged and the popped screen's saved state is never released. The effect
 keyed on `Unit`, so swapping backstacks would not restart tracking. Fixed: keyed on
 `backStack`, diffed by set membership.
 
-### 2.6 There is no retained scope — **FIXED**
+### 2.6 There is no retained scope — **SUPERSEDED BY COMPOSE**
 
-MESA's stance is "No ViewModels: logic belongs in `TrapezeStateHolder`." But:
+MESA's stance is "No ViewModels: logic belongs in a `TrapezeStateHolder`." But `TrapezeContent`
+creates the StateHolder with plain `remember`, and `wrapEventSink` uses `rememberCoroutineScope()`,
+so every in-flight operation is cancelled on rotation, on a theme change, on entering multi-window.
+A save taking 400ms and a user who rotates mid-save silently loses the write. `rememberSaveable`
+covers *state*; nothing covers *work*.
 
-- `TrapezeContent` creates the StateHolder with `remember(screen)` — plain `remember`, so
-  it is **destroyed and recreated on every configuration change**.
-- `wrapEventSink` uses `rememberCoroutineScope()`, whose scope is cancelled when the
-  composable leaves the composition.
+This review originally called for MESA to build a retained scope keyed on the backstack entry, and
+an implementation landed briefly. It has been **removed**: Compose 1.10 ships
+`androidx.compose.runtime:runtime-retain`, whose `retain { }` has exactly the intended semantics —
+survives recomposition and Android configuration changes, retired when content permanently leaves
+the composition — with no wiring required. It is already on the classpath transitively via
+`compose.ui`.
 
-So every in-flight operation started from an event sink is cancelled on rotation, on theme
-change, on entering multi-window, and on navigating away. A "save" that takes 400ms and a
-user who rotates mid-save silently loses the write. `rememberSaveable` covers *state* but
-nothing covers *work*.
+Building a parallel mechanism on top of a first-party primitive would have been strictly worse:
+more code, an extra `lifecycle-viewmodel-compose` dependency, a hand-rolled `ViewModel`, and a
+second concept for feature authors to learn. MESA now documents `retain { }` and wraps nothing.
 
-This is precisely the problem `ViewModel` exists to solve, and rejecting `ViewModel` without
-replacing the capability left a hole users would hit on day one.
+**Remaining piece:** `wrapEventSink` still launches from `rememberCoroutineScope()`, so event-sink
+work is still cancelled on a configuration change. The fix is a retained `CoroutineScope` cancelled
+from `RetainObserver.onRetired()`. It is not implemented because the exact `RetainObserver` callback
+set could not be verified in this environment — two documentation sources disagreed — and guessing
+at an interface's abstract members produces a compile error, not a working library. This is a small,
+well-understood change for whoever has a compiler in front of them.
 
-`TrapezeRetainedStore` now holds retained values and a `SupervisorJob`-backed scope, one store
-per backstack entry (§2.4). `NavigableTrapezeContent` clears a store when its entry leaves the
-backstack and never on a configuration change, so `rememberRetained` and
-`rememberRetainedCoroutineScope` give exactly the intended lifetime. `wrapEventSink` launches
-from that scope, which is what fixes the cancelled-on-rotation bug at the source.
+Note also that `retain` is marked experimental/incubating in Compose 1.10, so pin the Compose
+version deliberately and expect the API to move before it stabilises.
 
-On Android the host is an internal `ViewModel` — the only thing on the platform that reliably
-outlives Activity recreation. Feature authors never see it; "no ViewModels" is about where logic
-lives, not about refusing the platform's retention primitive. Other targets use a
-composition-lifetime host, which is correct where no such recreation exists.
-
-Outside a navigation host both helpers degrade to `remember` / `rememberCoroutineScope`, so
-standalone `TrapezeContent` and the headless test runtime behave exactly as before.
-
-Retained values are in-memory and do not survive process death; `rememberSaveable` remains the
-tool for that.
-
-The related sharp edge is also gone: `strataLaunch` no longer throws on an already-cancelled
-scope, so the non-atomic `isActive` check in `wrapEventSink` can no longer turn a late event into
-a main-thread crash.
+The related sharp edge is gone regardless: `strataLaunch` no longer throws on an already-cancelled
+scope, so the non-atomic `isActive` check in `wrapEventSink` can no longer turn a late event into a
+main-thread crash.
 
 ### 2.7 Backstack restore silently discards entries — **FIXED**
 
@@ -458,7 +454,8 @@ plugins.
 
 Ranked by how likely a real app is to need them:
 
-1. ~~Retained scope / config-change survival~~ — done (§2.6).
+1. ~~Retained scope / config-change survival~~ — use Compose's `retain { }` (§2.6). One piece
+   left: a retained `CoroutineScope` for `wrapEventSink`.
 2. ~~System back~~ — done (§1.2). Predictive back is still open and belongs with transitions.
 3. **Screen transition animations.** `NavigableTrapezeContent` swaps content with no
    `AnimatedContent` and no hook to supply one. Every navigation is a hard cut.
@@ -489,7 +486,7 @@ Committed on `claude/project-architecture-review-0aw4o5`:
 | `1fb598d` | Backstack entry identity, entry-scoped results, system back, restore truncation (§2.3, §2.4, §2.7, §1.2) |
 | `78f663d` | `TrapezeMessage` API, abstract navigator members, DI scoping, backup rules, doc consolidation, duplicate test removal (§2.9, §3.8, §3.9, §4.1, §4.2) |
 | `5922a5f` | `StrataInteractor` loading model rebuilt around the ambient transition (§2.9) |
-| *(final)* | Retained stores and scopes, per backstack entry (§2.6) |
+| *(final)* | Removed the hand-rolled retained store in favour of Compose's `retain` (§2.6) |
 
 Strata's changes are the only ones **executed** — it is pure Kotlin and builds against Maven
 Central, so its 58 tests were run locally, including three verified to fail against the previous

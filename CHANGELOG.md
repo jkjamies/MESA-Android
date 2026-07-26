@@ -15,13 +15,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   the back button left the app regardless of how deep the stack was.
 - **`TrapezeBackStackEntry`** — each push occupies an entry with a stable id that survives
   configuration changes and process death, exposed via `LocalTrapezeBackStackEntry`.
-- **Retained state and scopes.** `rememberRetained(key) { }` and `rememberRetainedCoroutineScope()`
-  hold values and coroutines that survive configuration changes and are cleared when the backstack
-  entry is popped. `wrapEventSink` now launches from the retained scope, so a save started from an
-  event sink is no longer cancelled by a rotation — `rememberSaveable` covered state, but nothing
-  covered in-flight work. Backed per-entry by `TrapezeRetainedStore`; on Android the host is an
-  internal `ViewModel`, which feature code never sees. Outside a navigation host both helpers
-  degrade to `remember` / `rememberCoroutineScope`.
 - `NavigationResultEffect(key) { }` for reacting to a navigation result exactly once.
 - `StrataSubjectInteractor.stop()` and `isActive`; a subscription could previously be started
   but never torn down.
