@@ -59,6 +59,13 @@ public class TrapezeBackStack internal constructor(root: TrapezeScreen) {
         _results = _results + (key to result)
     }
 
+    /**
+     * Reads the pending result for [key] without removing it.
+     *
+     * Safe to call from composition — unlike [consumeResult] it performs no snapshot write.
+     */
+    internal fun peekResult(key: String): TrapezeNavigationResult? = _results[key]
+
     internal fun consumeResult(key: String): TrapezeNavigationResult? {
         val result = _results[key]
         if (result != null) {
@@ -68,6 +75,9 @@ public class TrapezeBackStack internal constructor(root: TrapezeScreen) {
     }
 
     internal fun popWithResult(key: String, result: TrapezeNavigationResult): Boolean {
+        // Only publish the result if there is somewhere for it to go. Storing a result
+        // that no screen can ever consume would leak it for the lifetime of the backstack.
+        if (_stack.size <= 1) return false
         setResult(key, result)
         return pop()
     }

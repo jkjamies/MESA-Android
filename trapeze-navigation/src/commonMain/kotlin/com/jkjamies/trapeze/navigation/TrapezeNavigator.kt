@@ -69,10 +69,10 @@ public fun rememberTrapezeNavigator(
             }
 
             override fun <R : TrapezeNavigationResult> popWithResult(key: String, result: R) {
-                backStack.setResult(key, result)
-                if (backStack.size > 1) {
-                    backStack.pop()
-                } else {
+                // `popWithResult` stores the result only when the pop succeeds, so a result
+                // delivered at the root is dropped rather than retained forever with no
+                // screen left to consume it.
+                if (!backStack.popWithResult(key, result)) {
                     currentOnRootPop?.invoke()
                 }
             }

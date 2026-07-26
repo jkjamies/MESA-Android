@@ -18,7 +18,10 @@ package com.jkjamies.trapeze.navigation
 
 import android.os.Parcelable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.SaverScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.junit4.createComposeRule
 import com.jkjamies.trapeze.TrapezeNavigationResult
 import com.jkjamies.trapeze.TrapezeNavigator
@@ -129,9 +132,21 @@ class NavigationResultTest {
         composeTestRule.runOnIdle {
             rootPopCalled shouldBe true
             backStack.size shouldBe 1
-            // Result is still set even when at root
-            backStack.consumeResult("key").shouldBeInstanceOf<TestResult>().value shouldBe "root"
+            // The result is dropped rather than retained: with nothing left to pop to,
+            // no screen could ever consume it.
+            backStack.consumeResult("key").shouldBeNull()
         }
+    }
+
+    @Test
+    fun givenABackStackAtRoot_whenPopWithResultIsCalled_thenNothingIsStored() {
+        val backStack = TrapezeBackStack(ResultScreen(1))
+
+        val popped = backStack.popWithResult("key", TestResult("root"))
+
+        popped shouldBe false
+        backStack.size shouldBe 1
+        backStack.consumeResult("key").shouldBeNull()
     }
 
     // --- rememberNavigationResult tests ---
@@ -140,18 +155,62 @@ class NavigationResultTest {
     fun givenAResult_whenRememberNavigationResultIsCalled_thenItReturnsTheResult() {
         val backStack = TrapezeBackStack(ResultScreen(1))
         backStack.push(ResultScreen(2))
+        // Simulate Screen B popping back to Screen A with a result.
+        backStack.popWithResult("edit_result", TestResult("composed"))
         var capturedResult: TrapezeNavigationResult? = null
 
         composeTestRule.setContent {
             CompositionLocalProvider(LocalTrapezeBackStack provides backStack) {
-                // Simulate popWithResult having been called
-                backStack.popWithResult("edit_result", TestResult("composed"))
                 capturedResult = rememberNavigationResult("edit_result")
             }
         }
 
         composeTestRule.runOnIdle {
             capturedResult.shouldBeInstanceOf<TestResult>().value shouldBe "composed"
+            // Delivery removes it from the backstack.
+            backStack.consumeResult("edit_result").shouldBeNull()
+        }
+    }
+
+    @Test
+    fun givenAResultArrivesLater_whenRememberNavigationResultIsComposed_thenItIsDelivered() {
+        val backStack = TrapezeBackStack(ResultScreen(1))
+        backStack.push(ResultScreen(2))
+        var capturedResult: TrapezeNavigationResult? = null
+
+        composeTestRule.setContent {
+            CompositionLocalProvider(LocalTrapezeBackStack provides backStack) {
+                capturedResult = rememberNavigationResult("edit_result")
+            }
+        }
+
+        composeTestRule.runOnIdle { capturedResult.shouldBeNull() }
+
+        composeTestRule.runOnIdle {
+            backStack.popWithResult("edit_result", TestResult("late"))
+        }
+
+        composeTestRule.runOnIdle {
+            capturedResult.shouldBeInstanceOf<TestResult>().value shouldBe "late"
+        }
+    }
+
+    @Test
+    fun givenAResult_whenNavigationResultEffectIsUsed_thenItFiresExactlyOnce() {
+        val backStack = TrapezeBackStack(ResultScreen(1))
+        backStack.push(ResultScreen(2))
+        backStack.popWithResult("edit_result", TestResult("once"))
+        val received = mutableListOf<TrapezeNavigationResult>()
+
+        composeTestRule.setContent {
+            CompositionLocalProvider(LocalTrapezeBackStack provides backStack) {
+                NavigationResultEffect("edit_result") { received += it }
+            }
+        }
+
+        composeTestRule.runOnIdle {
+            received.size shouldBe 1
+            received.first().shouldBeInstanceOf<TestResult>().value shouldBe "once"
         }
     }
 
@@ -172,21 +231,31 @@ class NavigationResultTest {
     }
 
     @Test
-    fun givenAResult_whenRememberNavigationResultIsCalledTwice_thenItConsumesOnFirstRead() {
+    fun givenAResult_whenRememberNavigationResultRecomposes_thenTheValueIsLatched() {
         val backStack = TrapezeBackStack(ResultScreen(1))
         backStack.setResult("key", TestResult("once"))
         var lastResult: TrapezeNavigationResult? = null
+        var recomposeTrigger by mutableStateOf(0)
 
         composeTestRule.setContent {
             CompositionLocalProvider(LocalTrapezeBackStack provides backStack) {
+                @Suppress("UNUSED_EXPRESSION")
+                recomposeTrigger
                 lastResult = rememberNavigationResult("key")
             }
         }
 
         composeTestRule.runOnIdle {
             lastResult.shouldBeInstanceOf<TestResult>().value shouldBe "once"
-            // The backstack result should be consumed
+            // Taken off the backstack exactly once.
             backStack.consumeResult("key").shouldBeNull()
+        }
+
+        composeTestRule.runOnIdle { recomposeTrigger++ }
+
+        composeTestRule.runOnIdle {
+            // The delivered value survives recomposition instead of flipping back to null.
+            lastResult.shouldBeInstanceOf<TestResult>().value shouldBe "once"
         }
     }
 }

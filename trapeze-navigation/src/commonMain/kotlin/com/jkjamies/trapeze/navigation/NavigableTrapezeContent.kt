@@ -48,20 +48,21 @@ public fun NavigableTrapezeContent(
     val saveableStateHolder = rememberSaveableStateHolder()
     val currentScreen = backStack.current
 
-    // Clean up saved state for screens that have been popped from the backstack
-    LaunchedEffect(Unit) {
-        var previousScreens = backStack.asList()
+    // Clean up saved state for screens that have been removed from the backstack.
+    // Keyed on `backStack` so swapping backstacks restarts tracking, and driven by set
+    // difference rather than size: a push and a pop between two snapshot emissions leaves
+    // the size unchanged while still removing an entry.
+    LaunchedEffect(backStack, saveableStateHolder) {
+        var previousScreens = backStack.asList().toSet()
         snapshotFlow { backStack.asList() }
             .collect { currentScreens ->
-                if (currentScreens.size < previousScreens.size) {
-                    val currentSet = currentScreens.toSet()
-                    previousScreens.forEach { screen ->
-                        if (screen !in currentSet) {
-                            saveableStateHolder.removeState(screen)
-                        }
+                val currentSet = currentScreens.toSet()
+                previousScreens.forEach { screen ->
+                    if (screen !in currentSet) {
+                        saveableStateHolder.removeState(screen)
                     }
                 }
-                previousScreens = currentScreens
+                previousScreens = currentSet
             }
     }
 
