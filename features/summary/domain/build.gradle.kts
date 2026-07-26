@@ -35,7 +35,8 @@ android {
 
 dependencies {
     implementation(project(":strata"))
-    implementation(project(":features:summary:api"))
+    // `api`: the implementations here extend the abstract use cases declared in :api.
+    api(project(":features:summary:api"))
     implementation(libs.androidx.core.ktx)
     implementation(libs.kotlinx.coroutines.core)
 }

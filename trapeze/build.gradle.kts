@@ -44,9 +44,15 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            implementation(compose.runtime)
-            implementation(compose.ui)
-            implementation(libs.kotlinx.coroutines.core)
+            // These are `api` because they leak into Trapeze's public API surface:
+            //   - compose.runtime: `TrapezeStateHolder.produceState()` is `@Composable`.
+            //   - compose.ui: the `TrapezeUi` typealias takes a `Modifier`.
+            //   - coroutines: `wrapEventSink` exposes a `CoroutineScope` receiver.
+            // Declaring them as `implementation` would keep them off the consumer's
+            // compile classpath and make the published artifact unusable.
+            api(compose.runtime)
+            api(compose.ui)
+            api(libs.kotlinx.coroutines.core)
         }
         jvmTest.dependencies {
             implementation(libs.kotest.runner.junit5)

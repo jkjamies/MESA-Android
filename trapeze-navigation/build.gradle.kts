@@ -43,9 +43,12 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            implementation(project(":trapeze"))
-            implementation(compose.runtime)
-            implementation(compose.ui)
+            // `api` because these types appear in this module's public API:
+            //   - :trapeze supplies `TrapezeNavigator`, `TrapezeScreen`, `TrapezeNavigationResult`.
+            //   - compose.runtime/ui back the `@Composable` entry points and `Modifier` params.
+            api(project(":trapeze"))
+            api(compose.runtime)
+            api(compose.ui)
         }
         val androidInstrumentedTest by getting {
             dependencies {

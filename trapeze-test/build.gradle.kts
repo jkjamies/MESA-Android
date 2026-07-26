@@ -46,7 +46,8 @@ kotlin {
             api(libs.turbine)
             api(libs.kotlinx.coroutines.test)
             implementation(libs.molecule.runtime)
-            implementation(compose.runtime)
+            // `api` because `TrapezeStateHolder.test { }` drives a `@Composable` produceState.
+            api(compose.runtime)
         }
         jvmTest.dependencies {
             implementation(libs.kotest.runner.junit5)

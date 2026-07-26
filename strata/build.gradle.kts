@@ -40,7 +40,9 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            implementation(libs.kotlinx.coroutines.core)
+            // `api` because `Flow`, `Job` and `Deferred` appear in Strata's public API
+            // (`StrataSubjectInteractor.flow`, `StrataInteractor.inProgress`, `strataLaunch`).
+            api(libs.kotlinx.coroutines.core)
         }
         jvmTest.dependencies {
             implementation(libs.kotlinx.coroutines.test)
