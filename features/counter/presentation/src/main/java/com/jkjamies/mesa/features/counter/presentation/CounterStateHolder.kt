@@ -56,30 +56,27 @@ class CounterStateHolder constructor(
         val trapezeMessageManager = remember { TrapezeMessageManager() }
         val trapezeMessage by trapezeMessageManager.message.collectAsState(initial = null)
 
+        val eventSink = wrapEventSink<CounterEvent> { event ->
+            when (event) {
+                CounterEvent.Increment -> count++
+                CounterEvent.Decrement -> count--
+                CounterEvent.Divide -> count /= 2
+                CounterEvent.GoToSummary -> navigator.navigate(SummaryScreen(count))
+                CounterEvent.GetHelp -> interop.send(
+                    object : AppInteropEvent {
+                        override fun toString(): String = "Help Requested!"
+                    }
+                )
+                CounterEvent.ThrowError ->
+                    trapezeMessageManager.emitMessage(TrapezeMessage(MockError("Simulated Failure")))
+                is CounterEvent.ClearError -> trapezeMessageManager.clearMessage(event.id)
+            }
+        }
+
         return CounterState(
             count = count,
             trapezeMessage = trapezeMessage,
-            eventSink = { event ->
-                when (event) {
-                    CounterEvent.Increment -> count++
-                    CounterEvent.Decrement -> count--
-                    CounterEvent.Divide -> count /= 2
-                    CounterEvent.GoToSummary -> {
-                        navigator.navigate(SummaryScreen(count))
-                    }
-                    CounterEvent.GetHelp -> {
-                        interop.send(object : AppInteropEvent {
-                            override fun toString(): String = "Help Requested!"
-                        })
-                    }
-                    CounterEvent.ThrowError -> {
-                        trapezeMessageManager.emitMessage(TrapezeMessage(MockError("Simulated Failure")))
-                    }
-                    is CounterEvent.ClearError -> {
-                        trapezeMessageManager.clearMessage(event.id)
-                    }
-                }
-            }
+            eventSink = eventSink
         )
     }
 
