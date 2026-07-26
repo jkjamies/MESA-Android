@@ -279,7 +279,11 @@ class StrataInteractorTest : BehaviorSpec({
                 val result = interactor(Unit)
 
                 result.shouldBeInstanceOf<StrataResult.Failure>()
-                result.error.shouldBeInstanceOf<StrataTimeoutException>()
+                // Assert the duration, not just the type: under virtual time a five-minute
+                // timeout produces the same exception, so the type alone proves nothing about
+                // whether the override was honoured.
+                val error = result.error.shouldBeInstanceOf<StrataTimeoutException>()
+                error.duration shouldBe 50.milliseconds
             }
         }
     }

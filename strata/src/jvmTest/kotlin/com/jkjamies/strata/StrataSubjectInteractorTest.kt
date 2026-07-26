@@ -155,9 +155,11 @@ class StrataSubjectInteractorTest : BehaviorSpec({
 
     // Both of these use a SharedFlow rather than a StateFlow: a StateFlow conflates equal
     // assignments, so `value = 2` twice never produces a consecutive duplicate and the tests
-    // would pass whether or not `distinctValues` did anything.
+    // would pass whether or not `distinctValues` did anything. `replay = 1` because the first
+    // emit can land before flatMapLatest has subscribed, and a replay-0 SharedFlow drops
+    // emissions made while it has no subscribers.
     Given("a subject interactor emitting consecutive duplicate values") {
-        val backingFlow = MutableSharedFlow<Int>(extraBufferCapacity = 8)
+        val backingFlow = MutableSharedFlow<Int>(replay = 1, extraBufferCapacity = 8)
         val emitting = object : StrataSubjectInteractor<Unit, Int>() {
             override fun createObservable(params: Unit): Flow<Int> = backingFlow
         }
@@ -177,7 +179,7 @@ class StrataSubjectInteractorTest : BehaviorSpec({
     }
 
     Given("a subject interactor that opts into value de-duplication") {
-        val backingFlow = MutableSharedFlow<Int>(extraBufferCapacity = 8)
+        val backingFlow = MutableSharedFlow<Int>(replay = 1, extraBufferCapacity = 8)
         val deduping = object : StrataSubjectInteractor<Unit, Int>() {
             override val distinctValues: Boolean = true
             override fun createObservable(params: Unit): Flow<Int> = backingFlow
