@@ -43,6 +43,16 @@ public val LocalTrapezeBackStack = staticCompositionLocalOf<TrapezeBackStack> {
 }
 
 /**
+ * CompositionLocal for the [TrapezeBackStackEntry] currently being rendered.
+ *
+ * Screens are values, so the entry — not the screen — is what identifies "this visit". Used by
+ * [rememberNavigationResult] to address results to the right position in the stack.
+ */
+public val LocalTrapezeBackStackEntry = staticCompositionLocalOf<TrapezeBackStackEntry> {
+    error("No TrapezeBackStackEntry provided. Render screens via NavigableTrapezeContent.")
+}
+
+/**
  * Creates and remembers a [TrapezeNavigator] backed by the given [backStack].
  *
  * @param backStack The backstack to navigate with.

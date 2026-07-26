@@ -44,17 +44,22 @@ import com.jkjamies.trapeze.TrapezeNavigationResult
  * Prefer [NavigationResultEffect] when the result should trigger an action exactly once
  * rather than be read as state.
  *
- * @param key The unique key matching the one used in `popWithResult`.
+ * Results are addressed to a backstack *entry*, so the same [key] used by two unrelated
+ * features cannot collide, and a result nobody consumes is discarded when its entry is popped.
+ *
+ * @param key The result key matching the one used in `popWithResult`.
  * @param backStack The backstack to read results from. Defaults to [LocalTrapezeBackStack].
+ * @param entry The entry results are addressed to. Defaults to [LocalTrapezeBackStackEntry].
  * @return The most recently delivered result, or `null` if none has arrived.
  */
 @Composable
 public fun rememberNavigationResult(
     key: String,
-    backStack: TrapezeBackStack = LocalTrapezeBackStack.current
+    backStack: TrapezeBackStack = LocalTrapezeBackStack.current,
+    entry: TrapezeBackStackEntry = LocalTrapezeBackStackEntry.current
 ): TrapezeNavigationResult? {
-    var result by remember(backStack, key) { mutableStateOf<TrapezeNavigationResult?>(null) }
-    NavigationResultEffect(key, backStack) { result = it }
+    var result by remember(backStack, entry, key) { mutableStateOf<TrapezeNavigationResult?>(null) }
+    NavigationResultEffect(key, backStack, entry) { result = it }
     return result
 }
 
@@ -70,25 +75,27 @@ public fun rememberNavigationResult(
  * }
  * ```
  *
- * @param key The unique key matching the one used in `popWithResult`.
+ * @param key The result key matching the one used in `popWithResult`.
  * @param backStack The backstack to read results from. Defaults to [LocalTrapezeBackStack].
+ * @param entry The entry results are addressed to. Defaults to [LocalTrapezeBackStackEntry].
  * @param onResult Called with each delivered result.
  */
 @Composable
 public fun NavigationResultEffect(
     key: String,
     backStack: TrapezeBackStack = LocalTrapezeBackStack.current,
+    entry: TrapezeBackStackEntry = LocalTrapezeBackStackEntry.current,
     onResult: (TrapezeNavigationResult) -> Unit
 ) {
     val currentOnResult by rememberUpdatedState(onResult)
     // Consumption is a snapshot write, so it must happen in an effect rather than in
     // composition — writing state that was read during composition would invalidate the
     // calling scope and deliver the result for only a single, racy composition pass.
-    LaunchedEffect(backStack, key) {
-        snapshotFlow { backStack.peekResult(key) }
+    LaunchedEffect(backStack, entry, key) {
+        snapshotFlow { backStack.peekResult(entry.id, key) }
             .collect { pending ->
                 if (pending != null) {
-                    backStack.consumeResult(key)?.let(currentOnResult)
+                    backStack.consumeResult(entry.id, key)?.let(currentOnResult)
                 }
             }
     }

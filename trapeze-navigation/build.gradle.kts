@@ -50,11 +50,16 @@ kotlin {
             api(compose.runtime)
             api(compose.ui)
         }
+        androidMain.dependencies {
+            // Supplies the BackHandler actual. Internal to this module, so `implementation`.
+            implementation(libs.androidx.activity.compose)
+        }
         val androidInstrumentedTest by getting {
             dependencies {
                 implementation(libs.androidx.compose.ui.test.junit4)
                 implementation(libs.kotest.assertions.core)
                 implementation(libs.androidx.compose.ui.test.manifest)
+                implementation(libs.androidx.activity.compose)
             }
         }
     }
