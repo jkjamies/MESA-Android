@@ -17,22 +17,21 @@
 package com.jkjamies.trapeze
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.isActive
 
 /**
  * Wraps an event sink so events arriving after the scope is gone are dropped rather than crashing.
  *
- * Note the scope is the composition's, so work launched from an event sink is cancelled when the
- * screen leaves the composition — including on an Android configuration change. Retaining work
- * across a rotation is a job for Compose's `retain` API; see the note in TrapezeStateHolder.
+ * The scope is [rememberRetainedCoroutineScope], so work started by an event survives a
+ * configuration change and is cancelled when the screen is permanently gone. Pass an explicit
+ * scope to opt out.
  */
 @Composable
 @PublishedApi
 internal inline fun <E> wrapEventSink(
     crossinline eventSink: CoroutineScope.(E) -> Unit,
-    coroutineScope: CoroutineScope = rememberCoroutineScope(),
+    coroutineScope: CoroutineScope = rememberRetainedCoroutineScope(),
 ): (E) -> Unit = { event ->
     if (coroutineScope.isActive) {
         coroutineScope.eventSink(event)

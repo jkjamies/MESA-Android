@@ -20,6 +20,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   but never torn down.
 - `StrataInteractor.ambientLoadingDelay` and `defaultTimeout` are overridable per interactor.
 - `TrapezeMessage.cause` carries the originating `Throwable` for logging.
+- **`rememberRetainedCoroutineScope()`** — a scope held by Compose's `retain` and cancelled on
+  retirement. It is the default behind `wrapEventSink`, so work started from an event sink survives
+  an Android configuration change and is cancelled when the screen is permanently gone.
+  `rememberSaveable` covered state; nothing covered in-flight work. Use Compose's `retain { }`
+  directly for retained *values* — MESA does not wrap it.
 - CI runs the instrumented test suites on an emulator (API 28 and 34). They had never been
   executed by any workflow.
 - The publish workflow verifies the build before pushing artifacts to the registry.

@@ -343,10 +343,13 @@ process death (pair with `rememberSaveable` when you need both), and you must ne
 To release resources when a retained object is retired, have it implement `RetainObserver` and
 clean up in `onRetired()`.
 
-**Known gap:** `wrapEventSink` still launches from `rememberCoroutineScope()`, so work started by
-an event is cancelled on a configuration change. A retained `CoroutineScope` cancelled via
-`RetainObserver.onRetired()` is the fix; it is not yet implemented. Until then, launch long-running
-work somewhere with a longer lifetime than the composition if losing it on rotation matters.
+MESA does add one thing on top: `rememberRetainedCoroutineScope()`, a `CoroutineScope` held by
+`retain` and cancelled from `RetainObserver.onRetired()`. It is the default scope behind
+`wrapEventSink`, so a save started from an event sink survives a rotation and is cancelled when
+the screen is permanently gone. Pass an explicit scope to `wrapEventSink` to opt out.
+
+The scope inherits the composition's dispatcher and drops only its `Job`, so work stays on the
+same thread — and under the headless test runtime stays on the test scheduler.
 
 ### Screen Identity
 

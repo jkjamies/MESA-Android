@@ -21,10 +21,10 @@ ordered by how directly they block that.
 | | Count |
 |---|---|
 | Blocks out-of-the-box use | 4 (3 fixed) |
-| Correctness bugs and leaks | 9 (8 fixed, 1 partly) |
+| Correctness bugs and leaks | 9 (9 fixed) |
 | Library-hygiene gaps | 11 (3 fixed) |
 | Security / privacy | 4 (3 fixed) |
-| Missing capabilities | 8 (1 fixed, 1 deferred to Compose) |
+| Missing capabilities | 8 (2 fixed) |
 
 **Status:** everything below is marked FIXED or NOT FIXED against the branch
 `claude/project-architecture-review-0aw4o5`. Two items are deliberately still open —
@@ -35,7 +35,8 @@ almost entirely at the edges: **the published artifacts were not consumable, the
 navigation layer had a Compose-contract violation at its centre, the test suite that
 covers navigation never ran, and there was no retained scope** — which the "no ViewModels"
 stance made load-bearing rather than optional. The first three are fixed on this branch; the
-fourth is answered by Compose's own `retain` API rather than by MESA.
+fourth is answered by Compose's own `retain` API, with MESA adding only the retained scope that
+`wrapEventSink` needs.
 
 ---
 
@@ -229,7 +230,7 @@ size unchanged and the popped screen's saved state is never released. The effect
 keyed on `Unit`, so swapping backstacks would not restart tracking. Fixed: keyed on
 `backStack`, diffed by set membership.
 
-### 2.6 There is no retained scope — **SUPERSEDED BY COMPOSE**
+### 2.6 There is no retained scope — **FIXED (on Compose's `retain`)**
 
 MESA's stance is "No ViewModels: logic belongs in a `TrapezeStateHolder`." But `TrapezeContent`
 creates the StateHolder with plain `remember`, and `wrapEventSink` uses `rememberCoroutineScope()`,
@@ -248,15 +249,32 @@ Building a parallel mechanism on top of a first-party primitive would have been 
 more code, an extra `lifecycle-viewmodel-compose` dependency, a hand-rolled `ViewModel`, and a
 second concept for feature authors to learn. MESA now documents `retain { }` and wraps nothing.
 
-**Remaining piece:** `wrapEventSink` still launches from `rememberCoroutineScope()`, so event-sink
-work is still cancelled on a configuration change. The fix is a retained `CoroutineScope` cancelled
-from `RetainObserver.onRetired()`. It is not implemented because the exact `RetainObserver` callback
-set could not be verified in this environment — two documentation sources disagreed — and guessing
-at an interface's abstract members produces a compile error, not a working library. This is a small,
-well-understood change for whoever has a compiler in front of them.
+MESA adds exactly one thing on top: `rememberRetainedCoroutineScope()`, a scope held by `retain`
+and cancelled from `RetainObserver.onRetired()`. It backs `wrapEventSink`, which is what closes the
+original bug — event-sink work now survives a rotation and dies when the screen is permanently gone.
+The scope inherits the composition's dispatcher and drops only its `Job`, so work stays on the same
+thread and, under the headless test runtime, on the test scheduler.
 
-Note also that `retain` is marked experimental/incubating in Compose 1.10, so pin the Compose
-version deliberately and expect the API to move before it stabilises.
+All contact with the experimental API is confined to one private class in
+`RetainedCoroutineScope.kt`. Nothing from `androidx.compose.runtime.retain` appears in Trapeze's
+public API, so consumers do not inherit an opt-in requirement, and an upstream change is a
+single-file fix.
+
+**Two unverified assumptions**, both of which fail loudly at compile time rather than silently:
+
+1. `RetainObserver`'s abstract members are `onRetained`, `onEnteredComposition`,
+   `onExitedComposition`, `onRetired`. Official documentation lists these four; a secondary source
+   suggested an `onUnused` instead of the middle two. Could not be resolved — every primary source
+   for the interface declaration returned 403 or rendered navigation only.
+2. `runtime-retain` is on the compile classpath transitively via `compose.ui`. Confirmed for the
+   desktop variant (`org.jetbrains.compose.ui:ui-desktop:1.10.3` depends on
+   `androidx.compose.runtime:runtime-retain-desktop:1.10.5`), assumed for the rest. Note there is
+   **no** JetBrains-published `runtime-retain` on Maven Central — only `runtime`,
+   `runtime-saveable` and `runtime-annotation` — so declaring it explicitly would mean pinning an
+   androidx coordinate against seven KMP targets by hand. If resolution fails, that is the fix.
+
+`retain` is experimental/incubating in Compose 1.10, so pin the Compose version deliberately and
+expect the API to move before it stabilises.
 
 The related sharp edge is gone regardless: `strataLaunch` no longer throws on an already-cancelled
 scope, so the non-atomic `isActive` check in `wrapEventSink` can no longer turn a late event into a
@@ -454,8 +472,7 @@ plugins.
 
 Ranked by how likely a real app is to need them:
 
-1. ~~Retained scope / config-change survival~~ — use Compose's `retain { }` (§2.6). One piece
-   left: a retained `CoroutineScope` for `wrapEventSink`.
+1. ~~Retained scope / config-change survival~~ — done, on Compose's `retain` (§2.6).
 2. ~~System back~~ — done (§1.2). Predictive back is still open and belongs with transitions.
 3. **Screen transition animations.** `NavigableTrapezeContent` swaps content with no
    `AnimatedContent` and no hook to supply one. Every navigation is a hard cut.
@@ -486,7 +503,8 @@ Committed on `claude/project-architecture-review-0aw4o5`:
 | `1fb598d` | Backstack entry identity, entry-scoped results, system back, restore truncation (§2.3, §2.4, §2.7, §1.2) |
 | `78f663d` | `TrapezeMessage` API, abstract navigator members, DI scoping, backup rules, doc consolidation, duplicate test removal (§2.9, §3.8, §3.9, §4.1, §4.2) |
 | `5922a5f` | `StrataInteractor` loading model rebuilt around the ambient transition (§2.9) |
-| *(final)* | Removed the hand-rolled retained store in favour of Compose's `retain` (§2.6) |
+| `9e19674` | Removed the hand-rolled retained store in favour of Compose's `retain` (§2.6) |
+| *(final)* | `rememberRetainedCoroutineScope` on `retain`; backs `wrapEventSink` (§2.6) |
 
 Strata's changes are the only ones **executed** — it is pure Kotlin and builds against Maven
 Central, so its 58 tests were run locally, including three verified to fail against the previous
