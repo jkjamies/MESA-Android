@@ -14,11 +14,14 @@
  * limitations under the License.
  */
 
-pluginManagement {
-    // Convention plugins. Everything shared between module build files — target sets, SDK
-    // levels, the Java toolchain, the API guarantees — is declared once in there.
-    includeBuild("build-logic")
+// Same resolver the main build uses. Without it, `jvmToolchain(17)` below fails outright on a
+// machine whose only JDK is a different major version, which is a confusing first experience
+// for a contributor who never asked to think about build-logic at all.
+plugins {
+    id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
+}
 
+dependencyResolutionManagement {
     repositories {
         google {
             content {
@@ -30,27 +33,13 @@ pluginManagement {
         mavenCentral()
         gradlePluginPortal()
     }
-}
-plugins {
-    id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
-}
-dependencyResolutionManagement {
-    repositories {
-        google()
-        mavenCentral()
+
+    // The same catalog the main build uses, so a version is declared exactly once for both.
+    versionCatalogs {
+        create("libs") {
+            from(files("../gradle/libs.versions.toml"))
+        }
     }
 }
 
-rootProject.name = "MESA-Android"
-include(":app")
-include(":core:presentation")
-include(":features:counter:presentation")
-include(":features:summary:api")
-include(":features:summary:data")
-include(":features:summary:domain")
-include(":features:summary:presentation")
-include(":trapeze")
-include(":trapeze-navigation")
-include(":strata")
-include(":trapeze-test")
-include(":mesa-bom")
+rootProject.name = "build-logic"

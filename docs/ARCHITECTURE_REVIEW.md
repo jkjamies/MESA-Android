@@ -377,6 +377,12 @@ already diverged: **`minSdk` is 27 in the libraries and `features/counter`, but 
 app and every `features/summary` module.** Extract a `build-logic` convention plugin
 (`mesa.android.library`, `mesa.kmp.library`, `mesa.published`) and set these once.
 
+> **Addressed.** `build-logic` now carries `mesa.kmp.library`, `mesa.kmp.android.library`,
+> `mesa.android.library` and `mesa.android.application`. Each value is declared once, and the
+> drift is resolved as a policy rather than a coincidence: **27 for the published libraries**,
+> because a library's floor is a constraint it imposes on every consumer, and **28 for the
+> sample**, because that is what the only application that consumes it runs on.
+
 ### 3.6 Publishing setup
 
 - `gradle/publishing.gradle.kts` is applied with `apply(from:)` + `afterEvaluate`, which is
@@ -512,26 +518,28 @@ Central, so its 58 tests were run locally, including three verified to fail agai
 loading-state implementation. Everything touching Compose is source-reviewed only (see the caveat at the
 top) and needs CI.
 
-### Held back deliberately
+### Held back deliberately, then unblocked
 
-Three items were left out rather than written blind, because each is a design change that wants
-a compiler in the loop and would be hard to review stacked on top of unverified work:
+Two items were held out of the first pass rather than written blind, because each wanted a
+compiler in the loop and would have been hard to review stacked on unverified work. Both landed
+once CI was green:
 
-| # | Scope | Why held |
-|---|---|---|
-| 1 | **`explicitApi()` + binary-compatibility validator** (§3.1, §3.2) | `apiDump` has to be *run* to generate the `.api` files, and it cannot be run here. Adding `apiCheck` without the dumps would just make CI red. |
-| 2 | **`build-logic` convention plugins** (§3.5, §3.6) | Mechanical but wide, and it touches every build file this branch already modified. Much safer once the current changes are known-good. |
+| # | Scope | Why held | Outcome |
+|---|---|---|---|
+| 1 | **`explicitApi()` + binary-compatibility validator** (§3.1, §3.2) | The dumps have to be *generated* by a machine that can resolve the Android toolchain, and adding the check without them would only make CI red. | Landed. Explicit API mode on all four published modules; ABI recorded in `{module}/api/` and checked by `checkKotlinAbi` on every build. Bootstrapped by a temporary CI step that wrote and printed the dumps. |
+| 2 | **`build-logic` convention plugins** (§3.5) | Mechanical but wide, and it touches every build file this branch already modified. | Landed. `mesa.kmp.library`, `mesa.kmp.android.library`, `mesa.android.library`, `mesa.android.application`. The `minSdk` 27/28 drift is gone: 27 is the published libraries' floor, 28 is the sample's. |
+
+§3.6's other points stand: `gradle/publishing.gradle.kts` is still an `apply(from:)` script, `mesa-bom`
+still reads sibling `gradle.properties` outside Gradle's input tracking, and there is still no
+Dokka or signing. Those belong with the Maven Central work, not with this refactor.
 
 ### Recommended order from here
 
-1. Get this branch green — expect fallout in the instrumented suites, which are running for the
-   first time, and in the four commits that have never been compiled.
-2. `explicitApi()` + binary-compat dumps (§3.1, §3.2) — locks in §1.1 permanently.
-3. `build-logic` convention plugins (§3.5) — removes the `minSdk` 27/28 drift.
-4. Consumer R8 rules + a minified sample (§3.4) — needs 3.
-5. Screen transitions and predictive back (§5.3) — the visible polish.
-6. Maven Central (§1.4) — needs 2 and 3; the thing that unblocks actual adoption.
-7. Deep links (§5.6) — parked at the author's request.
+1. Consumer R8 rules + a minified sample (§3.4).
+2. Screen transitions and predictive back (§5.3) — the visible polish.
+3. Maven Central (§1.4) — the thing that unblocks actual adoption; wants Dokka and signing,
+   which is also where the rest of §3.6 gets cleaned up.
+4. Deep links (§5.6) — parked at the author's request.
 
 ---
 

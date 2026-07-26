@@ -103,6 +103,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `LaunchedEffect(result) { result?.let { … } }` pattern is unaffected.
 - `strataLaunch`/`strataLaunchWithResult` reject a `Job` passed in `context`, which would have
   detached the coroutine from the scope.
+- Shared build configuration moved into `build-logic` convention plugins. `compileSdk`, `minSdk`,
+  the Java target, the multiplatform target set and the publishing hookup were hand-repeated in
+  every module and had drifted — `minSdk` was 27 in three modules and 28 in five, with no rule
+  behind either. It is now a stated policy: 27 for the published libraries, 28 for the sample.
 - `GEMINI.md` and `.junie/guidelines.md` now point at `CLAUDE.md` instead of duplicating it.
 - `trapeze-test` moves to 0.3.0, aligning it with the other modules. It sat at 0.2.0 while the
   library it is built against changed, and the publish workflow skips versions that already

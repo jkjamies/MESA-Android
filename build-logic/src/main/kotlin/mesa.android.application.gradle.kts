@@ -14,27 +14,29 @@
  * limitations under the License.
  */
 
-plugins {
-    id("mesa.kmp.android.library")
-}
+/**
+ * The sample application.
+ *
+ * One consumer today, and the point is precisely that: the app's SDK and Java levels are pinned
+ * to the same declarations the sample's library modules use, so the two cannot drift apart
+ * unnoticed the way they had.
+ */
 
-kotlin {
-    sourceSets {
-        commonMain.dependencies {
-            api(project(":trapeze"))
-            api(libs.turbine)
-            api(libs.kotlinx.coroutines.test)
-            implementation(libs.molecule.runtime)
-            // `api` because `TrapezeStateHolder.test { }` drives a `@Composable` produceState.
-            api(compose.runtime)
-        }
-        jvmTest.dependencies {
-            implementation(libs.kotest.runner.junit5)
-            implementation(libs.kotest.assertions.core)
-        }
-    }
+plugins {
+    id("com.android.application")
+    id("org.jetbrains.kotlin.android")
 }
 
 android {
-    namespace = "com.jkjamies.trapeze.test"
+    compileSdk = 36
+
+    defaultConfig {
+        minSdk = 28
+        targetSdk = 36
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
 }
