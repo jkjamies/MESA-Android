@@ -66,7 +66,7 @@ jobs:
     runs-on: ubuntu-latest
 
     permissions:
-      contents: write
+      contents: read
       packages: write
 
     steps:
@@ -76,10 +76,16 @@ jobs:
         uses: actions/setup-java@v5
         with:
           java-version: '17'
-          distribution: 'temurin'
+          distribution: 'corretto'
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
+
+      # A release can be cut from any commit, including one CI never saw green.
+      # Verify before anything is pushed to the registry — artifacts are immutable
+      # once published.
+      - name: Verify
+        run: ./gradlew build
 
       - name: Check and Publish Trapeze
         run: |
