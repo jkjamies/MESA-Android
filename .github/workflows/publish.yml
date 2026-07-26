@@ -95,6 +95,11 @@ jobs:
       - name: Verify
         run: ./gradlew build
 
+      # An artifact whose ABI has drifted from the recorded dumps is exactly the artifact that
+      # must not become immutable: consumers compile against what the dumps describe.
+      - name: Check published API surface
+        run: ./gradlew checkKotlinAbi
+
       - name: Check and Publish Trapeze
         run: |
           VERSION=$(grep 'publishingVersion' trapeze/gradle.properties | cut -d'=' -f2 | tr -d '[:space:]')
