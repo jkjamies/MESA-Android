@@ -8,6 +8,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+> Targets 0.3.0. Alongside the entries below, this release carries work that landed on `main`
+> earlier and was not written up at the time:
+>
+> - **Kotlin Multiplatform migration** (#30) — `trapeze`, `trapeze-navigation`, `strata` and
+>   `trapeze-test` now target Android, JVM, iOS, macOS and wasmJs (plus Linux/Windows native for
+>   `strata`). `TrapezeScreen` and `TrapezeNavigationResult` became `expect`/`actual`, extending
+>   `Parcelable` only on Android.
+> - **`popTo` navigation and targeted message clearing** (#25) — `TrapezeNavigator.popTo(screen)`,
+>   `TrapezeMessageManager.clearMessage(id)`, and matching support in `FakeTrapezeNavigator`.
+> - Dependency updates across the Kotlin, Compose, AndroidX, Kotest, coroutines and Actions groups.
+
 ### Added
 - **System back handling.** `NavigableTrapezeContent` pops the backstack on the platform back
   affordance while more than one screen is on the stack, and stays out of the way at the root.

@@ -55,6 +55,9 @@ public fun rememberRetainedCoroutineScope(): CoroutineScope {
  * upstream is a single-file fix, and — because nothing here appears in Trapeze's public API —
  * consumers never inherit an opt-in requirement.
  *
+ * `RetainObserver` has five members: [onRetained], [onEnteredComposition], [onExitedComposition],
+ * [onRetired] and [onUnused]. Only the last two release anything.
+ *
  * The artifact reaches the compile classpath transitively through `compose.ui`, which `:trapeze`
  * exports. There is no JetBrains-published `runtime-retain`, so declaring it explicitly would mean
  * pinning an androidx coordinate against every KMP target by hand.
@@ -80,6 +83,13 @@ private class RetainedCoroutineScopeHolder(compositionContext: CoroutineContext)
     }
 
     override fun onRetired() {
+        scope.cancel()
+    }
+
+    override fun onUnused() {
+        // Created but never actually retained — the composition that requested it was abandoned.
+        // Nothing has launched yet, but the Job is real, so release it rather than leave it
+        // dangling.
         scope.cancel()
     }
 }
