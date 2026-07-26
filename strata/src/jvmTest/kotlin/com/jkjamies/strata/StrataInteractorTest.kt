@@ -297,4 +297,25 @@ class StrataInteractorTest : BehaviorSpec({
             }
         }
     }
+
+    Given("a parameterless interactor overriding defaultTimeout") {
+        val interactor = object : StrataInteractor<Unit, Unit>() {
+            override val defaultTimeout = 50.milliseconds
+            override suspend fun doWork(params: Unit) {
+                delay(10.seconds)
+            }
+        }
+
+        When("invoked through the no-parameter extension") {
+            Then("the subclass timeout applies rather than the library default") {
+                // The extension must not hard-code DefaultTimeout: doing so would silently give
+                // this interactor 5 minutes instead of the 50ms it asked for.
+                val result = interactor()
+
+                result.shouldBeInstanceOf<StrataResult.Failure>()
+                val error = result.error.shouldBeInstanceOf<StrataTimeoutException>()
+                error.duration shouldBe 50.milliseconds
+            }
+        }
+    }
 })

@@ -17,6 +17,7 @@
 package com.jkjamies.trapeze
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MonotonicFrameClock
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.retain.RetainObserver
 import androidx.compose.runtime.retain.retain
@@ -35,9 +36,11 @@ import kotlin.coroutines.CoroutineContext
  * scope is held by Compose's `retain`, whose retention boundary is "permanently removed", not
  * "temporarily recomposed elsewhere".
  *
- * The scope inherits the composition's [CoroutineContext] — its dispatcher, and under a headless
- * test runtime its `TestCoroutineScheduler` — but drops the composition's [Job], which is what
- * decouples its lifetime without changing which thread work runs on.
+ * The scope inherits the composition's dispatcher — and under a headless test runtime its
+ * `TestCoroutineScheduler` — but drops two composition-bound elements: the [Job], which is what
+ * decouples its lifetime, and the [MonotonicFrameClock], which belongs to the `Recomposer` that
+ * dies at a configuration change. Carrying a dead frame clock across one would hang any retained
+ * coroutine that awaited a frame.
  *
  * This is the default scope behind [TrapezeStateHolder.wrapEventSink].
  */
@@ -59,16 +62,23 @@ public fun rememberRetainedCoroutineScope(): CoroutineScope {
  * [onRetired] and [onUnused]. Only the last two release anything.
  *
  * The artifact reaches the compile classpath transitively through `compose.ui`, which `:trapeze`
- * exports. There is no JetBrains-published `runtime-retain`, so declaring it explicitly would mean
- * pinning an androidx coordinate against every KMP target by hand.
+ * exports — verified for the desktop and wasm variants, which depend on
+ * `androidx.compose.runtime:runtime-retain-<target>`. Note there is no *JetBrains*-published
+ * `org.jetbrains.compose.runtime:runtime-retain`; declaring the dependency explicitly would mean
+ * pinning a raw androidx coordinate, and version, against every KMP target by hand.
  */
 private class RetainedCoroutineScopeHolder(compositionContext: CoroutineContext) : RetainObserver {
 
-    // SupervisorJob so one failed event handler does not take down unrelated work from the
-    // same screen. minusKey(Job) detaches from the composition's lifetime while keeping its
-    // dispatcher.
-    val scope: CoroutineScope =
-        CoroutineScope(compositionContext.minusKey(Job) + SupervisorJob())
+    // SupervisorJob so one failed event handler does not take down unrelated work from the same
+    // screen. Dropping Job detaches from the composition's lifetime; dropping MonotonicFrameClock
+    // avoids carrying a frame clock owned by a Recomposer that will not survive a configuration
+    // change. The dispatcher is kept — AndroidUiDispatcher is a per-thread singleton, and under a
+    // test runtime it carries the scheduler that gives tests virtual time.
+    val scope: CoroutineScope = CoroutineScope(
+        compositionContext
+            .minusKey(Job)
+            .minusKey(MonotonicFrameClock) + SupervisorJob()
+    )
 
     override fun onRetained() {
         // Nothing to start: the scope is created eagerly and stays idle until something launches.

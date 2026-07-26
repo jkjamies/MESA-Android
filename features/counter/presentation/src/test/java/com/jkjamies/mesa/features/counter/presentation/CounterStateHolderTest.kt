@@ -29,6 +29,8 @@ import io.kotest.matchers.types.shouldBeInstanceOf
 
 class CounterStateHolderTest : BehaviorSpec({
 
+    coroutineTestScope = true
+
     Given("a CounterStateHolder with initial count") {
         When("produceState is called") {
             Then("initial count matches the screen") {

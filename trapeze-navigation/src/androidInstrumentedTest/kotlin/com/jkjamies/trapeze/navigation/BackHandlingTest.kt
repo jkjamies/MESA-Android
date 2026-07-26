@@ -29,7 +29,6 @@ import com.jkjamies.trapeze.TrapezeNavigator
 import com.jkjamies.trapeze.TrapezeScreen
 import com.jkjamies.trapeze.TrapezeState
 import com.jkjamies.trapeze.TrapezeStateHolder
-import com.jkjamies.trapeze.TrapezeUi
 import io.kotest.matchers.shouldBe
 import kotlinx.parcelize.Parcelize
 import org.junit.Rule
@@ -45,18 +44,24 @@ private class EmptyHolder : TrapezeStateHolder<BackScreen, TrapezeState, Trapeze
     override fun produceState(): TrapezeState = EmptyState
 }
 
+/**
+ * A function, so the factory can hand back `::EmptyUi`. `TrapezeContent` casts the resolved UI to
+ * `TrapezeUi<TrapezeState>`, which emits a real `CHECKCAST` to `Function4`; a composable lambda
+ * compiles to `ComposableLambdaImpl` and does not satisfy it.
+ */
+@Composable
+private fun EmptyUi(modifier: Modifier, state: TrapezeState) {
+}
+
 class BackHandlingTest {
 
     @get:Rule
     val composeTestRule = createAndroidComposeRule<ComponentActivity>()
 
-    private fun trapeze(): Trapeze {
-        val ui: TrapezeUi<TrapezeState> = @Composable { _: Modifier, _: TrapezeState -> }
-        return Trapeze.Builder()
-            .addStateHolderFactory { screen, _ -> if (screen is BackScreen) EmptyHolder() else null }
-            .addUiFactory { screen -> if (screen is BackScreen) ui else null }
-            .build()
-    }
+    private fun trapeze(): Trapeze = Trapeze.Builder()
+        .addStateHolderFactory { screen, _ -> if (screen is BackScreen) EmptyHolder() else null }
+        .addUiFactory { screen -> if (screen is BackScreen) ::EmptyUi else null }
+        .build()
 
     private fun pressBack() {
         composeTestRule.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }

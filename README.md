@@ -526,10 +526,13 @@ class NoteStateHolder @AssistedInject constructor(
                         val result = saveNote.value(event.params)
                         // map + getOrDefault: safely extract a value with fallback
                         val savedId = result.map { event.params.id }.getOrDefault("")
-                        // fold: produce a message for both outcomes
+                        // fold: produce a message for both outcomes. The failure branch
+                        // carries the exception as `cause` for logging rather than showing it.
                         val message = result.fold(
-                            onSuccess = { "Saved $savedId successfully!" },
-                            onFailure = { error -> "Save failed: ${error.message}" }
+                            onSuccess = { TrapezeMessage("Saved $savedId successfully!") },
+                            onFailure = { error ->
+                                TrapezeMessage("Couldn't save your note.", cause = error)
+                            }
                         )
                     }
                 }

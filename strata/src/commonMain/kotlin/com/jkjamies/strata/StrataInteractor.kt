@@ -174,7 +174,17 @@ public abstract class StrataInteractor<in P, R> {
 
 /**
  * Convenience overload for interactors that take no parameters.
+ *
+ * Deliberately takes no `timeout` default. Supplying one here would hard-code
+ * [StrataInteractor.DefaultTimeout] and silently override a subclass's own [defaultTimeout];
+ * omitting it lets the member operator pick the instance's value. Kotlin cannot express
+ * "fall back to the member default" from an extension, hence the two overloads.
  */
-public suspend operator fun <R> StrataInteractor<Unit, R>.invoke(
-    timeout: Duration = StrataInteractor.DefaultTimeout,
+public suspend operator fun <R> StrataInteractor<Unit, R>.invoke(): StrataResult<R> = invoke(Unit)
+
+/**
+ * Convenience overload for parameterless interactors run with an explicit [timeout].
+ */
+public suspend fun <R> StrataInteractor<Unit, R>.invoke(
+    timeout: Duration,
 ): StrataResult<R> = invoke(Unit, timeout)

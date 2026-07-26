@@ -20,6 +20,7 @@ import app.cash.turbine.test
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 
@@ -139,6 +140,7 @@ class StrataSubjectInteractorTest : BehaviorSpec({
 
         When("invoked again with the same params after stop") {
             Then("it re-subscribes") {
+                backingFlow.value = 99
                 interactor.flow.test {
                     interactor(Unit)
                     awaitItem() shouldBe 99
@@ -151,8 +153,11 @@ class StrataSubjectInteractorTest : BehaviorSpec({
         }
     }
 
-    Given("a subject interactor emitting duplicate values") {
-        val backingFlow = MutableStateFlow(1)
+    // Both of these use a SharedFlow rather than a StateFlow: a StateFlow conflates equal
+    // assignments, so `value = 2` twice never produces a consecutive duplicate and the tests
+    // would pass whether or not `distinctValues` did anything.
+    Given("a subject interactor emitting consecutive duplicate values") {
+        val backingFlow = MutableSharedFlow<Int>(extraBufferCapacity = 8)
         val emitting = object : StrataSubjectInteractor<Unit, Int>() {
             override fun createObservable(params: Unit): Flow<Int> = backingFlow
         }
@@ -161,15 +166,10 @@ class StrataSubjectInteractorTest : BehaviorSpec({
             Then("repeat emissions are delivered rather than silently dropped") {
                 emitting.flow.test {
                     emitting(Unit)
-                    awaitItem() shouldBe 1
 
-                    // A StateFlow conflates equal assignments, so force two distinct
-                    // emissions that carry the same value.
-                    backingFlow.value = 2
+                    backingFlow.emit(2)
                     awaitItem() shouldBe 2
-                    backingFlow.value = 1
-                    awaitItem() shouldBe 1
-                    backingFlow.value = 2
+                    backingFlow.emit(2)
                     awaitItem() shouldBe 2
                 }
             }
@@ -177,7 +177,7 @@ class StrataSubjectInteractorTest : BehaviorSpec({
     }
 
     Given("a subject interactor that opts into value de-duplication") {
-        val backingFlow = MutableStateFlow(1)
+        val backingFlow = MutableSharedFlow<Int>(extraBufferCapacity = 8)
         val deduping = object : StrataSubjectInteractor<Unit, Int>() {
             override val distinctValues: Boolean = true
             override fun createObservable(params: Unit): Flow<Int> = backingFlow
@@ -187,11 +187,10 @@ class StrataSubjectInteractorTest : BehaviorSpec({
             Then("the override is honoured and consecutive duplicates are filtered") {
                 deduping.flow.test {
                     deduping(Unit)
-                    awaitItem() shouldBe 1
 
-                    backingFlow.value = 2
+                    backingFlow.emit(2)
                     awaitItem() shouldBe 2
-                    backingFlow.value = 2
+                    backingFlow.emit(2)
                     expectNoEvents()
                 }
             }

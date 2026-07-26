@@ -10,9 +10,10 @@ add these artifacts to an empty project and build a real app with them?** Findin
 ordered by how directly they block that.
 
 > **Verification caveat.** This review was produced in an environment where Google's Maven
-> repository is unreachable, so AGP and Compose could not be resolved and *nothing here was
-> compiled or executed*. Findings are from source reading. The fixes committed alongside
-> this document need a green CI run before they are trusted.
+> repository is unreachable, so AGP and Compose could not be resolved: **nothing that depends on
+> them was compiled or executed**, and those findings come from source reading alone. `:strata` is
+> the exception — it is pure Kotlin, resolves from Maven Central, and its tests were run locally
+> (see §6). Everything Compose-dependent needs a green CI run before it is trusted.
 
 ---
 

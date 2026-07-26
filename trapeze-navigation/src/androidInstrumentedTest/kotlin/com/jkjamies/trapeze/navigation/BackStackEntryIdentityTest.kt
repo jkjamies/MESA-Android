@@ -32,10 +32,10 @@ import com.jkjamies.trapeze.TrapezeNavigator
 import com.jkjamies.trapeze.TrapezeScreen
 import com.jkjamies.trapeze.TrapezeState
 import com.jkjamies.trapeze.TrapezeStateHolder
-import com.jkjamies.trapeze.TrapezeUi
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import kotlinx.parcelize.Parcelize
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 
@@ -43,6 +43,22 @@ import org.junit.Test
 private data class IdScreen(val id: Int) : TrapezeScreen, Parcelable
 
 private data class CounterState(val count: Int, val bump: () -> Unit) : TrapezeState
+
+/** The most recent state rendered, at file scope so the UI below can be a plain function. */
+private var latestState: CounterState? = null
+
+/**
+ * Declared as a function so factories can hand back `::IdCounterUi`.
+ *
+ * `TrapezeContent` casts the resolved UI to `TrapezeUi<TrapezeState>`, and Kotlin emits a real
+ * `CHECKCAST` to `Function4` for that. A composable *lambda* compiles to `ComposableLambdaImpl`,
+ * which does not satisfy it; a function reference does. Feature code uses `::FooUi` throughout for
+ * the same reason.
+ */
+@Composable
+private fun IdCounterUi(modifier: Modifier, state: CounterState) {
+    latestState = state
+}
 
 /** Holds a `rememberSaveable` counter, so shared saveable state is directly observable. */
 private class CounterHolder : TrapezeStateHolder<IdScreen, CounterState, TrapezeEvent>() {
@@ -58,17 +74,22 @@ class BackStackEntryIdentityTest {
     @get:Rule
     val composeTestRule = createComposeRule()
 
-    private var latest: CounterState? = null
+    private val latest: CounterState
+        get() = checkNotNull(latestState) { "UI has not composed yet" }
 
-    private fun trapeze(): Trapeze {
-        val ui: TrapezeUi<CounterState> = @Composable { _: Modifier, state: CounterState ->
-            latest = state
-        }
-        return Trapeze.Builder()
-            .addStateHolderFactory { screen, _ -> if (screen is IdScreen) CounterHolder() else null }
-            .addUiFactory { screen -> if (screen is IdScreen) ui else null }
-            .build()
+    @Before
+    fun resetCapturedState() {
+        latestState = null
     }
+
+    /**
+     * Built once per test — rebuilding it inside `setContent` would hand `TrapezeContent` a new
+     * registry on every recomposition and defeat its remember keys.
+     */
+    private fun trapeze(): Trapeze = Trapeze.Builder()
+        .addStateHolderFactory { screen, _ -> if (screen is IdScreen) CounterHolder() else null }
+        .addUiFactory { screen -> if (screen is IdScreen) ::IdCounterUi else null }
+        .build()
 
     @Test
     fun givenTwoPushesOfAnEqualScreen_thenTheEntriesHaveDistinctIds() {
@@ -94,17 +115,17 @@ class BackStackEntryIdentityTest {
             }
         }
 
-        composeTestRule.runOnIdle { latest!!.bump() }
-        composeTestRule.runOnIdle { latest!!.count shouldBe 1 }
+        composeTestRule.runOnIdle { latest.bump() }
+        composeTestRule.runOnIdle { latest.count shouldBe 1 }
 
         // Navigate to an *equal* screen. Keyed by screen value this would resume the root
         // entry's saved state; keyed by entry id it must start fresh.
         composeTestRule.runOnIdle { navigator.navigate(IdScreen(1)) }
-        composeTestRule.runOnIdle { latest!!.count shouldBe 0 }
+        composeTestRule.runOnIdle { latest.count shouldBe 0 }
 
         // Going back restores the root entry's own state.
         composeTestRule.runOnIdle { navigator.pop() }
-        composeTestRule.runOnIdle { latest!!.count shouldBe 1 }
+        composeTestRule.runOnIdle { latest.count shouldBe 1 }
     }
 
     @Test
@@ -121,14 +142,14 @@ class BackStackEntryIdentityTest {
         }
 
         composeTestRule.runOnIdle { navigator.navigate(IdScreen(2)) }
-        composeTestRule.runOnIdle { latest!!.bump() }
-        composeTestRule.runOnIdle { latest!!.count shouldBe 1 }
+        composeTestRule.runOnIdle { latest.bump() }
+        composeTestRule.runOnIdle { latest.count shouldBe 1 }
 
         composeTestRule.runOnIdle { navigator.pop() }
         composeTestRule.runOnIdle { navigator.navigate(IdScreen(2)) }
 
         // A fresh entry: the popped one's saved state must have been released.
-        composeTestRule.runOnIdle { latest!!.count shouldBe 0 }
+        composeTestRule.runOnIdle { latest.count shouldBe 0 }
     }
 
     @Test

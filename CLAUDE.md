@@ -360,14 +360,17 @@ strataLaunch {
     // map: transform Success<Unit> to carry additional context
     val savedCount = result.map { params.count }.getOrDefault(0)
 
-    // fold: produce a message for both success and failure
+    // fold: produce a message for both outcomes. The failure branch keeps the exception as
+    // `cause` for logging and never puts it in the text — see Transient UI Messages below.
     val message = result.fold(
-        onSuccess = { "Saved $savedCount successfully!" },
-        onFailure = { error -> "Save failed: ${error.message ?: "Unknown error"}" }
+        onSuccess = { TrapezeMessage("Saved $savedCount successfully!") },
+        onFailure = { error -> TrapezeMessage("Couldn't save your changes.", cause = error) }
     )
 
-    // getOrElse: compute a fallback from the error
-    val display = result.map { "OK" }.getOrElse { error -> "Error: ${error.message}" }
+    // getOrElse: compute a fallback from the error. Branch on the error's *type*, not its text.
+    val display = result.map { "OK" }.getOrElse { error ->
+        if (error is StrataTimeoutException) "Timed out" else "Unavailable"
+    }
 }
 ```
 

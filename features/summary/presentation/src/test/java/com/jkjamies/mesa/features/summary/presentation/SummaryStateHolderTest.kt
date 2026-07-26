@@ -28,6 +28,8 @@ import io.kotest.matchers.string.shouldContain
 
 class SummaryStateHolderTest : BehaviorSpec({
 
+    coroutineTestScope = true
+
     Given("a SummaryStateHolder") {
         When("produceState is called") {
             Then("initial state shows the final count") {
