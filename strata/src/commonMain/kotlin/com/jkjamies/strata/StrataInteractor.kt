@@ -32,11 +32,8 @@ import kotlin.time.Duration.Companion.seconds
 /**
  * Base class for one-shot business logic operations in Strata.
  *
- * Subclass and implement [doWork] to define the operation. Invoke via the `operator fun invoke`
- * which handles timeouts, error wrapping, and loading-state tracking automatically.
- *
- * The [inProgress] flow emits `true` while work is running. User-initiated calls update the
- * indicator immediately; ambient calls are debounced by 5 seconds to avoid flicker.
+ * Subclass and implement [doWork] to define the operation. Invoke via the `operator fun invoke`,
+ * which applies the timeout, wraps failures into [StrataResult], and tracks loading state.
  *
  * @param P The parameter type.
  * @param R The result type on success.
@@ -44,15 +41,36 @@ import kotlin.time.Duration.Companion.seconds
 public abstract class StrataInteractor<in P, R> {
     private val loadingState = MutableStateFlow(State())
 
+    /**
+     * How long to wait before reporting *ambient* work as in progress.
+     *
+     * Background refreshes that finish quickly should not flash a spinner. Work the user
+     * explicitly asked for is never delayed — see [inProgress]. Override to tune, or set to
+     * [Duration.ZERO] to report every load immediately.
+     */
+    protected open val ambientLoadingDelay: Duration = 5.seconds
+
+    /** The timeout applied by [invoke] when the caller does not pass one explicitly. */
+    protected open val defaultTimeout: Duration = DefaultTimeout
+
+    /**
+     * Emits `true` while work is running.
+     *
+     * Work flagged as user-initiated is reported immediately. Purely ambient work is delayed
+     * by [ambientLoadingDelay] so short background refreshes never flash a spinner. Once any
+     * user-initiated call is in flight the indicator turns on right away, even if ambient work
+     * started first.
+     */
+    // `by lazy` so an `ambientLoadingDelay` override is visible: reading an open member from a
+    // constructor initializer would see the base-class default.
     @OptIn(FlowPreview::class)
     public val inProgress: Flow<Boolean> by lazy {
+        val delay = ambientLoadingDelay
         loadingState
-            .debounce {
-                if (it.ambientCount > 0) {
-                    5.seconds
-                } else {
-                    0.seconds
-                }
+            .debounce { state ->
+                // Only defer when the work is *entirely* ambient. Debouncing whenever any
+                // ambient work happened to be running would delay the user's own spinner.
+                if (state.userCount == 0 && state.ambientCount > 0) delay else Duration.ZERO
             }
             .map { (it.userCount + it.ambientCount) > 0 }
             .distinctUntilChanged()
@@ -88,7 +106,7 @@ public abstract class StrataInteractor<in P, R> {
      */
     public suspend operator fun invoke(
         params: P,
-        timeout: Duration = DefaultTimeout,
+        timeout: Duration = defaultTimeout,
         userInitiated: Boolean = params.isUserInitiated,
     ): StrataResult<R> = withLoader(userInitiated) {
         try {
@@ -116,13 +134,17 @@ public abstract class StrataInteractor<in P, R> {
 
     protected abstract suspend fun doWork(params: P): R
 
-    companion object {
-        internal val DefaultTimeout = 5.minutes
+    public companion object {
+        /** The timeout applied when neither the caller nor the subclass specifies one. */
+        public val DefaultTimeout: Duration = 5.minutes
     }
 
     private data class State(val userCount: Int = 0, val ambientCount: Int = 0)
 }
 
+/**
+ * Convenience overload for interactors that take no parameters.
+ */
 public suspend operator fun <R> StrataInteractor<Unit, R>.invoke(
     timeout: Duration = StrataInteractor.DefaultTimeout,
-) = invoke(Unit, timeout)
+): StrataResult<R> = invoke(Unit, timeout)

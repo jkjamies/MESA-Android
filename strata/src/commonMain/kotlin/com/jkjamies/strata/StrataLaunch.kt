@@ -27,48 +27,57 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
 /**
- * Launches a coroutine on [Dispatchers.Default] and immediately verifies that its [Job] is not
- * already cancelled.
+ * Launches a coroutine on [Dispatchers.Default].
  *
- * Use this instead of bare [launch] inside event sinks to fail fast when the
- * [CoroutineScope] has been cancelled (e.g., after composition disposal).
+ * Use this instead of a bare [launch] inside event sinks: it pins background work off the
+ * main thread by default rather than inheriting whatever dispatcher the calling scope
+ * happens to carry.
  *
- * The coroutine runs on [Dispatchers.Default] unless overridden via [context]
- * (e.g., `strataLaunch(Dispatchers.Main) { … }`).
+ * Override the dispatcher via [context] (e.g. `strataLaunch(Dispatchers.Main) { … }`).
  *
- * @throws IllegalStateException if the returned [Job] is already cancelled at launch time.
+ * If the receiving [CoroutineScope] has already been cancelled — a UI event arriving as the
+ * composition is torn down, for instance — the returned [Job] is already cancelled and
+ * [block] never runs. That is a normal outcome, not an error: dropping a late event is
+ * correct, and crashing the caller for it would not be. Check [Job.isCancelled] if the
+ * distinction matters.
+ *
+ * @throws IllegalArgumentException if [context] carries a [Job], which would detach the
+ *   coroutine from the scope's structured concurrency.
  */
 public fun CoroutineScope.strataLaunch(
     context: CoroutineContext = EmptyCoroutineContext,
     start: CoroutineStart = CoroutineStart.DEFAULT,
     block: suspend CoroutineScope.() -> Unit,
-): Job = launch(Dispatchers.Default + context, start, block).also {
-    check(!it.isCancelled) {
-        "launch failed. Job is already cancelled"
+): Job {
+    require(context[Job] == null) {
+        "strataLaunch does not accept a Job in `context` — it would detach the coroutine " +
+            "from this scope. Launch in a different scope instead."
     }
+    return launch(Dispatchers.Default + context, start, block)
 }
 
 /**
  * Launches a coroutine on [Dispatchers.Default] that wraps [block] in [strataRunCatching],
  * returning a [Deferred] of [StrataResult].
  *
- * This combines the threading and cancellation guarantees of [strataLaunch] with automatic
- * error handling via [strataRunCatching], so callers get structured results without manual
- * try/catch or wrapping.
+ * Combines the threading behaviour of [strataLaunch] with automatic error wrapping, so
+ * callers get a structured result without manual try/catch.
  *
- * The coroutine runs on [Dispatchers.Default] unless overridden via [context]
- * (e.g., `strataLaunchWithResult(Dispatchers.Main) { … }`).
+ * As with [strataLaunch], an already-cancelled scope yields an already-cancelled [Deferred]
+ * and [block] never runs.
  *
- * @throws IllegalStateException if the returned [Deferred] is already cancelled at launch time.
+ * @throws IllegalArgumentException if [context] carries a [Job].
  */
 public fun <T> CoroutineScope.strataLaunchWithResult(
     context: CoroutineContext = EmptyCoroutineContext,
     start: CoroutineStart = CoroutineStart.DEFAULT,
     block: suspend CoroutineScope.() -> T,
-): Deferred<StrataResult<T>> = async(Dispatchers.Default + context, start) {
-    strataRunCatching { block() }
-}.also {
-    check(!it.isCancelled) {
-        "launch failed. Job is already cancelled"
+): Deferred<StrataResult<T>> {
+    require(context[Job] == null) {
+        "strataLaunchWithResult does not accept a Job in `context` — it would detach the " +
+            "coroutine from this scope. Launch in a different scope instead."
+    }
+    return async(Dispatchers.Default + context, start) {
+        strataRunCatching { block() }
     }
 }

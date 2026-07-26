@@ -20,6 +20,7 @@ import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.test.TestScope
@@ -45,12 +46,36 @@ class StrataLaunchTest : BehaviorSpec({
 
     Given("a cancelled coroutine scope") {
         When("strataLaunch is called") {
-            Then("it throws IllegalStateException") {
+            Then("it returns a cancelled job without running the block or throwing") {
                 val scope = TestScope()
                 scope.cancel()
+                var ran = false
 
-                shouldThrow<IllegalStateException> {
-                    scope.strataLaunch { }
+                val job = scope.strataLaunch { ran = true }
+
+                job.isCancelled shouldBe true
+                ran shouldBe false
+            }
+        }
+    }
+
+    Given("a context carrying a Job") {
+        When("strataLaunch is called") {
+            Then("it rejects the context rather than detaching from the scope") {
+                coroutineScope {
+                    shouldThrow<IllegalArgumentException> {
+                        strataLaunch(Job()) { }
+                    }
+                }
+            }
+        }
+
+        When("strataLaunchWithResult is called") {
+            Then("it rejects the context rather than detaching from the scope") {
+                coroutineScope {
+                    shouldThrow<IllegalArgumentException> {
+                        strataLaunchWithResult(Job()) { 1 }
+                    }
                 }
             }
         }
@@ -94,13 +119,15 @@ class StrataLaunchTest : BehaviorSpec({
         }
 
         When("the scope is cancelled") {
-            Then("it throws IllegalStateException") {
+            Then("it returns a cancelled deferred without running the block or throwing") {
                 val scope = TestScope()
                 scope.cancel()
+                var ran = false
 
-                shouldThrow<IllegalStateException> {
-                    scope.strataLaunchWithResult { 1 }
-                }
+                val deferred = scope.strataLaunchWithResult { ran = true; 1 }
+
+                deferred.isCancelled shouldBe true
+                ran shouldBe false
             }
         }
     }
