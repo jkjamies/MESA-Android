@@ -1,0 +1,115 @@
+public final class com/jkjamies/trapeze/test/FakeTrapezeNavigator : com/jkjamies/trapeze/TrapezeNavigator {
+	public static final field $stable I
+	public fun <init> ()V
+	public fun <init> (Z)V
+	public synthetic fun <init> (ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun awaitEvent (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun awaitNavigate (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun awaitPop (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun awaitPopTo (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun awaitPopToRoot (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun awaitPopWithResult (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun expectNoEvents ()V
+	public final fun getEvents ()Ljava/util/List;
+	public final fun getNavigatedScreens ()Ljava/util/List;
+	public final fun getPopCount ()I
+	public final fun getPopToReturns ()Z
+	public final fun getResults ()Ljava/util/Map;
+	public fun navigate (Lcom/jkjamies/trapeze/TrapezeScreen;)V
+	public fun pop ()V
+	public fun popTo (Lcom/jkjamies/trapeze/TrapezeScreen;)Z
+	public fun popToRoot ()V
+	public fun popWithResult (Ljava/lang/String;Lcom/jkjamies/trapeze/TrapezeNavigationResult;)V
+	public final fun setPopToReturns (Z)V
+}
+
+public abstract interface class com/jkjamies/trapeze/test/NavigationEvent {
+}
+
+public final class com/jkjamies/trapeze/test/NavigationEvent$Navigate : com/jkjamies/trapeze/test/NavigationEvent {
+	public static final field $stable I
+	public fun <init> (Lcom/jkjamies/trapeze/TrapezeScreen;)V
+	public final fun component1 ()Lcom/jkjamies/trapeze/TrapezeScreen;
+	public final fun copy (Lcom/jkjamies/trapeze/TrapezeScreen;)Lcom/jkjamies/trapeze/test/NavigationEvent$Navigate;
+	public static synthetic fun copy$default (Lcom/jkjamies/trapeze/test/NavigationEvent$Navigate;Lcom/jkjamies/trapeze/TrapezeScreen;ILjava/lang/Object;)Lcom/jkjamies/trapeze/test/NavigationEvent$Navigate;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getScreen ()Lcom/jkjamies/trapeze/TrapezeScreen;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/jkjamies/trapeze/test/NavigationEvent$Pop : com/jkjamies/trapeze/test/NavigationEvent {
+	public static final field $stable I
+	public static final field INSTANCE Lcom/jkjamies/trapeze/test/NavigationEvent$Pop;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/jkjamies/trapeze/test/NavigationEvent$PopTo : com/jkjamies/trapeze/test/NavigationEvent {
+	public static final field $stable I
+	public fun <init> (Lcom/jkjamies/trapeze/TrapezeScreen;)V
+	public final fun component1 ()Lcom/jkjamies/trapeze/TrapezeScreen;
+	public final fun copy (Lcom/jkjamies/trapeze/TrapezeScreen;)Lcom/jkjamies/trapeze/test/NavigationEvent$PopTo;
+	public static synthetic fun copy$default (Lcom/jkjamies/trapeze/test/NavigationEvent$PopTo;Lcom/jkjamies/trapeze/TrapezeScreen;ILjava/lang/Object;)Lcom/jkjamies/trapeze/test/NavigationEvent$PopTo;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getScreen ()Lcom/jkjamies/trapeze/TrapezeScreen;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/jkjamies/trapeze/test/NavigationEvent$PopToRoot : com/jkjamies/trapeze/test/NavigationEvent {
+	public static final field $stable I
+	public static final field INSTANCE Lcom/jkjamies/trapeze/test/NavigationEvent$PopToRoot;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/jkjamies/trapeze/test/NavigationEvent$PopWithResult : com/jkjamies/trapeze/test/NavigationEvent {
+	public static final field $stable I
+	public fun <init> (Ljava/lang/String;Lcom/jkjamies/trapeze/TrapezeNavigationResult;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Lcom/jkjamies/trapeze/TrapezeNavigationResult;
+	public final fun copy (Ljava/lang/String;Lcom/jkjamies/trapeze/TrapezeNavigationResult;)Lcom/jkjamies/trapeze/test/NavigationEvent$PopWithResult;
+	public static synthetic fun copy$default (Lcom/jkjamies/trapeze/test/NavigationEvent$PopWithResult;Ljava/lang/String;Lcom/jkjamies/trapeze/TrapezeNavigationResult;ILjava/lang/Object;)Lcom/jkjamies/trapeze/test/NavigationEvent$PopWithResult;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getKey ()Ljava/lang/String;
+	public final fun getResult ()Lcom/jkjamies/trapeze/TrapezeNavigationResult;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/jkjamies/trapeze/test/TestEventSink : kotlin/jvm/functions/Function1 {
+	public static final field $stable I
+	public fun <init> ()V
+	public final fun clear ()V
+	public final fun getEvents ()Ljava/util/List;
+	public final fun getLast ()Lcom/jkjamies/trapeze/TrapezeEvent;
+	public final fun getSize ()I
+	public fun invoke (Lcom/jkjamies/trapeze/TrapezeEvent;)V
+	public synthetic fun invoke (Ljava/lang/Object;)Ljava/lang/Object;
+}
+
+public final class com/jkjamies/trapeze/test/TrapezeReceiveTurbine : app/cash/turbine/ReceiveTurbine {
+	public static final field $stable I
+	public fun <init> (Lapp/cash/turbine/ReceiveTurbine;)V
+	public fun asChannel ()Lkotlinx/coroutines/channels/ReceiveChannel;
+	public fun awaitComplete (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun awaitError (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun awaitEvent (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun awaitItem (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun awaitUnchanged (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun cancel (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun cancelAndConsumeRemainingEvents (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun cancelAndIgnoreRemainingEvents (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun ensureAllEventsConsumed ()V
+	public fun expectMostRecentItem ()Ljava/lang/Object;
+	public fun expectNoEvents ()V
+	public fun skipItems (ILkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/jkjamies/trapeze/test/TrapezeStateHolderTestExtensionKt {
+	public static final fun test (Lcom/jkjamies/trapeze/TrapezeStateHolder;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+

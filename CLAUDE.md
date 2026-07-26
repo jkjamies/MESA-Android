@@ -590,7 +590,8 @@ To verify publishing locally (publishes to `~/.m2/repository`):
 | `gradle/publishing.gradle.kts` | Shared publishing configuration applied to each library module |
 | `.github/workflows/publish.yml` | CI workflow that publishes all modules on release creation |
 | `{module}/gradle.properties` | Per-module coordinates: group, artifactId, version, name, description |
-| `{module}/api/{module}.api` | Recorded public ABI — the compatibility promise, diffed on every build |
+| `{module}/api/**` | Recorded public ABI — the compatibility promise, diffed on every build |
+
 
 ---
 
@@ -600,7 +601,7 @@ The four published modules run in **explicit API mode**. Every declaration they 
 its visibility and names its return type; a missing `public` is a compile error, not a silently
 widened API.
 
-Their ABI is recorded in `{module}/api/{module}.api` and checked on every build:
+Their ABI is recorded under `{module}/api/` and checked on every build:
 
 ```bash
 ./gradlew checkKotlinAbi    # fails when the compiled ABI drifts from the dumps
@@ -611,7 +612,12 @@ A breaking change is therefore never invisible — it shows up as a diff in a ch
 that a reviewer has to accept. When `checkKotlinAbi` fails, read the diff before re-recording:
 if the removal or signature change was not intended, the dump is telling you about a real bug.
 
-The dumps cover the JVM/Android ABI. Klib validation for the native and wasm targets is
-available (`abiValidation { klib { enabled.set(true) } }`) but not enabled: the Apple targets
-cannot be compiled on the Linux CI runners, so their declarations would be absent from any
-dump CI produces.
+Every target is covered, in three flavours of dump:
+
+| File | Covers |
+|------|--------|
+| `api/jvm/{module}.api` | The JVM artifact |
+| `api/android/{module}.api` | The Android artifact — differs where `expect`/`actual` adds `Parcelable` |
+| `api/{module}.klib.api` | Every native and wasm target, listed in the file's `// Targets:` header |
+
+`:strata` has no Android target, so its JVM dump is `api/strata.api` rather than `api/jvm/…`.

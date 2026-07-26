@@ -1,0 +1,144 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64, iosX64, macosArm64, macosX64, wasmJs]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <com.jkjamies:trapeze-test>
+sealed interface com.jkjamies.trapeze.test/NavigationEvent { // com.jkjamies.trapeze.test/NavigationEvent|null[0]
+    final class Navigate : com.jkjamies.trapeze.test/NavigationEvent { // com.jkjamies.trapeze.test/NavigationEvent.Navigate|null[0]
+        constructor <init>(com.jkjamies.trapeze/TrapezeScreen) // com.jkjamies.trapeze.test/NavigationEvent.Navigate.<init>|<init>(com.jkjamies.trapeze.TrapezeScreen){}[0]
+
+        final val screen // com.jkjamies.trapeze.test/NavigationEvent.Navigate.screen|{}screen[0]
+            final fun <get-screen>(): com.jkjamies.trapeze/TrapezeScreen // com.jkjamies.trapeze.test/NavigationEvent.Navigate.screen.<get-screen>|<get-screen>(){}[0]
+
+        final fun component1(): com.jkjamies.trapeze/TrapezeScreen // com.jkjamies.trapeze.test/NavigationEvent.Navigate.component1|component1(){}[0]
+        final fun copy(com.jkjamies.trapeze/TrapezeScreen = ...): com.jkjamies.trapeze.test/NavigationEvent.Navigate // com.jkjamies.trapeze.test/NavigationEvent.Navigate.copy|copy(com.jkjamies.trapeze.TrapezeScreen){}[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // com.jkjamies.trapeze.test/NavigationEvent.Navigate.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // com.jkjamies.trapeze.test/NavigationEvent.Navigate.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // com.jkjamies.trapeze.test/NavigationEvent.Navigate.toString|toString(){}[0]
+    }
+
+    final class PopTo : com.jkjamies.trapeze.test/NavigationEvent { // com.jkjamies.trapeze.test/NavigationEvent.PopTo|null[0]
+        constructor <init>(com.jkjamies.trapeze/TrapezeScreen) // com.jkjamies.trapeze.test/NavigationEvent.PopTo.<init>|<init>(com.jkjamies.trapeze.TrapezeScreen){}[0]
+
+        final val screen // com.jkjamies.trapeze.test/NavigationEvent.PopTo.screen|{}screen[0]
+            final fun <get-screen>(): com.jkjamies.trapeze/TrapezeScreen // com.jkjamies.trapeze.test/NavigationEvent.PopTo.screen.<get-screen>|<get-screen>(){}[0]
+
+        final fun component1(): com.jkjamies.trapeze/TrapezeScreen // com.jkjamies.trapeze.test/NavigationEvent.PopTo.component1|component1(){}[0]
+        final fun copy(com.jkjamies.trapeze/TrapezeScreen = ...): com.jkjamies.trapeze.test/NavigationEvent.PopTo // com.jkjamies.trapeze.test/NavigationEvent.PopTo.copy|copy(com.jkjamies.trapeze.TrapezeScreen){}[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // com.jkjamies.trapeze.test/NavigationEvent.PopTo.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // com.jkjamies.trapeze.test/NavigationEvent.PopTo.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // com.jkjamies.trapeze.test/NavigationEvent.PopTo.toString|toString(){}[0]
+    }
+
+    final class PopWithResult : com.jkjamies.trapeze.test/NavigationEvent { // com.jkjamies.trapeze.test/NavigationEvent.PopWithResult|null[0]
+        constructor <init>(kotlin/String, com.jkjamies.trapeze/TrapezeNavigationResult) // com.jkjamies.trapeze.test/NavigationEvent.PopWithResult.<init>|<init>(kotlin.String;com.jkjamies.trapeze.TrapezeNavigationResult){}[0]
+
+        final val key // com.jkjamies.trapeze.test/NavigationEvent.PopWithResult.key|{}key[0]
+            final fun <get-key>(): kotlin/String // com.jkjamies.trapeze.test/NavigationEvent.PopWithResult.key.<get-key>|<get-key>(){}[0]
+        final val result // com.jkjamies.trapeze.test/NavigationEvent.PopWithResult.result|{}result[0]
+            final fun <get-result>(): com.jkjamies.trapeze/TrapezeNavigationResult // com.jkjamies.trapeze.test/NavigationEvent.PopWithResult.result.<get-result>|<get-result>(){}[0]
+
+        final fun component1(): kotlin/String // com.jkjamies.trapeze.test/NavigationEvent.PopWithResult.component1|component1(){}[0]
+        final fun component2(): com.jkjamies.trapeze/TrapezeNavigationResult // com.jkjamies.trapeze.test/NavigationEvent.PopWithResult.component2|component2(){}[0]
+        final fun copy(kotlin/String = ..., com.jkjamies.trapeze/TrapezeNavigationResult = ...): com.jkjamies.trapeze.test/NavigationEvent.PopWithResult // com.jkjamies.trapeze.test/NavigationEvent.PopWithResult.copy|copy(kotlin.String;com.jkjamies.trapeze.TrapezeNavigationResult){}[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // com.jkjamies.trapeze.test/NavigationEvent.PopWithResult.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // com.jkjamies.trapeze.test/NavigationEvent.PopWithResult.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // com.jkjamies.trapeze.test/NavigationEvent.PopWithResult.toString|toString(){}[0]
+    }
+
+    final object Pop : com.jkjamies.trapeze.test/NavigationEvent { // com.jkjamies.trapeze.test/NavigationEvent.Pop|null[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // com.jkjamies.trapeze.test/NavigationEvent.Pop.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // com.jkjamies.trapeze.test/NavigationEvent.Pop.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // com.jkjamies.trapeze.test/NavigationEvent.Pop.toString|toString(){}[0]
+    }
+
+    final object PopToRoot : com.jkjamies.trapeze.test/NavigationEvent { // com.jkjamies.trapeze.test/NavigationEvent.PopToRoot|null[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // com.jkjamies.trapeze.test/NavigationEvent.PopToRoot.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // com.jkjamies.trapeze.test/NavigationEvent.PopToRoot.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // com.jkjamies.trapeze.test/NavigationEvent.PopToRoot.toString|toString(){}[0]
+    }
+}
+
+final class <#A: com.jkjamies.trapeze/TrapezeEvent> com.jkjamies.trapeze.test/TestEventSink : kotlin/Function1<#A, kotlin/Unit> { // com.jkjamies.trapeze.test/TestEventSink|null[0]
+    constructor <init>() // com.jkjamies.trapeze.test/TestEventSink.<init>|<init>(){}[0]
+
+    final val events // com.jkjamies.trapeze.test/TestEventSink.events|{}events[0]
+        final fun <get-events>(): kotlin.collections/List<#A> // com.jkjamies.trapeze.test/TestEventSink.events.<get-events>|<get-events>(){}[0]
+    final val last // com.jkjamies.trapeze.test/TestEventSink.last|{}last[0]
+        final fun <get-last>(): #A? // com.jkjamies.trapeze.test/TestEventSink.last.<get-last>|<get-last>(){}[0]
+    final val size // com.jkjamies.trapeze.test/TestEventSink.size|{}size[0]
+        final fun <get-size>(): kotlin/Int // com.jkjamies.trapeze.test/TestEventSink.size.<get-size>|<get-size>(){}[0]
+
+    final fun clear() // com.jkjamies.trapeze.test/TestEventSink.clear|clear(){}[0]
+    final fun invoke(#A) // com.jkjamies.trapeze.test/TestEventSink.invoke|invoke(1:0){}[0]
+}
+
+final class <#A: kotlin/Any?> com.jkjamies.trapeze.test/TrapezeReceiveTurbine : app.cash.turbine/ReceiveTurbine<#A> { // com.jkjamies.trapeze.test/TrapezeReceiveTurbine|null[0]
+    constructor <init>(app.cash.turbine/ReceiveTurbine<#A>) // com.jkjamies.trapeze.test/TrapezeReceiveTurbine.<init>|<init>(app.cash.turbine.ReceiveTurbine<1:0>){}[0]
+
+    final fun asChannel(): kotlinx.coroutines.channels/ReceiveChannel<#A> // com.jkjamies.trapeze.test/TrapezeReceiveTurbine.asChannel|asChannel(){}[0]
+    final fun ensureAllEventsConsumed() // com.jkjamies.trapeze.test/TrapezeReceiveTurbine.ensureAllEventsConsumed|ensureAllEventsConsumed(){}[0]
+    final fun expectMostRecentItem(): #A // com.jkjamies.trapeze.test/TrapezeReceiveTurbine.expectMostRecentItem|expectMostRecentItem(){}[0]
+    final fun expectNoEvents() // com.jkjamies.trapeze.test/TrapezeReceiveTurbine.expectNoEvents|expectNoEvents(){}[0]
+    final suspend fun awaitComplete() // com.jkjamies.trapeze.test/TrapezeReceiveTurbine.awaitComplete|awaitComplete(){}[0]
+    final suspend fun awaitError(): kotlin/Throwable // com.jkjamies.trapeze.test/TrapezeReceiveTurbine.awaitError|awaitError(){}[0]
+    final suspend fun awaitEvent(): app.cash.turbine/Event<#A> // com.jkjamies.trapeze.test/TrapezeReceiveTurbine.awaitEvent|awaitEvent(){}[0]
+    final suspend fun awaitItem(): #A // com.jkjamies.trapeze.test/TrapezeReceiveTurbine.awaitItem|awaitItem(){}[0]
+    final suspend fun awaitUnchanged() // com.jkjamies.trapeze.test/TrapezeReceiveTurbine.awaitUnchanged|awaitUnchanged(){}[0]
+    final suspend fun cancel() // com.jkjamies.trapeze.test/TrapezeReceiveTurbine.cancel|cancel(){}[0]
+    final suspend fun cancelAndConsumeRemainingEvents(): kotlin.collections/List<app.cash.turbine/Event<#A>> // com.jkjamies.trapeze.test/TrapezeReceiveTurbine.cancelAndConsumeRemainingEvents|cancelAndConsumeRemainingEvents(){}[0]
+    final suspend fun cancelAndIgnoreRemainingEvents() // com.jkjamies.trapeze.test/TrapezeReceiveTurbine.cancelAndIgnoreRemainingEvents|cancelAndIgnoreRemainingEvents(){}[0]
+    final suspend fun skipItems(kotlin/Int) // com.jkjamies.trapeze.test/TrapezeReceiveTurbine.skipItems|skipItems(kotlin.Int){}[0]
+}
+
+final class com.jkjamies.trapeze.test/FakeTrapezeNavigator : com.jkjamies.trapeze/TrapezeNavigator { // com.jkjamies.trapeze.test/FakeTrapezeNavigator|null[0]
+    constructor <init>(kotlin/Boolean = ...) // com.jkjamies.trapeze.test/FakeTrapezeNavigator.<init>|<init>(kotlin.Boolean){}[0]
+
+    final val events // com.jkjamies.trapeze.test/FakeTrapezeNavigator.events|{}events[0]
+        final fun <get-events>(): kotlin.collections/List<com.jkjamies.trapeze.test/NavigationEvent> // com.jkjamies.trapeze.test/FakeTrapezeNavigator.events.<get-events>|<get-events>(){}[0]
+    final val navigatedScreens // com.jkjamies.trapeze.test/FakeTrapezeNavigator.navigatedScreens|{}navigatedScreens[0]
+        final fun <get-navigatedScreens>(): kotlin.collections/List<com.jkjamies.trapeze/TrapezeScreen> // com.jkjamies.trapeze.test/FakeTrapezeNavigator.navigatedScreens.<get-navigatedScreens>|<get-navigatedScreens>(){}[0]
+    final val popCount // com.jkjamies.trapeze.test/FakeTrapezeNavigator.popCount|{}popCount[0]
+        final fun <get-popCount>(): kotlin/Int // com.jkjamies.trapeze.test/FakeTrapezeNavigator.popCount.<get-popCount>|<get-popCount>(){}[0]
+    final val results // com.jkjamies.trapeze.test/FakeTrapezeNavigator.results|{}results[0]
+        final fun <get-results>(): kotlin.collections/Map<kotlin/String, com.jkjamies.trapeze/TrapezeNavigationResult> // com.jkjamies.trapeze.test/FakeTrapezeNavigator.results.<get-results>|<get-results>(){}[0]
+
+    final var popToReturns // com.jkjamies.trapeze.test/FakeTrapezeNavigator.popToReturns|{}popToReturns[0]
+        final fun <get-popToReturns>(): kotlin/Boolean // com.jkjamies.trapeze.test/FakeTrapezeNavigator.popToReturns.<get-popToReturns>|<get-popToReturns>(){}[0]
+        final fun <set-popToReturns>(kotlin/Boolean) // com.jkjamies.trapeze.test/FakeTrapezeNavigator.popToReturns.<set-popToReturns>|<set-popToReturns>(kotlin.Boolean){}[0]
+
+    final fun <#A1: com.jkjamies.trapeze/TrapezeNavigationResult> popWithResult(kotlin/String, #A1) // com.jkjamies.trapeze.test/FakeTrapezeNavigator.popWithResult|popWithResult(kotlin.String;0:0){0§<com.jkjamies.trapeze.TrapezeNavigationResult>}[0]
+    final fun expectNoEvents() // com.jkjamies.trapeze.test/FakeTrapezeNavigator.expectNoEvents|expectNoEvents(){}[0]
+    final fun navigate(com.jkjamies.trapeze/TrapezeScreen) // com.jkjamies.trapeze.test/FakeTrapezeNavigator.navigate|navigate(com.jkjamies.trapeze.TrapezeScreen){}[0]
+    final fun pop() // com.jkjamies.trapeze.test/FakeTrapezeNavigator.pop|pop(){}[0]
+    final fun popTo(com.jkjamies.trapeze/TrapezeScreen): kotlin/Boolean // com.jkjamies.trapeze.test/FakeTrapezeNavigator.popTo|popTo(com.jkjamies.trapeze.TrapezeScreen){}[0]
+    final fun popToRoot() // com.jkjamies.trapeze.test/FakeTrapezeNavigator.popToRoot|popToRoot(){}[0]
+    final suspend fun awaitEvent(): com.jkjamies.trapeze.test/NavigationEvent // com.jkjamies.trapeze.test/FakeTrapezeNavigator.awaitEvent|awaitEvent(){}[0]
+    final suspend fun awaitNavigate(): com.jkjamies.trapeze/TrapezeScreen // com.jkjamies.trapeze.test/FakeTrapezeNavigator.awaitNavigate|awaitNavigate(){}[0]
+    final suspend fun awaitPop() // com.jkjamies.trapeze.test/FakeTrapezeNavigator.awaitPop|awaitPop(){}[0]
+    final suspend fun awaitPopTo(): com.jkjamies.trapeze/TrapezeScreen // com.jkjamies.trapeze.test/FakeTrapezeNavigator.awaitPopTo|awaitPopTo(){}[0]
+    final suspend fun awaitPopToRoot() // com.jkjamies.trapeze.test/FakeTrapezeNavigator.awaitPopToRoot|awaitPopToRoot(){}[0]
+    final suspend fun awaitPopWithResult(): kotlin/Pair<kotlin/String, com.jkjamies.trapeze/TrapezeNavigationResult> // com.jkjamies.trapeze.test/FakeTrapezeNavigator.awaitPopWithResult|awaitPopWithResult(){}[0]
+}
+
+final val com.jkjamies.trapeze.test/com_jkjamies_trapeze_test_FakeTrapezeNavigator$stableprop // com.jkjamies.trapeze.test/com_jkjamies_trapeze_test_FakeTrapezeNavigator$stableprop|#static{}com_jkjamies_trapeze_test_FakeTrapezeNavigator$stableprop[0]
+final val com.jkjamies.trapeze.test/com_jkjamies_trapeze_test_NavigationEvent_Navigate$stableprop // com.jkjamies.trapeze.test/com_jkjamies_trapeze_test_NavigationEvent_Navigate$stableprop|#static{}com_jkjamies_trapeze_test_NavigationEvent_Navigate$stableprop[0]
+final val com.jkjamies.trapeze.test/com_jkjamies_trapeze_test_NavigationEvent_Pop$stableprop // com.jkjamies.trapeze.test/com_jkjamies_trapeze_test_NavigationEvent_Pop$stableprop|#static{}com_jkjamies_trapeze_test_NavigationEvent_Pop$stableprop[0]
+final val com.jkjamies.trapeze.test/com_jkjamies_trapeze_test_NavigationEvent_PopTo$stableprop // com.jkjamies.trapeze.test/com_jkjamies_trapeze_test_NavigationEvent_PopTo$stableprop|#static{}com_jkjamies_trapeze_test_NavigationEvent_PopTo$stableprop[0]
+final val com.jkjamies.trapeze.test/com_jkjamies_trapeze_test_NavigationEvent_PopToRoot$stableprop // com.jkjamies.trapeze.test/com_jkjamies_trapeze_test_NavigationEvent_PopToRoot$stableprop|#static{}com_jkjamies_trapeze_test_NavigationEvent_PopToRoot$stableprop[0]
+final val com.jkjamies.trapeze.test/com_jkjamies_trapeze_test_NavigationEvent_PopWithResult$stableprop // com.jkjamies.trapeze.test/com_jkjamies_trapeze_test_NavigationEvent_PopWithResult$stableprop|#static{}com_jkjamies_trapeze_test_NavigationEvent_PopWithResult$stableprop[0]
+final val com.jkjamies.trapeze.test/com_jkjamies_trapeze_test_TestEventSink$stableprop // com.jkjamies.trapeze.test/com_jkjamies_trapeze_test_TestEventSink$stableprop|#static{}com_jkjamies_trapeze_test_TestEventSink$stableprop[0]
+final val com.jkjamies.trapeze.test/com_jkjamies_trapeze_test_TrapezeReceiveTurbine$stableprop // com.jkjamies.trapeze.test/com_jkjamies_trapeze_test_TrapezeReceiveTurbine$stableprop|#static{}com_jkjamies_trapeze_test_TrapezeReceiveTurbine$stableprop[0]
+
+final fun com.jkjamies.trapeze.test/com_jkjamies_trapeze_test_FakeTrapezeNavigator$stableprop_getter(): kotlin/Int // com.jkjamies.trapeze.test/com_jkjamies_trapeze_test_FakeTrapezeNavigator$stableprop_getter|com_jkjamies_trapeze_test_FakeTrapezeNavigator$stableprop_getter(){}[0]
+final fun com.jkjamies.trapeze.test/com_jkjamies_trapeze_test_NavigationEvent_Navigate$stableprop_getter(): kotlin/Int // com.jkjamies.trapeze.test/com_jkjamies_trapeze_test_NavigationEvent_Navigate$stableprop_getter|com_jkjamies_trapeze_test_NavigationEvent_Navigate$stableprop_getter(){}[0]
+final fun com.jkjamies.trapeze.test/com_jkjamies_trapeze_test_NavigationEvent_Pop$stableprop_getter(): kotlin/Int // com.jkjamies.trapeze.test/com_jkjamies_trapeze_test_NavigationEvent_Pop$stableprop_getter|com_jkjamies_trapeze_test_NavigationEvent_Pop$stableprop_getter(){}[0]
+final fun com.jkjamies.trapeze.test/com_jkjamies_trapeze_test_NavigationEvent_PopTo$stableprop_getter(): kotlin/Int // com.jkjamies.trapeze.test/com_jkjamies_trapeze_test_NavigationEvent_PopTo$stableprop_getter|com_jkjamies_trapeze_test_NavigationEvent_PopTo$stableprop_getter(){}[0]
+final fun com.jkjamies.trapeze.test/com_jkjamies_trapeze_test_NavigationEvent_PopToRoot$stableprop_getter(): kotlin/Int // com.jkjamies.trapeze.test/com_jkjamies_trapeze_test_NavigationEvent_PopToRoot$stableprop_getter|com_jkjamies_trapeze_test_NavigationEvent_PopToRoot$stableprop_getter(){}[0]
+final fun com.jkjamies.trapeze.test/com_jkjamies_trapeze_test_NavigationEvent_PopWithResult$stableprop_getter(): kotlin/Int // com.jkjamies.trapeze.test/com_jkjamies_trapeze_test_NavigationEvent_PopWithResult$stableprop_getter|com_jkjamies_trapeze_test_NavigationEvent_PopWithResult$stableprop_getter(){}[0]
+final fun com.jkjamies.trapeze.test/com_jkjamies_trapeze_test_TestEventSink$stableprop_getter(): kotlin/Int // com.jkjamies.trapeze.test/com_jkjamies_trapeze_test_TestEventSink$stableprop_getter|com_jkjamies_trapeze_test_TestEventSink$stableprop_getter(){}[0]
+final fun com.jkjamies.trapeze.test/com_jkjamies_trapeze_test_TrapezeReceiveTurbine$stableprop_getter(): kotlin/Int // com.jkjamies.trapeze.test/com_jkjamies_trapeze_test_TrapezeReceiveTurbine$stableprop_getter|com_jkjamies_trapeze_test_TrapezeReceiveTurbine$stableprop_getter(){}[0]
+final suspend fun <#A: com.jkjamies.trapeze/TrapezeScreen, #B: com.jkjamies.trapeze/TrapezeState, #C: com.jkjamies.trapeze/TrapezeEvent> (com.jkjamies.trapeze/TrapezeStateHolder<#A, #B, #C>).com.jkjamies.trapeze.test/test(kotlin.coroutines/SuspendFunction1<com.jkjamies.trapeze.test/TrapezeReceiveTurbine<#B>, kotlin/Unit>) // com.jkjamies.trapeze.test/test|test@com.jkjamies.trapeze.TrapezeStateHolder<0:0,0:1,0:2>(kotlin.coroutines.SuspendFunction1<com.jkjamies.trapeze.test.TrapezeReceiveTurbine<0:1>,kotlin.Unit>){0§<com.jkjamies.trapeze.TrapezeScreen>;1§<com.jkjamies.trapeze.TrapezeState>;2§<com.jkjamies.trapeze.TrapezeEvent>}[0]

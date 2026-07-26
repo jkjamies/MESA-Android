@@ -1,0 +1,105 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64, iosX64, linuxX64, macosArm64, macosX64, mingwX64, wasmJs]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <com.jkjamies:strata>
+abstract interface com.jkjamies.strata/StrataUserInitiatedParams { // com.jkjamies.strata/StrataUserInitiatedParams|null[0]
+    abstract val isUserInitiated // com.jkjamies.strata/StrataUserInitiatedParams.isUserInitiated|{}isUserInitiated[0]
+        abstract fun <get-isUserInitiated>(): kotlin/Boolean // com.jkjamies.strata/StrataUserInitiatedParams.isUserInitiated.<get-isUserInitiated>|<get-isUserInitiated>(){}[0]
+}
+
+sealed interface <#A: out kotlin/Any?> com.jkjamies.strata/StrataResult { // com.jkjamies.strata/StrataResult|null[0]
+    open fun <#A1: kotlin/Any?> flatMap(kotlin/Function1<#A, com.jkjamies.strata/StrataResult<#A1>>): com.jkjamies.strata/StrataResult<#A1> // com.jkjamies.strata/StrataResult.flatMap|flatMap(kotlin.Function1<1:0,com.jkjamies.strata.StrataResult<0:0>>){0§<kotlin.Any?>}[0]
+    open fun <#A1: kotlin/Any?> fold(kotlin/Function1<#A, #A1>, kotlin/Function1<com.jkjamies.strata/StrataException, #A1>): #A1 // com.jkjamies.strata/StrataResult.fold|fold(kotlin.Function1<1:0,0:0>;kotlin.Function1<com.jkjamies.strata.StrataException,0:0>){0§<kotlin.Any?>}[0]
+    open fun <#A1: kotlin/Any?> map(kotlin/Function1<#A, #A1>): com.jkjamies.strata/StrataResult<#A1> // com.jkjamies.strata/StrataResult.map|map(kotlin.Function1<1:0,0:0>){0§<kotlin.Any?>}[0]
+    open fun getOrNull(): #A? // com.jkjamies.strata/StrataResult.getOrNull|getOrNull(){}[0]
+    open fun onFailure(kotlin/Function1<com.jkjamies.strata/StrataException, kotlin/Unit>): com.jkjamies.strata/StrataResult<#A> // com.jkjamies.strata/StrataResult.onFailure|onFailure(kotlin.Function1<com.jkjamies.strata.StrataException,kotlin.Unit>){}[0]
+    open fun onSuccess(kotlin/Function1<#A, kotlin/Unit>): com.jkjamies.strata/StrataResult<#A> // com.jkjamies.strata/StrataResult.onSuccess|onSuccess(kotlin.Function1<1:0,kotlin.Unit>){}[0]
+
+    final class <#A1: kotlin/Any?> Success : com.jkjamies.strata/StrataResult<#A1> { // com.jkjamies.strata/StrataResult.Success|null[0]
+        constructor <init>(#A1) // com.jkjamies.strata/StrataResult.Success.<init>|<init>(1:0){}[0]
+
+        final val data // com.jkjamies.strata/StrataResult.Success.data|{}data[0]
+            final fun <get-data>(): #A1 // com.jkjamies.strata/StrataResult.Success.data.<get-data>|<get-data>(){}[0]
+
+        final fun component1(): #A1 // com.jkjamies.strata/StrataResult.Success.component1|component1(){}[0]
+        final fun copy(#A1 = ...): com.jkjamies.strata/StrataResult.Success<#A1> // com.jkjamies.strata/StrataResult.Success.copy|copy(1:0){}[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // com.jkjamies.strata/StrataResult.Success.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // com.jkjamies.strata/StrataResult.Success.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // com.jkjamies.strata/StrataResult.Success.toString|toString(){}[0]
+    }
+
+    final class Failure : com.jkjamies.strata/StrataResult<kotlin/Nothing> { // com.jkjamies.strata/StrataResult.Failure|null[0]
+        constructor <init>(com.jkjamies.strata/StrataException) // com.jkjamies.strata/StrataResult.Failure.<init>|<init>(com.jkjamies.strata.StrataException){}[0]
+
+        final val error // com.jkjamies.strata/StrataResult.Failure.error|{}error[0]
+            final fun <get-error>(): com.jkjamies.strata/StrataException // com.jkjamies.strata/StrataResult.Failure.error.<get-error>|<get-error>(){}[0]
+
+        final fun component1(): com.jkjamies.strata/StrataException // com.jkjamies.strata/StrataResult.Failure.component1|component1(){}[0]
+        final fun copy(com.jkjamies.strata/StrataException = ...): com.jkjamies.strata/StrataResult.Failure // com.jkjamies.strata/StrataResult.Failure.copy|copy(com.jkjamies.strata.StrataException){}[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // com.jkjamies.strata/StrataResult.Failure.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // com.jkjamies.strata/StrataResult.Failure.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // com.jkjamies.strata/StrataResult.Failure.toString|toString(){}[0]
+    }
+}
+
+abstract class <#A: in kotlin/Any?, #B: kotlin/Any?> com.jkjamies.strata/StrataInteractor { // com.jkjamies.strata/StrataInteractor|null[0]
+    constructor <init>() // com.jkjamies.strata/StrataInteractor.<init>|<init>(){}[0]
+
+    final val inProgress // com.jkjamies.strata/StrataInteractor.inProgress|{}inProgress[0]
+        final fun <get-inProgress>(): kotlinx.coroutines.flow/Flow<kotlin/Boolean> // com.jkjamies.strata/StrataInteractor.inProgress.<get-inProgress>|<get-inProgress>(){}[0]
+    open val ambientLoadingDelay // com.jkjamies.strata/StrataInteractor.ambientLoadingDelay|{}ambientLoadingDelay[0]
+        open fun <get-ambientLoadingDelay>(): kotlin.time/Duration // com.jkjamies.strata/StrataInteractor.ambientLoadingDelay.<get-ambientLoadingDelay>|<get-ambientLoadingDelay>(){}[0]
+    open val defaultTimeout // com.jkjamies.strata/StrataInteractor.defaultTimeout|{}defaultTimeout[0]
+        open fun <get-defaultTimeout>(): kotlin.time/Duration // com.jkjamies.strata/StrataInteractor.defaultTimeout.<get-defaultTimeout>|<get-defaultTimeout>(){}[0]
+
+    abstract suspend fun doWork(#A): #B // com.jkjamies.strata/StrataInteractor.doWork|doWork(1:0){}[0]
+    final suspend fun invoke(#A, kotlin.time/Duration = ..., kotlin/Boolean = ...): com.jkjamies.strata/StrataResult<#B> // com.jkjamies.strata/StrataInteractor.invoke|invoke(1:0;kotlin.time.Duration;kotlin.Boolean){}[0]
+
+    final object Companion { // com.jkjamies.strata/StrataInteractor.Companion|null[0]
+        final val DefaultTimeout // com.jkjamies.strata/StrataInteractor.Companion.DefaultTimeout|{}DefaultTimeout[0]
+            final fun <get-DefaultTimeout>(): kotlin.time/Duration // com.jkjamies.strata/StrataInteractor.Companion.DefaultTimeout.<get-DefaultTimeout>|<get-DefaultTimeout>(){}[0]
+    }
+}
+
+abstract class <#A: kotlin/Any, #B: kotlin/Any?> com.jkjamies.strata/StrataSubjectInteractor { // com.jkjamies.strata/StrataSubjectInteractor|null[0]
+    constructor <init>() // com.jkjamies.strata/StrataSubjectInteractor.<init>|<init>(){}[0]
+
+    final val flow // com.jkjamies.strata/StrataSubjectInteractor.flow|{}flow[0]
+        final fun <get-flow>(): kotlinx.coroutines.flow/Flow<#B> // com.jkjamies.strata/StrataSubjectInteractor.flow.<get-flow>|<get-flow>(){}[0]
+    final val isActive // com.jkjamies.strata/StrataSubjectInteractor.isActive|{}isActive[0]
+        final fun <get-isActive>(): kotlin/Boolean // com.jkjamies.strata/StrataSubjectInteractor.isActive.<get-isActive>|<get-isActive>(){}[0]
+    open val distinctValues // com.jkjamies.strata/StrataSubjectInteractor.distinctValues|{}distinctValues[0]
+        open fun <get-distinctValues>(): kotlin/Boolean // com.jkjamies.strata/StrataSubjectInteractor.distinctValues.<get-distinctValues>|<get-distinctValues>(){}[0]
+
+    abstract fun createObservable(#A): kotlinx.coroutines.flow/Flow<#B> // com.jkjamies.strata/StrataSubjectInteractor.createObservable|createObservable(1:0){}[0]
+    final fun invoke(#A) // com.jkjamies.strata/StrataSubjectInteractor.invoke|invoke(1:0){}[0]
+    final fun stop() // com.jkjamies.strata/StrataSubjectInteractor.stop|stop(){}[0]
+}
+
+abstract class com.jkjamies.strata/StrataException : kotlin/Exception { // com.jkjamies.strata/StrataException|null[0]
+    constructor <init>(kotlin/String, kotlin/Throwable? = ...) // com.jkjamies.strata/StrataException.<init>|<init>(kotlin.String;kotlin.Throwable?){}[0]
+}
+
+final class com.jkjamies.strata/StrataExecutionException : com.jkjamies.strata/StrataException { // com.jkjamies.strata/StrataExecutionException|null[0]
+    constructor <init>(kotlin/Throwable) // com.jkjamies.strata/StrataExecutionException.<init>|<init>(kotlin.Throwable){}[0]
+}
+
+final class com.jkjamies.strata/StrataTimeoutException : com.jkjamies.strata/StrataException { // com.jkjamies.strata/StrataTimeoutException|null[0]
+    constructor <init>(kotlin.time/Duration, kotlin/Throwable) // com.jkjamies.strata/StrataTimeoutException.<init>|<init>(kotlin.time.Duration;kotlin.Throwable){}[0]
+
+    final val duration // com.jkjamies.strata/StrataTimeoutException.duration|{}duration[0]
+        final fun <get-duration>(): kotlin.time/Duration // com.jkjamies.strata/StrataTimeoutException.duration.<get-duration>|<get-duration>(){}[0]
+}
+
+final fun (kotlinx.coroutines/CoroutineScope).com.jkjamies.strata/strataLaunch(kotlin.coroutines/CoroutineContext = ..., kotlinx.coroutines/CoroutineStart = ..., kotlin.coroutines/SuspendFunction1<kotlinx.coroutines/CoroutineScope, kotlin/Unit>): kotlinx.coroutines/Job // com.jkjamies.strata/strataLaunch|strataLaunch@kotlinx.coroutines.CoroutineScope(kotlin.coroutines.CoroutineContext;kotlinx.coroutines.CoroutineStart;kotlin.coroutines.SuspendFunction1<kotlinx.coroutines.CoroutineScope,kotlin.Unit>){}[0]
+final fun <#A: kotlin/Any?> (com.jkjamies.strata/StrataResult<#A>).com.jkjamies.strata/getOrDefault(#A): #A // com.jkjamies.strata/getOrDefault|getOrDefault@com.jkjamies.strata.StrataResult<0:0>(0:0){0§<kotlin.Any?>}[0]
+final fun <#A: kotlin/Any?> (com.jkjamies.strata/StrataResult<#A>).com.jkjamies.strata/getOrElse(kotlin/Function1<com.jkjamies.strata/StrataException, #A>): #A // com.jkjamies.strata/getOrElse|getOrElse@com.jkjamies.strata.StrataResult<0:0>(kotlin.Function1<com.jkjamies.strata.StrataException,0:0>){0§<kotlin.Any?>}[0]
+final fun <#A: kotlin/Any?> (kotlinx.coroutines/CoroutineScope).com.jkjamies.strata/strataLaunchWithResult(kotlin.coroutines/CoroutineContext = ..., kotlinx.coroutines/CoroutineStart = ..., kotlin.coroutines/SuspendFunction1<kotlinx.coroutines/CoroutineScope, #A>): kotlinx.coroutines/Deferred<com.jkjamies.strata/StrataResult<#A>> // com.jkjamies.strata/strataLaunchWithResult|strataLaunchWithResult@kotlinx.coroutines.CoroutineScope(kotlin.coroutines.CoroutineContext;kotlinx.coroutines.CoroutineStart;kotlin.coroutines.SuspendFunction1<kotlinx.coroutines.CoroutineScope,0:0>){0§<kotlin.Any?>}[0]
+final inline fun <#A: kotlin/Any?> com.jkjamies.strata/strataRunCatching(kotlin/Function0<#A>): com.jkjamies.strata/StrataResult<#A> // com.jkjamies.strata/strataRunCatching|strataRunCatching(kotlin.Function0<0:0>){0§<kotlin.Any?>}[0]
+final suspend fun <#A: kotlin/Any?> (com.jkjamies.strata/StrataInteractor<kotlin/Unit, #A>).com.jkjamies.strata/invoke(): com.jkjamies.strata/StrataResult<#A> // com.jkjamies.strata/invoke|invoke@com.jkjamies.strata.StrataInteractor<kotlin.Unit,0:0>(){0§<kotlin.Any?>}[0]
+final suspend fun <#A: kotlin/Any?> (com.jkjamies.strata/StrataInteractor<kotlin/Unit, #A>).com.jkjamies.strata/invoke(kotlin.time/Duration): com.jkjamies.strata/StrataResult<#A> // com.jkjamies.strata/invoke|invoke@com.jkjamies.strata.StrataInteractor<kotlin.Unit,0:0>(kotlin.time.Duration){0§<kotlin.Any?>}[0]
+final suspend fun <#A: kotlin/Any?> (com.jkjamies.strata/StrataResult<#A>).com.jkjamies.strata/recover(kotlin.coroutines/SuspendFunction1<com.jkjamies.strata/StrataException, com.jkjamies.strata/StrataResult<#A>>): com.jkjamies.strata/StrataResult<#A> // com.jkjamies.strata/recover|recover@com.jkjamies.strata.StrataResult<0:0>(kotlin.coroutines.SuspendFunction1<com.jkjamies.strata.StrataException,com.jkjamies.strata.StrataResult<0:0>>){0§<kotlin.Any?>}[0]

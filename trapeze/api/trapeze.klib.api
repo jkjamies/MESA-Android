@@ -1,0 +1,103 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64, iosX64, macosArm64, macosX64, wasmJs]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <com.jkjamies:trapeze>
+abstract interface com.jkjamies.trapeze/TrapezeEvent // com.jkjamies.trapeze/TrapezeEvent|null[0]
+
+abstract interface com.jkjamies.trapeze/TrapezeInterop { // com.jkjamies.trapeze/TrapezeInterop|null[0]
+    abstract fun send(com.jkjamies.trapeze/TrapezeInteropEvent) // com.jkjamies.trapeze/TrapezeInterop.send|send(com.jkjamies.trapeze.TrapezeInteropEvent){}[0]
+}
+
+abstract interface com.jkjamies.trapeze/TrapezeInteropEvent // com.jkjamies.trapeze/TrapezeInteropEvent|null[0]
+
+abstract interface com.jkjamies.trapeze/TrapezeNavigationResult // com.jkjamies.trapeze/TrapezeNavigationResult|null[0]
+
+abstract interface com.jkjamies.trapeze/TrapezeNavigator { // com.jkjamies.trapeze/TrapezeNavigator|null[0]
+    abstract fun <#A1: com.jkjamies.trapeze/TrapezeNavigationResult> popWithResult(kotlin/String, #A1) // com.jkjamies.trapeze/TrapezeNavigator.popWithResult|popWithResult(kotlin.String;0:0){0§<com.jkjamies.trapeze.TrapezeNavigationResult>}[0]
+    abstract fun navigate(com.jkjamies.trapeze/TrapezeScreen) // com.jkjamies.trapeze/TrapezeNavigator.navigate|navigate(com.jkjamies.trapeze.TrapezeScreen){}[0]
+    abstract fun pop() // com.jkjamies.trapeze/TrapezeNavigator.pop|pop(){}[0]
+    abstract fun popTo(com.jkjamies.trapeze/TrapezeScreen): kotlin/Boolean // com.jkjamies.trapeze/TrapezeNavigator.popTo|popTo(com.jkjamies.trapeze.TrapezeScreen){}[0]
+    abstract fun popToRoot() // com.jkjamies.trapeze/TrapezeNavigator.popToRoot|popToRoot(){}[0]
+}
+
+abstract interface com.jkjamies.trapeze/TrapezeScreen // com.jkjamies.trapeze/TrapezeScreen|null[0]
+
+abstract interface com.jkjamies.trapeze/TrapezeState // com.jkjamies.trapeze/TrapezeState|null[0]
+
+abstract class <#A: com.jkjamies.trapeze/TrapezeScreen, #B: com.jkjamies.trapeze/TrapezeState, #C: com.jkjamies.trapeze/TrapezeEvent> com.jkjamies.trapeze/TrapezeStateHolder { // com.jkjamies.trapeze/TrapezeStateHolder|null[0]
+    constructor <init>() // com.jkjamies.trapeze/TrapezeStateHolder.<init>|<init>(){}[0]
+
+    abstract fun produceState(androidx.compose.runtime/Composer?, kotlin/Int): #B // com.jkjamies.trapeze/TrapezeStateHolder.produceState|produceState(androidx.compose.runtime.Composer?;kotlin.Int){}[0]
+    final inline fun <#A1: reified #C> wrapEventSink(crossinline kotlin/Function2<kotlinx.coroutines/CoroutineScope, #A1, kotlin/Unit>, androidx.compose.runtime/Composer?, kotlin/Int): kotlin/Function1<#A1, kotlin/Unit> // com.jkjamies.trapeze/TrapezeStateHolder.wrapEventSink|wrapEventSink(kotlin.Function2<kotlinx.coroutines.CoroutineScope,0:0,kotlin.Unit>;androidx.compose.runtime.Composer?;kotlin.Int){0§<1:2>}[0]
+}
+
+final class com.jkjamies.trapeze/Trapeze { // com.jkjamies.trapeze/Trapeze|null[0]
+    abstract fun interface StateHolderFactory { // com.jkjamies.trapeze/Trapeze.StateHolderFactory|null[0]
+        abstract fun create(com.jkjamies.trapeze/TrapezeScreen, com.jkjamies.trapeze/TrapezeNavigator?): com.jkjamies.trapeze/TrapezeStateHolder<*, *, *>? // com.jkjamies.trapeze/Trapeze.StateHolderFactory.create|create(com.jkjamies.trapeze.TrapezeScreen;com.jkjamies.trapeze.TrapezeNavigator?){}[0]
+    }
+
+    abstract fun interface UiFactory { // com.jkjamies.trapeze/Trapeze.UiFactory|null[0]
+        abstract fun create(com.jkjamies.trapeze/TrapezeScreen): kotlin/Function4<androidx.compose.ui/Modifier, *, androidx.compose.runtime/Composer, kotlin/Int, kotlin/Unit>? // com.jkjamies.trapeze/Trapeze.UiFactory.create|create(com.jkjamies.trapeze.TrapezeScreen){}[0]
+    }
+
+    final class Builder { // com.jkjamies.trapeze/Trapeze.Builder|null[0]
+        constructor <init>() // com.jkjamies.trapeze/Trapeze.Builder.<init>|<init>(){}[0]
+
+        final fun addStateHolderFactory(com.jkjamies.trapeze/Trapeze.StateHolderFactory): com.jkjamies.trapeze/Trapeze.Builder // com.jkjamies.trapeze/Trapeze.Builder.addStateHolderFactory|addStateHolderFactory(com.jkjamies.trapeze.Trapeze.StateHolderFactory){}[0]
+        final fun addUiFactory(com.jkjamies.trapeze/Trapeze.UiFactory): com.jkjamies.trapeze/Trapeze.Builder // com.jkjamies.trapeze/Trapeze.Builder.addUiFactory|addUiFactory(com.jkjamies.trapeze.Trapeze.UiFactory){}[0]
+        final fun build(): com.jkjamies.trapeze/Trapeze // com.jkjamies.trapeze/Trapeze.Builder.build|build(){}[0]
+    }
+}
+
+final class com.jkjamies.trapeze/TrapezeMessage { // com.jkjamies.trapeze/TrapezeMessage|null[0]
+    constructor <init>(kotlin/String, kotlin/Throwable? = ..., kotlin.uuid/Uuid = ...) // com.jkjamies.trapeze/TrapezeMessage.<init>|<init>(kotlin.String;kotlin.Throwable?;kotlin.uuid.Uuid){}[0]
+
+    final val cause // com.jkjamies.trapeze/TrapezeMessage.cause|{}cause[0]
+        final fun <get-cause>(): kotlin/Throwable? // com.jkjamies.trapeze/TrapezeMessage.cause.<get-cause>|<get-cause>(){}[0]
+    final val id // com.jkjamies.trapeze/TrapezeMessage.id|{}id[0]
+        final fun <get-id>(): kotlin.uuid/Uuid // com.jkjamies.trapeze/TrapezeMessage.id.<get-id>|<get-id>(){}[0]
+    final val message // com.jkjamies.trapeze/TrapezeMessage.message|{}message[0]
+        final fun <get-message>(): kotlin/String // com.jkjamies.trapeze/TrapezeMessage.message.<get-message>|<get-message>(){}[0]
+
+    final fun component1(): kotlin/String // com.jkjamies.trapeze/TrapezeMessage.component1|component1(){}[0]
+    final fun component2(): kotlin/Throwable? // com.jkjamies.trapeze/TrapezeMessage.component2|component2(){}[0]
+    final fun component3(): kotlin.uuid/Uuid // com.jkjamies.trapeze/TrapezeMessage.component3|component3(){}[0]
+    final fun copy(kotlin/String = ..., kotlin/Throwable? = ..., kotlin.uuid/Uuid = ...): com.jkjamies.trapeze/TrapezeMessage // com.jkjamies.trapeze/TrapezeMessage.copy|copy(kotlin.String;kotlin.Throwable?;kotlin.uuid.Uuid){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.jkjamies.trapeze/TrapezeMessage.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.jkjamies.trapeze/TrapezeMessage.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.jkjamies.trapeze/TrapezeMessage.toString|toString(){}[0]
+}
+
+final class com.jkjamies.trapeze/TrapezeMessageManager { // com.jkjamies.trapeze/TrapezeMessageManager|null[0]
+    constructor <init>() // com.jkjamies.trapeze/TrapezeMessageManager.<init>|<init>(){}[0]
+
+    final val message // com.jkjamies.trapeze/TrapezeMessageManager.message|{}message[0]
+        final fun <get-message>(): kotlinx.coroutines.flow/Flow<com.jkjamies.trapeze/TrapezeMessage?> // com.jkjamies.trapeze/TrapezeMessageManager.message.<get-message>|<get-message>(){}[0]
+
+    final fun clearAll() // com.jkjamies.trapeze/TrapezeMessageManager.clearAll|clearAll(){}[0]
+    final fun clearMessage(kotlin.uuid/Uuid) // com.jkjamies.trapeze/TrapezeMessageManager.clearMessage|clearMessage(kotlin.uuid.Uuid){}[0]
+    final fun emitMessage(com.jkjamies.trapeze/TrapezeMessage) // com.jkjamies.trapeze/TrapezeMessageManager.emitMessage|emitMessage(com.jkjamies.trapeze.TrapezeMessage){}[0]
+}
+
+final val com.jkjamies.trapeze/LocalTrapeze // com.jkjamies.trapeze/LocalTrapeze|{}LocalTrapeze[0]
+    final fun <get-LocalTrapeze>(): androidx.compose.runtime/ProvidableCompositionLocal<com.jkjamies.trapeze/Trapeze> // com.jkjamies.trapeze/LocalTrapeze.<get-LocalTrapeze>|<get-LocalTrapeze>(){}[0]
+final val com.jkjamies.trapeze/com_jkjamies_trapeze_Trapeze$stableprop // com.jkjamies.trapeze/com_jkjamies_trapeze_Trapeze$stableprop|#static{}com_jkjamies_trapeze_Trapeze$stableprop[0]
+final val com.jkjamies.trapeze/com_jkjamies_trapeze_TrapezeMessage$stableprop // com.jkjamies.trapeze/com_jkjamies_trapeze_TrapezeMessage$stableprop|#static{}com_jkjamies_trapeze_TrapezeMessage$stableprop[0]
+final val com.jkjamies.trapeze/com_jkjamies_trapeze_TrapezeMessageManager$stableprop // com.jkjamies.trapeze/com_jkjamies_trapeze_TrapezeMessageManager$stableprop|#static{}com_jkjamies_trapeze_TrapezeMessageManager$stableprop[0]
+final val com.jkjamies.trapeze/com_jkjamies_trapeze_TrapezeStateHolder$stableprop // com.jkjamies.trapeze/com_jkjamies_trapeze_TrapezeStateHolder$stableprop|#static{}com_jkjamies_trapeze_TrapezeStateHolder$stableprop[0]
+final val com.jkjamies.trapeze/com_jkjamies_trapeze_Trapeze_Builder$stableprop // com.jkjamies.trapeze/com_jkjamies_trapeze_Trapeze_Builder$stableprop|#static{}com_jkjamies_trapeze_Trapeze_Builder$stableprop[0]
+
+final fun com.jkjamies.trapeze/TrapezeCompositionLocals(com.jkjamies.trapeze/Trapeze, kotlin/Function2<androidx.compose.runtime/Composer, kotlin/Int, kotlin/Unit>, androidx.compose.runtime/Composer?, kotlin/Int) // com.jkjamies.trapeze/TrapezeCompositionLocals|TrapezeCompositionLocals(com.jkjamies.trapeze.Trapeze;kotlin.Function2<androidx.compose.runtime.Composer,kotlin.Int,kotlin.Unit>;androidx.compose.runtime.Composer?;kotlin.Int){}[0]
+final fun com.jkjamies.trapeze/TrapezeContent(com.jkjamies.trapeze/TrapezeScreen, androidx.compose.ui/Modifier?, com.jkjamies.trapeze/Trapeze?, com.jkjamies.trapeze/TrapezeNavigator?, androidx.compose.runtime/Composer?, kotlin/Int, kotlin/Int) // com.jkjamies.trapeze/TrapezeContent|TrapezeContent(com.jkjamies.trapeze.TrapezeScreen;androidx.compose.ui.Modifier?;com.jkjamies.trapeze.Trapeze?;com.jkjamies.trapeze.TrapezeNavigator?;androidx.compose.runtime.Composer?;kotlin.Int;kotlin.Int){}[0]
+final fun com.jkjamies.trapeze/com_jkjamies_trapeze_Trapeze$stableprop_getter(): kotlin/Int // com.jkjamies.trapeze/com_jkjamies_trapeze_Trapeze$stableprop_getter|com_jkjamies_trapeze_Trapeze$stableprop_getter(){}[0]
+final fun com.jkjamies.trapeze/com_jkjamies_trapeze_TrapezeMessage$stableprop_getter(): kotlin/Int // com.jkjamies.trapeze/com_jkjamies_trapeze_TrapezeMessage$stableprop_getter|com_jkjamies_trapeze_TrapezeMessage$stableprop_getter(){}[0]
+final fun com.jkjamies.trapeze/com_jkjamies_trapeze_TrapezeMessageManager$stableprop_getter(): kotlin/Int // com.jkjamies.trapeze/com_jkjamies_trapeze_TrapezeMessageManager$stableprop_getter|com_jkjamies_trapeze_TrapezeMessageManager$stableprop_getter(){}[0]
+final fun com.jkjamies.trapeze/com_jkjamies_trapeze_TrapezeStateHolder$stableprop_getter(): kotlin/Int // com.jkjamies.trapeze/com_jkjamies_trapeze_TrapezeStateHolder$stableprop_getter|com_jkjamies_trapeze_TrapezeStateHolder$stableprop_getter(){}[0]
+final fun com.jkjamies.trapeze/com_jkjamies_trapeze_Trapeze_Builder$stableprop_getter(): kotlin/Int // com.jkjamies.trapeze/com_jkjamies_trapeze_Trapeze_Builder$stableprop_getter|com_jkjamies_trapeze_Trapeze_Builder$stableprop_getter(){}[0]
+final fun com.jkjamies.trapeze/rememberRetainedCoroutineScope(androidx.compose.runtime/Composer?, kotlin/Int): kotlinx.coroutines/CoroutineScope // com.jkjamies.trapeze/rememberRetainedCoroutineScope|rememberRetainedCoroutineScope(androidx.compose.runtime.Composer?;kotlin.Int){}[0]
+final fun com.jkjamies.trapeze/trapezeLogWarning(kotlin/String, kotlin/String) // com.jkjamies.trapeze/trapezeLogWarning|trapezeLogWarning(kotlin.String;kotlin.String){}[0]
+final inline fun <#A: kotlin/Any?> com.jkjamies.trapeze/wrapEventSink(crossinline kotlin/Function2<kotlinx.coroutines/CoroutineScope, #A, kotlin/Unit>, kotlinx.coroutines/CoroutineScope?, androidx.compose.runtime/Composer?, kotlin/Int, kotlin/Int): kotlin/Function1<#A, kotlin/Unit> // com.jkjamies.trapeze/wrapEventSink|wrapEventSink(kotlin.Function2<kotlinx.coroutines.CoroutineScope,0:0,kotlin.Unit>;kotlinx.coroutines.CoroutineScope?;androidx.compose.runtime.Composer?;kotlin.Int;kotlin.Int){0§<kotlin.Any?>}[0]
