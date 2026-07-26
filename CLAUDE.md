@@ -179,6 +179,35 @@ TrapezeCompositionLocals(trapeze) {
 is on the stack, popping the backstack. At the root it stays out of the way so the host
 Activity behaves normally. Pass `handleBack = false` to take over.
 
+### Retained State and Scopes
+
+`rememberSaveable` covers *state*; it does not cover in-flight *work*. A save started from an
+event sink used to be cancelled by a rotation, because the scope came from
+`rememberCoroutineScope()`.
+
+`NavigableTrapezeContent` gives each backstack entry a `TrapezeRetainedStore` that survives
+configuration changes and is cleared when the entry is popped:
+
+```kotlin
+@Composable
+override fun produceState(): FooState {
+    val pager = rememberRetained("pager") { Pager(query) }   // survives rotation
+    // ...
+}
+```
+
+`wrapEventSink` launches from that retained scope, so work started by an event survives a
+rotation and is cancelled when the screen is actually gone. On Android the store is held by an
+internal `ViewModel` — the only thing that reliably outlives Activity recreation. You never write
+one; MESA's "no ViewModels" rule is about where your logic lives, not about refusing the
+platform's only retention primitive.
+
+Outside a navigation host there is nothing to retain against, so `rememberRetained` degrades to
+`remember` and the scope to `rememberCoroutineScope()`.
+
+Retained values are held in memory and do **not** survive process death. Pair with
+`rememberSaveable` when you need both.
+
 ### Screen Identity
 
 Screens are values, so navigating to an equal screen twice produces two *equal* screens. Each

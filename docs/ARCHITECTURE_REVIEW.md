@@ -21,21 +21,20 @@ ordered by how directly they block that.
 | | Count |
 |---|---|
 | Blocks out-of-the-box use | 4 (3 fixed) |
-| Correctness bugs and leaks | 9 (8 fixed) |
+| Correctness bugs and leaks | 9 (9 fixed) |
 | Library-hygiene gaps | 11 (3 fixed) |
 | Security / privacy | 4 (3 fixed) |
-| Missing capabilities | 8 (1 fixed) |
+| Missing capabilities | 8 (2 fixed) |
 
 **Status:** everything below is marked FIXED or NOT FIXED against the branch
-`claude/project-architecture-review-0aw4o5`. The three items still open — retained scope,
-`explicitApi()` + binary-compatibility validation, and convention plugins — were deliberately
-held back; see §6.
+`claude/project-architecture-review-0aw4o5`. Two items are deliberately still open —
+`explicitApi()` + binary-compatibility validation, and convention plugins; see §6.
 
 The core idea is sound and the code is clean, small, and readable. What is missing is
 almost entirely at the edges: **the published artifacts were not consumable, the
 navigation layer had a Compose-contract violation at its centre, the test suite that
-covers navigation never ran, and there is no retained scope** — which the "no ViewModels"
-stance makes load-bearing rather than optional.
+covers navigation never ran, and there was no retained scope** — which the "no ViewModels"
+stance made load-bearing rather than optional. All four are addressed on this branch.
 
 ---
 
@@ -229,7 +228,7 @@ size unchanged and the popped screen's saved state is never released. The effect
 keyed on `Unit`, so swapping backstacks would not restart tracking. Fixed: keyed on
 `backStack`, diffed by set membership.
 
-### 2.6 There is no retained scope — **NOT FIXED (largest architectural gap)**
+### 2.6 There is no retained scope — **FIXED**
 
 MESA's stance is "No ViewModels: logic belongs in `TrapezeStateHolder`." But:
 
@@ -243,20 +242,29 @@ change, on entering multi-window, and on navigating away. A "save" that takes 40
 user who rotates mid-save silently loses the write. `rememberSaveable` covers *state* but
 nothing covers *work*.
 
-This is precisely the problem `ViewModel` exists to solve, and rejecting `ViewModel`
-without replacing the capability leaves a hole users will hit on day one. Options, roughly
-in order of preference:
+This is precisely the problem `ViewModel` exists to solve, and rejecting `ViewModel` without
+replacing the capability left a hole users would hit on day one.
 
-1. A `TrapezeRetainedScope` keyed on the backstack entry id (§2.4), surviving config
-   changes and cleared when the entry is popped — Circuit's `rememberRetained` model.
-2. An opt-in `androidx.lifecycle.ViewModelStoreOwner`-backed scope per entry.
-3. At minimum: document loudly that event-sink work does not survive, and give
-   `strataLaunch` a documented escape hatch to an application-scoped coroutine scope.
+`TrapezeRetainedStore` now holds retained values and a `SupervisorJob`-backed scope, one store
+per backstack entry (§2.4). `NavigableTrapezeContent` clears a store when its entry leaves the
+backstack and never on a configuration change, so `rememberRetained` and
+`rememberRetainedCoroutineScope` give exactly the intended lifetime. `wrapEventSink` launches
+from that scope, which is what fixes the cancelled-on-rotation bug at the source.
 
-Related sharp edge: `strataLaunch` does `check(!it.isCancelled)` and **throws
-`IllegalStateException`** when the scope is already cancelled. `wrapEventSink` guards with
-`coroutineScope.isActive`, but that check and the `launch` are not atomic — an event
-dispatched exactly at disposal can crash on the main thread instead of being dropped.
+On Android the host is an internal `ViewModel` — the only thing on the platform that reliably
+outlives Activity recreation. Feature authors never see it; "no ViewModels" is about where logic
+lives, not about refusing the platform's retention primitive. Other targets use a
+composition-lifetime host, which is correct where no such recreation exists.
+
+Outside a navigation host both helpers degrade to `remember` / `rememberCoroutineScope`, so
+standalone `TrapezeContent` and the headless test runtime behave exactly as before.
+
+Retained values are in-memory and do not survive process death; `rememberSaveable` remains the
+tool for that.
+
+The related sharp edge is also gone: `strataLaunch` no longer throws on an already-cancelled
+scope, so the non-atomic `isActive` check in `wrapEventSink` can no longer turn a late event into
+a main-thread crash.
 
 ### 2.7 Backstack restore silently discards entries — **FIXED**
 
@@ -450,9 +458,8 @@ plugins.
 
 Ranked by how likely a real app is to need them:
 
-1. **Retained scope / config-change survival** (§2.6) — the "no ViewModels" claim is not
-   yet backed by a replacement.
-2. **System back and predictive back** (§1.2).
+1. ~~Retained scope / config-change survival~~ — done (§2.6).
+2. ~~System back~~ — done (§1.2). Predictive back is still open and belongs with transitions.
 3. **Screen transition animations.** `NavigableTrapezeContent` swaps content with no
    `AnimatedContent` and no hook to supply one. Every navigation is a hard cut.
 4. **Nested navigation / multiple backstacks** — bottom-nav tabs with independent history
@@ -481,7 +488,8 @@ Committed on `claude/project-architecture-review-0aw4o5`:
 | `a7417c4` | Strata: subscription lifecycle, `distinctValues`, launch semantics (§2.9) |
 | `1fb598d` | Backstack entry identity, entry-scoped results, system back, restore truncation (§2.3, §2.4, §2.7, §1.2) |
 | `78f663d` | `TrapezeMessage` API, abstract navigator members, DI scoping, backup rules, doc consolidation, duplicate test removal (§2.9, §3.8, §3.9, §4.1, §4.2) |
-| *(final)* | `StrataInteractor` loading model re-derived around the ambient transition (§2.9) |
+| `5922a5f` | `StrataInteractor` loading model rebuilt around the ambient transition (§2.9) |
+| *(final)* | Retained stores and scopes, per backstack entry (§2.6) |
 
 Strata's changes are the only ones **executed** — it is pure Kotlin and builds against Maven
 Central, so its 58 tests were run locally, including three verified to fail against the previous
@@ -495,18 +503,16 @@ a compiler in the loop and would be hard to review stacked on top of unverified 
 
 | # | Scope | Why held |
 |---|---|---|
-| 1 | **Retained scope** (§2.6) | The largest design change in the list, and it needs a new dependency (a `ViewModel`-backed store on Android, or the multiplatform lifecycle-viewmodel artifact) whose API cannot be checked here. Now unblocked by entry identity: the store hangs off `TrapezeBackStackEntry.id`, cleared when the entry is popped. |
-| 2 | **`explicitApi()` + binary-compatibility validator** (§3.1, §3.2) | `apiDump` has to be *run* to generate the `.api` files, and it cannot be run here. Adding `apiCheck` without the dumps would just make CI red. |
-| 3 | **`build-logic` convention plugins** (§3.5, §3.6) | Mechanical but wide, and it touches every build file this branch already modified. Much safer once the current changes are known-good. |
+| 1 | **`explicitApi()` + binary-compatibility validator** (§3.1, §3.2) | `apiDump` has to be *run* to generate the `.api` files, and it cannot be run here. Adding `apiCheck` without the dumps would just make CI red. |
+| 2 | **`build-logic` convention plugins** (§3.5, §3.6) | Mechanical but wide, and it touches every build file this branch already modified. Much safer once the current changes are known-good. |
 
 ### Recommended order from here
 
-1. Get this branch green in CI — expect fallout in the instrumented suites, which are running
-   for the first time.
-2. Retained scope (§2.6) — the remaining load-bearing gap.
-3. `explicitApi()` + binary-compat dumps (§3.1, §3.2) — locks in §1.1 permanently.
-4. `build-logic` convention plugins (§3.5) — removes the `minSdk` 27/28 drift.
-5. Consumer R8 rules + a minified sample (§3.4) — needs 4.
-6. Screen transitions and predictive back (§5.3) — the visible polish.
-7. Maven Central (§1.4) — needs 3 and 4; the thing that unblocks actual adoption.
-8. Deep links (§5.6) — parked at the author's request.
+1. Get this branch green — expect fallout in the instrumented suites, which are running for the
+   first time, and in the four commits that have never been compiled.
+2. `explicitApi()` + binary-compat dumps (§3.1, §3.2) — locks in §1.1 permanently.
+3. `build-logic` convention plugins (§3.5) — removes the `minSdk` 27/28 drift.
+4. Consumer R8 rules + a minified sample (§3.4) — needs 3.
+5. Screen transitions and predictive back (§5.3) — the visible polish.
+6. Maven Central (§1.4) — needs 2 and 3; the thing that unblocks actual adoption.
+7. Deep links (§5.6) — parked at the author's request.

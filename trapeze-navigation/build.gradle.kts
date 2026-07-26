@@ -53,6 +53,9 @@ kotlin {
         androidMain.dependencies {
             // Supplies the BackHandler actual. Internal to this module, so `implementation`.
             implementation(libs.androidx.activity.compose)
+            // Backs the retained host. A ViewModel is the only thing on Android that reliably
+            // outlives Activity recreation; it is an implementation detail, never exposed.
+            implementation(libs.androidx.lifecycle.viewmodel.compose)
         }
         val androidInstrumentedTest by getting {
             dependencies {

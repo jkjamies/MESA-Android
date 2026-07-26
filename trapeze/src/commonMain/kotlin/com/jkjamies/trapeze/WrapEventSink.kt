@@ -17,15 +17,22 @@
 package com.jkjamies.trapeze
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.isActive
 
+/**
+ * The scope event sinks launch from.
+ *
+ * Deliberately the *retained* scope rather than `rememberCoroutineScope()`: work started from an
+ * event sink should outlive a rotation and die when the screen is actually gone. Outside a
+ * navigation host [rememberRetainedCoroutineScope] falls back to the composition's lifetime, so
+ * standalone `TrapezeContent` behaves as it always did.
+ */
 @Composable
 @PublishedApi
 internal inline fun <E> wrapEventSink(
     crossinline eventSink: CoroutineScope.(E) -> Unit,
-    coroutineScope: CoroutineScope = rememberCoroutineScope(),
+    coroutineScope: CoroutineScope = rememberRetainedCoroutineScope(),
 ): (E) -> Unit = { event ->
     if (coroutineScope.isActive) {
         coroutineScope.eventSink(event)

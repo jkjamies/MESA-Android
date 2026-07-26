@@ -23,6 +23,7 @@ import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import com.jkjamies.trapeze.LocalTrapeze
+import com.jkjamies.trapeze.LocalTrapezeRetainedStore
 import com.jkjamies.trapeze.Trapeze
 import com.jkjamies.trapeze.TrapezeContent
 import com.jkjamies.trapeze.TrapezeNavigator
@@ -52,23 +53,31 @@ public fun NavigableTrapezeContent(
     handleBack: Boolean = true
 ) {
     val saveableStateHolder = rememberSaveableStateHolder()
+    val retainedHost = rememberTrapezeRetainedHost()
     val currentEntry = backStack.currentEntry
 
     TrapezeBackHandler(enabled = handleBack && backStack.size > 1) {
         navigator.pop()
     }
 
-    // Clean up saved state for entries that have been removed from the backstack.
+    // Release both kinds of per-entry state when an entry leaves the backstack: the saved UI
+    // state, and the retained store (which cancels any work still running for that screen).
     // Keyed on `backStack` so swapping backstacks restarts tracking, and driven by set
     // difference rather than size: a push and a pop between two snapshot emissions leaves
     // the size unchanged while still removing an entry.
-    LaunchedEffect(backStack, saveableStateHolder) {
+    //
+    // Nothing here fires on a configuration change — the entries are unchanged and the host
+    // outlives the composition — which is exactly what keeps in-flight work alive across one.
+    LaunchedEffect(backStack, saveableStateHolder, retainedHost) {
         var previousIds = backStack.entries.mapTo(mutableSetOf()) { it.id }
         snapshotFlow { backStack.entries }
             .collect { entries ->
                 val currentIds = entries.mapTo(mutableSetOf()) { it.id }
                 previousIds.forEach { id ->
-                    if (id !in currentIds) saveableStateHolder.removeState(id)
+                    if (id !in currentIds) {
+                        saveableStateHolder.removeState(id)
+                        retainedHost.clear(id)
+                    }
                 }
                 previousIds = currentIds
             }
@@ -77,7 +86,8 @@ public fun NavigableTrapezeContent(
     CompositionLocalProvider(
         LocalTrapezeNavigator provides navigator,
         LocalTrapezeBackStack provides backStack,
-        LocalTrapezeBackStackEntry provides currentEntry
+        LocalTrapezeBackStackEntry provides currentEntry,
+        LocalTrapezeRetainedStore provides retainedHost.storeFor(currentEntry.id)
     ) {
         // Keyed on the entry id, not the screen: two visits to an equal screen are distinct
         // positions in the stack and must not share saved UI state.
