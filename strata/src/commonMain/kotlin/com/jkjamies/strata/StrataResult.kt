@@ -26,18 +26,18 @@ public sealed interface StrataResult<out T> {
     /**
      * Represents a successful operation containing [data].
      */
-    data class Success<T>(val data: T) : StrataResult<T>
+    public data class Success<T>(val data: T) : StrataResult<T>
 
     /**
      * Represents a failed operation containing an [error] of type [StrataException].
      */
-    data class Failure(val error: StrataException) : StrataResult<Nothing>
+    public data class Failure(val error: StrataException) : StrataResult<Nothing>
 
     /**
      * Performs the given [action] on the encapsulated [StrataException] exception if this instance represents [Failure].
      * Returns the original `StrataResult` unchanged.
      */
-    fun onFailure(action: (StrataException) -> Unit): StrataResult<T> {
+    public fun onFailure(action: (StrataException) -> Unit): StrataResult<T> {
         if (this is Failure) action(error)
         return this
     }
@@ -46,7 +46,7 @@ public sealed interface StrataResult<out T> {
      * Performs the given [action] on the encapsulated value if this instance represents [Success].
      * Returns the original `StrataResult` unchanged.
      */
-    fun onSuccess(action: (T) -> Unit): StrataResult<T> {
+    public fun onSuccess(action: (T) -> Unit): StrataResult<T> {
         if (this is Success) action(data)
         return this
     }
@@ -54,13 +54,13 @@ public sealed interface StrataResult<out T> {
     /**
      * Returns the encapsulated value if this instance represents [Success] or `null` if it is [Failure].
      */
-    fun getOrNull(): T? = (this as? Success)?.data
+    public fun getOrNull(): T? = (this as? Success)?.data
 
     /**
      * Returns a new [StrataResult] with the encapsulated value transformed by [transform]
      * if this instance represents [Success], or the original [Failure] unchanged.
      */
-    fun <R> map(transform: (T) -> R): StrataResult<R> = when (this) {
+    public fun <R> map(transform: (T) -> R): StrataResult<R> = when (this) {
         is Success -> Success(transform(data))
         is Failure -> this
     }
@@ -74,7 +74,7 @@ public sealed interface StrataResult<out T> {
      * val profile = fetchUser(id).flatMap { user -> fetchProfile(user.profileId) }
      * ```
      */
-    fun <R> flatMap(transform: (T) -> StrataResult<R>): StrataResult<R> = when (this) {
+    public fun <R> flatMap(transform: (T) -> StrataResult<R>): StrataResult<R> = when (this) {
         is Success -> transform(data)
         is Failure -> this
     }
@@ -83,7 +83,7 @@ public sealed interface StrataResult<out T> {
      * Returns the result of [onSuccess] for the encapsulated value if this instance represents
      * [Success] or the result of [onFailure] for the encapsulated error if it is [Failure].
      */
-    fun <R> fold(onSuccess: (T) -> R, onFailure: (StrataException) -> R): R = when (this) {
+    public fun <R> fold(onSuccess: (T) -> R, onFailure: (StrataException) -> R): R = when (this) {
         is Success -> onSuccess(data)
         is Failure -> onFailure(error)
     }

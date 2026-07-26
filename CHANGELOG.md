@@ -41,6 +41,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - The publish workflow verifies the build before pushing artifacts to the registry.
 - A `NOTICE` file carrying the project's copyright, the conventional home for any third-party
   notices a future dependency requires.
+- **Explicit API mode and ABI validation on all four published modules.** Every exported
+  declaration now states its visibility and names its return type, and the compiled ABI is
+  recorded in `{module}/api/{module}.api` and checked on every build. Previously a `public` that
+  was never meant to be public was one omitted keyword away, and a breaking signature change
+  reached consumers with nothing in the diff to review. `./gradlew updateKotlinAbi` re-records
+  the dumps after an intentional change.
 
 ### Fixed
 - **Published artifacts are now usable by external consumers.** Compose, coroutines and

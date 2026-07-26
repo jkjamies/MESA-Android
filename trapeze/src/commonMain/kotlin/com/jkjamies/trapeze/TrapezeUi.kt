@@ -24,4 +24,4 @@ import androidx.compose.ui.Modifier
  * This ensures the UI is a standard Composable function that
  * accepts a specific State type.
  */
-typealias TrapezeUi<S> = @Composable (modifier: Modifier, state: S) -> Unit
+public typealias TrapezeUi<S> = @Composable (modifier: Modifier, state: S) -> Unit

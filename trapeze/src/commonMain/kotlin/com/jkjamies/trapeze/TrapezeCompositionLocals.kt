@@ -18,12 +18,13 @@ package com.jkjamies.trapeze
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.ProvidableCompositionLocal
 import androidx.compose.runtime.staticCompositionLocalOf
 
 /**
  * CompositionLocal for accessing the current [Trapeze] instance.
  */
-public val LocalTrapeze = staticCompositionLocalOf<Trapeze> {
+public val LocalTrapeze: ProvidableCompositionLocal<Trapeze> = staticCompositionLocalOf<Trapeze> {
     error("No Trapeze provided. Wrap your content with TrapezeCompositionLocals.")
 }
 

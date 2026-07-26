@@ -18,6 +18,7 @@ package com.jkjamies.trapeze.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.ProvidableCompositionLocal
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.staticCompositionLocalOf
@@ -28,9 +29,10 @@ import com.jkjamies.trapeze.TrapezeScreen
 /**
  * CompositionLocal for accessing the current [TrapezeNavigator].
  */
-public val LocalTrapezeNavigator = staticCompositionLocalOf<TrapezeNavigator> {
-    error("No TrapezeNavigator provided")
-}
+public val LocalTrapezeNavigator: ProvidableCompositionLocal<TrapezeNavigator> =
+    staticCompositionLocalOf<TrapezeNavigator> {
+        error("No TrapezeNavigator provided")
+    }
 
 /**
  * CompositionLocal for accessing the current [TrapezeBackStack].
@@ -38,9 +40,10 @@ public val LocalTrapezeNavigator = staticCompositionLocalOf<TrapezeNavigator> {
  * Used internally by [rememberNavigationResult] to consume results.
  * The backstack's mutation methods are `internal`, so consumers get read-only access.
  */
-public val LocalTrapezeBackStack = staticCompositionLocalOf<TrapezeBackStack> {
-    error("No TrapezeBackStack provided")
-}
+public val LocalTrapezeBackStack: ProvidableCompositionLocal<TrapezeBackStack> =
+    staticCompositionLocalOf<TrapezeBackStack> {
+        error("No TrapezeBackStack provided")
+    }
 
 /**
  * CompositionLocal for the [TrapezeBackStackEntry] currently being rendered.
@@ -48,9 +51,10 @@ public val LocalTrapezeBackStack = staticCompositionLocalOf<TrapezeBackStack> {
  * Screens are values, so the entry — not the screen — is what identifies "this visit". Used by
  * [rememberNavigationResult] to address results to the right position in the stack.
  */
-public val LocalTrapezeBackStackEntry = staticCompositionLocalOf<TrapezeBackStackEntry> {
-    error("No TrapezeBackStackEntry provided. Render screens via NavigableTrapezeContent.")
-}
+public val LocalTrapezeBackStackEntry: ProvidableCompositionLocal<TrapezeBackStackEntry> =
+    staticCompositionLocalOf<TrapezeBackStackEntry> {
+        error("No TrapezeBackStackEntry provided. Render screens via NavigableTrapezeContent.")
+    }
 
 /**
  * Creates and remembers a [TrapezeNavigator] backed by the given [backStack].

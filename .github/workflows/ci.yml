@@ -47,10 +47,29 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
 
+      # TEMPORARY — bootstrap only. The reference ABI dumps have to be produced by a machine
+      # that can resolve the Android toolchain, which the authoring environment cannot. This
+      # step writes them and prints them so they can be committed; it is removed in the
+      # following commit, once `api/*.api` are in the repository.
+      - name: Bootstrap reference ABI dumps
+        run: |
+          ./gradlew updateKotlinAbi
+          for f in $(find . -path '*/api/*.api' -o -path '*/api/*.klib.api' | sort); do
+            echo "===== BEGIN $f"
+            cat "$f"
+            echo "===== END $f"
+          done
+
       # `build` depends on `check`, which already runs every JVM/KMP test task
       # (`jvmTest`, `testDebugUnitTest`, ...) plus Android Lint.
       - name: Build and run JVM tests
         run: ./gradlew build
+
+      # Fails when a library's compiled ABI drifts from the dumps in `api/`. Run explicitly
+      # rather than relying on it being wired into `check`, so a change in that wiring cannot
+      # silently drop the guarantee.
+      - name: Check published API surface
+        run: ./gradlew checkKotlinAbi
 
   instrumented-tests:
     name: Instrumented tests (API ${{ matrix.api-level }})
