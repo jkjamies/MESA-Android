@@ -16,6 +16,7 @@
 
 package com.jkjamies.mesa.features.summary.presentation
 
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -112,5 +113,21 @@ class SummaryUiTest {
 
         composeTestRule.onNodeWithText("Print Value").performClick()
         event shouldBe SummaryEvent.PrintValue
+    }
+
+    @Test
+    fun givenSaveIsInProgress_whenDisplayed_thenTheSaveButtonIsDisabledAndShowsProgress() {
+        val state = SummaryState(
+            finalCount = 7,
+            lastSavedValue = null,
+            saveInProgress = true,
+            eventSink = {}
+        )
+
+        composeTestRule.setContent {
+            SummaryUi(state = state)
+        }
+
+        composeTestRule.onNodeWithText("Saving\u2026").assertIsNotEnabled()
     }
 }

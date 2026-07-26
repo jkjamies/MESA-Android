@@ -155,7 +155,9 @@ class FooStateHolder @AssistedInject constructor(
 | `rememberSaveableBackStack(root)` | Creates saveable backstack with root screen |
 | `rememberTrapezeNavigator(backStack)` | Creates navigator backed by backstack |
 | `LocalTrapezeNavigator` | CompositionLocal for accessing navigator |
-| `LocalTrapezeBackStack` | CompositionLocal for accessing backstack (used internally by `rememberNavigationResult`) |
+| `LocalTrapezeBackStack` | CompositionLocal for accessing backstack |
+| `LocalTrapezeBackStackEntry` | CompositionLocal for the entry being rendered (identifies *this visit*) |
+| `TrapezeBackStackEntry` | One position in the backstack, with a stable id that survives process death |
 | `rememberNavigationResult(key)` | Composable returning the latest result for a key (latched until the screen leaves composition) |
 | `NavigationResultEffect(key) { }` | Composable that invokes a callback once per delivered result |
 | `TrapezeNavigationResult` | Marker interface (`Parcelable` on Android via `expect/actual`, plain interface on other platforms) |
@@ -170,6 +172,18 @@ TrapezeCompositionLocals(trapeze) {
     NavigableTrapezeContent(navigator, backStack)
 }
 ```
+
+### Back Handling
+
+`NavigableTrapezeContent` intercepts the platform back affordance while more than one screen
+is on the stack, popping the backstack. At the root it stays out of the way so the host
+Activity behaves normally. Pass `handleBack = false` to take over.
+
+### Screen Identity
+
+Screens are values, so navigating to an equal screen twice produces two *equal* screens. Each
+push occupies a `TrapezeBackStackEntry` with its own id, so the two visits keep separate
+saveable UI state and separate navigation results. Never key per-visit state off the screen.
 
 ### TrapezeNavigator Interface
 ```kotlin
@@ -261,9 +275,20 @@ or consumers of the published artifact cannot compile against them.
 | `StrataInteractor<P, R>` | One-shot async (API calls, DB writes) | `StrataResult<R>` |
 | `StrataSubjectInteractor<P, T>` | Streams/flows (observe data) | `Flow<T>` via `.flow` |
 
+`StrataSubjectInteractor` starts idle and emits nothing until `invoke(params)`. Call `stop()`
+to tear the subscription down. Equal params are conflated. Emitted *values* are not
+de-duplicated by default — override `distinctValues` to opt in.
+
+`StrataInteractor` reports `inProgress` immediately for user-initiated work and delays purely
+ambient work by `ambientLoadingDelay` (default 5s). Override `ambientLoadingDelay` and
+`defaultTimeout` per interactor.
+
 ### Launch Utilities
 
-`strataLaunch` runs on `Dispatchers.Default` by default (override via `context` parameter):
+`strataLaunch` runs on `Dispatchers.Default` by default (override via `context` parameter). If
+the scope is already cancelled the returned `Job` is already cancelled and the block never runs
+— a late UI event is dropped, not a crash. Passing a `Job` in `context` is rejected, since it
+would detach the coroutine from the scope:
 ```kotlin
 // Default dispatcher
 strataLaunch {
@@ -417,12 +442,18 @@ Use `TrapezeMessage` and `TrapezeMessageManager` to handle one-off events (snack
 val messageManager = remember { TrapezeMessageManager() }
 val message by messageManager.message.collectAsState(initial = null)
 
-// Emit a message
-messageManager.emitMessage(TrapezeMessage(Throwable("Something went wrong")))
+// Emit a message. `message` is user-facing copy; attach the failure as `cause` for logging.
+messageManager.emitMessage(
+    TrapezeMessage("Couldn't save your changes.", cause = error)
+)
 
 // Clear all messages
 messageManager.clearAll()
 ```
+
+**Never derive the displayed text from `throwable.message`.** Exception text routinely carries
+URLs, query fragments, and file paths. `TrapezeMessage` has no throwable-only factory for
+exactly this reason — `cause` is carried for logs and is never rendered.
 
 **UI:**
 ```kotlin

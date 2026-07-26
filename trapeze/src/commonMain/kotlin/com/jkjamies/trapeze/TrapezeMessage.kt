@@ -28,23 +28,28 @@ import kotlin.uuid.Uuid
  *
  * Each message has a unique [id] used for targeted dismissal via [TrapezeMessageManager.clearMessage].
  *
- * @param message The human-readable message text.
+ * [message] is shown to the user and must be written for them. Attach the originating
+ * [Throwable] as [cause] when there is one — it is carried for logging and crash reporting and
+ * is deliberately *not* part of what the UI renders.
+ *
+ * ```kotlin
+ * result.onFailure { error ->
+ *     messageManager.emitMessage(TrapezeMessage("Couldn't save your changes.", cause = error))
+ * }
+ * ```
+ *
+ * Exception messages routinely carry request URLs, query fragments, file paths, and
+ * occasionally credentials. Deriving the user-facing string from `throwable.message` would
+ * make leaking those the path of least resistance, so this type does not offer it.
+ *
+ * @param message The human-readable message text to display.
+ * @param cause The originating failure, for logging. Never rendered by Trapeze.
  * @param id Unique identifier for this message instance.
  */
 public data class TrapezeMessage(
     val message: String,
+    val cause: Throwable? = null,
     val id: Uuid = Uuid.random()
-)
-
-/**
- * Creates a [TrapezeMessage] from a [Throwable], using its message or a formatted fallback.
- */
-public fun TrapezeMessage(
-    t: Throwable,
-    id: Uuid = Uuid.random(),
-): TrapezeMessage = TrapezeMessage(
-    message = t.message ?: "Error occurred: $t",
-    id = id,
 )
 
 /**

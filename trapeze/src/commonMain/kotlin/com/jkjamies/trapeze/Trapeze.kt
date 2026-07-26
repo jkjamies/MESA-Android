@@ -44,6 +44,12 @@ public class Trapeze private constructor(builder: Builder) {
 
     /**
      * Returns a [TrapezeStateHolder] for the given [screen], or null if none is found.
+     *
+     * Factories are consulted in registration order and the first non-null result wins. If two
+     * features register factories that both claim a screen type, the earlier registration
+     * silently shadows the later one — Trapeze cannot detect this without invoking factories
+     * for their side effects. Keep one factory per screen type.
+     *
      * @param navigator Optional navigator for screens that need navigation capabilities.
      */
     internal fun stateHolder(

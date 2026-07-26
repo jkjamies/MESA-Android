@@ -25,7 +25,7 @@ Platform-specific concerns like `Parcelable` are handled via `expect/actual` dec
 | Library | Artifact | Purpose | Key Components |
 |---------|----------|---------|----------------|
 | **Trapeze** | `com.jkjamies:trapeze` | Core architecture | `TrapezeStateHolder`, `TrapezeState`, `TrapezeScreen`, `TrapezeEvent`, `TrapezeContent`, `Trapeze`, `TrapezeCompositionLocals`, `TrapezeMessage`, `TrapezeMessageManager`, `TrapezeNavigationResult` |
-| **Trapeze Navigation** | `com.jkjamies:trapeze-navigation` | Navigation layer | `NavigableTrapezeContent`, `TrapezeBackStack`, `TrapezeNavigator`, `LocalTrapezeNavigator`, `LocalTrapezeBackStack`, `rememberNavigationResult`, `NavigationResultEffect` |
+| **Trapeze Navigation** | `com.jkjamies:trapeze-navigation` | Navigation layer | `NavigableTrapezeContent`, `TrapezeBackStack`, `TrapezeNavigator`, `LocalTrapezeNavigator`, `LocalTrapezeBackStack`, `LocalTrapezeBackStackEntry`, `rememberNavigationResult`, `NavigationResultEffect` |
 | **Strata** | `com.jkjamies:strata` | Business logic | `StrataInteractor`, `StrataSubjectInteractor`, `StrataResult`, `strataLaunch` |
 | **Trapeze Test** | `com.jkjamies:trapeze-test` | Test utilities | `TrapezeStateHolder.test`, `FakeTrapezeNavigator`, `TestEventSink`, `TrapezeReceiveTurbine`, `NavigationEvent` |
 | **MESA BOM** | `com.jkjamies:mesa-bom` | Bill of Materials | Aligns versions of all MESA libraries |
@@ -312,6 +312,23 @@ interface TrapezeNavigator {
 }
 ```
 
+### Back Handling
+
+`NavigableTrapezeContent` intercepts the platform back affordance while more than one screen is
+on the stack and pops the backstack. At the root it stays out of the way, so the host Activity
+finishes as usual. Opt out with `handleBack = false` if you want to drive back yourself.
+
+On targets with no system back affordance this is a no-op and the host drives the backstack.
+
+### Screen Identity
+
+Screens are values: navigating to `HomeScreen` twice gives you two *equal* screens. Each push
+occupies a `TrapezeBackStackEntry` with its own generated id, so the two visits keep separate
+saveable UI state and separate navigation results rather than silently sharing them. The id
+survives configuration changes and process death.
+
+`LocalTrapezeBackStackEntry` exposes the entry currently being rendered.
+
 ### Navigation Result Passing
 Return data from Screen B to Screen A when popping:
 
@@ -412,6 +429,15 @@ class ObserveNote @Inject constructor(
     }
 }
 ```
+
+A subject interactor starts idle and emits nothing until `invoke(params)`; `stop()` tears the
+subscription down. Equal parameters are conflated, so re-triggering from a recomposition will
+not resubscribe. Emitted *values* are delivered as-is — override `distinctValues` to `true` to
+filter consecutive duplicates.
+
+`StrataInteractor.inProgress` turns on immediately for user-initiated work and delays purely
+ambient work by `ambientLoadingDelay` (default 5s), so short background refreshes never flash a
+spinner. Both that and `defaultTimeout` are overridable per interactor.
 
 ### Launch Utilities
 
@@ -572,12 +598,19 @@ Use `TrapezeMessage` and `TrapezeMessageManager` to handle one-off events (snack
 val messageManager = remember { TrapezeMessageManager() }
 val message by messageManager.message.collectAsState(initial = null)
 
-// Emit a message
-messageManager.emitMessage(TrapezeMessage(Throwable("Something went wrong")))
+// `message` is copy written for the user. Attach the failure as `cause` — it is carried for
+// logging and crash reporting, and is never rendered by Trapeze.
+messageManager.emitMessage(
+    TrapezeMessage("Couldn't save your changes.", cause = error)
+)
 
 // Clear all messages
 messageManager.clearAll()
 ```
+
+> **Do not derive the displayed text from `throwable.message`.** Exception text routinely
+> carries request URLs, query fragments, and file paths. `TrapezeMessage` deliberately offers
+> no throwable-only factory.
 
 **UI:**
 ```kotlin

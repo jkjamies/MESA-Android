@@ -45,7 +45,9 @@ public interface TrapezeNavigator {
     /**
      * Pops the entire backstack to the root screen.
      */
-    public fun popToRoot() {}
+    // Abstract rather than a no-op default: a navigator that silently ignores popToRoot is a
+    // bug, and a default implementation hides it until someone notices nothing happened.
+    public fun popToRoot()
 
     /**
      * Pops the backstack to the given [screen].
@@ -55,5 +57,5 @@ public interface TrapezeNavigator {
      *
      * @return `true` if the screen was found and the backstack was updated, `false` otherwise.
      */
-    public fun popTo(screen: TrapezeScreen): Boolean = false
+    public fun popTo(screen: TrapezeScreen): Boolean
 }

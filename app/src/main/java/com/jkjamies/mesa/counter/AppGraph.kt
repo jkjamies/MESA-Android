@@ -23,6 +23,7 @@ import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.DependencyGraph
 import dev.zacsweers.metro.Multibinds
 import dev.zacsweers.metro.Provides
+import dev.zacsweers.metro.SingleIn
 import dev.zacsweers.metrox.android.MetroAppComponentProviders
 
 @DependencyGraph(AppScope::class)
@@ -34,8 +35,10 @@ interface AppGraph : MetroAppComponentProviders {
     @Multibinds
     val uiFactories: Set<Trapeze.UiFactory>
 
+    // Scoped: without this every injection point rebuilds the registry and re-walks the
+    // factory sets.
     val trapeze: Trapeze
-        @Provides get() = Trapeze.Builder()
+        @Provides @SingleIn(AppScope::class) get() = Trapeze.Builder()
             .apply { stateHolderFactories.forEach { addStateHolderFactory(it) } }
             .apply { uiFactories.forEach { addUiFactory(it) } }
             .build()

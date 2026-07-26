@@ -67,8 +67,14 @@ class CounterStateHolder constructor(
                         override fun toString(): String = "Help Requested!"
                     }
                 )
-                CounterEvent.ThrowError ->
-                    trapezeMessageManager.emitMessage(TrapezeMessage(MockError("Simulated Failure")))
+                CounterEvent.ThrowError -> trapezeMessageManager.emitMessage(
+                    // The user-facing text is written for the user; the exception rides
+                    // along as `cause` for logging and is never rendered.
+                    TrapezeMessage(
+                        message = "Something went wrong. Please try again.",
+                        cause = MockError("Simulated Failure")
+                    )
+                )
                 is CounterEvent.ClearError -> trapezeMessageManager.clearMessage(event.id)
             }
         }

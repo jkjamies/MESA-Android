@@ -21,10 +21,15 @@ ordered by how directly they block that.
 | | Count |
 |---|---|
 | Blocks out-of-the-box use | 4 (3 fixed) |
-| Correctness bugs and leaks | 9 (4 fixed) |
-| Library-hygiene gaps | 11 |
-| Security / privacy | 4 (1 fixed) |
-| Missing capabilities | 8 |
+| Correctness bugs and leaks | 9 (8 fixed) |
+| Library-hygiene gaps | 11 (3 fixed) |
+| Security / privacy | 4 (3 fixed) |
+| Missing capabilities | 8 (1 fixed) |
+
+**Status:** everything below is marked FIXED or NOT FIXED against the branch
+`claude/project-architecture-review-0aw4o5`. The three items still open — retained scope,
+`explicitApi()` + binary-compatibility validation, and convention plugins — were deliberately
+held back; see §6.
 
 The core idea is sound and the code is clean, small, and readable. What is missing is
 almost entirely at the edges: **the published artifacts were not consumable, the
@@ -70,7 +75,7 @@ Fixed in `db2ff58`, including the sample modules with the same defect
 
 **Follow-up:** nothing stops this regressing. See §3.2 (binary-compatibility validation).
 
-### 1.2 System back button does nothing — **NOT FIXED**
+### 1.2 System back button does nothing — **FIXED**
 
 There is no `BackHandler`, no `onBackPressed` wiring, and no predictive-back support
 anywhere in the repository:
@@ -84,13 +89,13 @@ In the sample app, navigating Counter → Summary and pressing back **exits the 
 instead of popping to Counter. For a library whose headline feature is a navigation
 layer, this is the first thing a user will try and the first thing that will fail.
 
-`rememberTrapezeNavigator` already takes an `onRootPop` callback, so the shape of the fix
-is clear: `NavigableTrapezeContent` should install a `BackHandler(enabled = backStack.size > 1)`
-that calls `navigator.pop()`, and the sample's `onRootPop` should finish the Activity.
-Predictive back (`PredictiveBackHandler`) is the follow-on.
+`NavigableTrapezeContent` now installs a back handler while `backStack.size > 1` and leaves
+back alone at the root, so the host Activity finishes as usual. `handleBack = false` opts out.
+Android delegates to `androidx.activity.compose.BackHandler` through an `expect/actual`; other
+targets get a documented no-op. Covered by `BackHandlingTest`.
 
-This needs an `expect/actual` — `BackHandler` is Android-only in Compose Multiplatform
-(`androidx.activity.compose.BackHandler`), with no-op actuals elsewhere.
+Predictive back (`PredictiveBackHandler`, with a progress-driven transition) is still open and
+belongs with screen transitions — see §5.3.
 
 ### 1.3 The navigation test suite never ran — **FIXED**
 
@@ -172,7 +177,7 @@ then lived in `_results` for the lifetime of the backstack **and was serialized 
 saved-state `Bundle` on every save**. Fixed: the result is stored only when the pop
 succeeds.
 
-### 2.3 The results map is unbounded and globally keyed — **NOT FIXED**
+### 2.3 The results map is unbounded and globally keyed — **FIXED**
 
 ```kotlin
 private var _results by mutableStateOf<Map<String, TrapezeNavigationResult>>(emptyMap())
@@ -188,11 +193,12 @@ Two independent problems:
   a `popToRoot()` that skips the intended consumer all leave the entry in the map forever
   — and inside the process-death `Bundle`.
 
-The structural fix is to scope results to a backstack *entry* rather than a global map,
-which depends on §2.4. A cheap interim mitigation is to drop results whose owning screen
-is no longer on the stack when the stack shrinks.
+Results are now addressed to the backstack *entry* that will receive them, so two features
+using the same key cannot collide. Every path that removes entries funnels through one place
+that discards results belonging to departed entries, so the map cannot grow unbounded and
+nothing orphaned reaches the saved-state `Bundle`.
 
-### 2.4 Backstack entries have no identity — **NOT FIXED**
+### 2.4 Backstack entries have no identity — **FIXED**
 
 `TrapezeBackStack` is a `List<TrapezeScreen>`, and screens are value types. Consequences:
 
@@ -204,10 +210,11 @@ is no longer on the stack when the stack shrinks.
   The KDoc admits this ("pops to the most recent occurrence") rather than fixing it.
 - Result scoping (§2.3) and per-entry retained scope (§2.6) both need entry identity.
 
-Circuit solves this with a per-record `BackStack.Record` carrying a generated key. That is
-the change to make here: wrap each pushed screen in a record with a stable unique id, key
-saveable state and results off the record id, and keep the public `TrapezeScreen` API
-unchanged.
+Each push now occupies a `TrapezeBackStackEntry` with a generated id that survives
+configuration changes and process death. Saveable state and results key off the entry id; the
+public `TrapezeScreen` API is unchanged. `LocalTrapezeBackStackEntry` exposes the current entry,
+which is also where per-entry retained scope will hang off (§2.6). Covered by
+`BackStackEntryIdentityTest`.
 
 ### 2.5 Saveable state leaked on same-size stack changes — **FIXED**
 
@@ -251,7 +258,7 @@ Related sharp edge: `strataLaunch` does `check(!it.isCancelled)` and **throws
 `coroutineScope.isActive`, but that check and the `launch` are not atomic — an event
 dispatched exactly at disposal can crash on the main thread instead of being dropped.
 
-### 2.7 Backstack restore silently discards entries — **NOT FIXED**
+### 2.7 Backstack restore silently discards entries — **FIXED**
 
 ```kotlin
 val stack = bundle.getParcelableArrayList<Parcelable>("stack")
@@ -263,34 +270,35 @@ val stack = bundle.getParcelableArrayList<Parcelable>("stack")
 `filterIsInstance` drops anything that failed to restore — a renamed screen class, a
 `Parcelable` whose `CREATOR` was stripped by R8 (§3.4) — **silently reordering and
 shrinking the user's history** with no log and no signal. Restoring `A → B → C` as `A → C`
-is worse than restoring nothing. Recommend logging each dropped entry and falling back to
-the root, and using the non-deprecated `getParcelableArrayList(key, clazz)` on API 33+.
+is worse than restoring nothing. The saver now restores the longest valid prefix, logs how many
+entries were dropped, and uses the non-deprecated Bundle accessors on API 33+.
 
-### 2.8 Factory resolution is unguarded — **NOT FIXED**
+### 2.8 Factory resolution is unguarded — **PARTIALLY FIXED**
 
 `Trapeze.stateHolder`/`ui` linearly scan every registered factory on every screen
 resolution (O(features) per navigation) and the **first match wins silently** — a
 behaviour the existing test enshrines. Two features accidentally claiming the same screen
-type produces a wrong-screen bug with no diagnostic. Consider a debug-build assertion for
-ambiguous matches, and caching resolution by screen class.
+type produces a wrong-screen bug with no diagnostic.
 
-### 2.9 Smaller behavioural issues — **NOT FIXED**
+Trapeze cannot detect the collision without invoking factories for their side effects, so this
+is now documented on `stateHolder`/`ui` rather than enforced. Caching resolution by screen class
+remains worth doing.
 
-- `TrapezeNavigator.popToRoot()` and `popTo()` have **default no-op / `false`
-  implementations on the interface**. Any custom navigator silently does nothing for
-  those. They should be abstract; the defaults exist only for source compatibility and
-  hide bugs.
-- `StrataSubjectInteractor.flow` applies `distinctUntilChanged()` to emitted values,
-  silently swallowing legitimate repeat emissions (a refresh tick carrying an identical
-  payload). Also there is no way to stop or reset a subscription once started.
-- `StrataInteractor.inProgress` debounces on the *incoming* state's `ambientCount`, so a
-  user-initiated load starting while an ambient load is running is debounced 5s — the
-  opposite of the documented intent ("user-initiated calls update the indicator
-  immediately").
-- `AppGraph.trapeze` is an unscoped `@Provides get()`, so a new `Trapeze` registry is
-  built per injection point. Harmless with one consumer, wrong in principle.
-- `SummaryState.saveInProgress` is computed and never rendered — the sample advertises a
-  loading state it does not show.
+### 2.9 Smaller behavioural issues — **MOSTLY FIXED**
+
+- **FIXED** `TrapezeNavigator.popToRoot()` and `popTo()` had default no-op / `false`
+  implementations, so a custom navigator silently did nothing. Both are now abstract.
+- **FIXED** `StrataSubjectInteractor.flow` applied `distinctUntilChanged()` to emitted values,
+  swallowing legitimate repeat emissions. Now opt-in via `distinctValues`, and `stop()`/
+  `isActive` were added — a subscription previously could not be torn down.
+- **FIXED** `StrataInteractor.inProgress` debounced whenever ambient work was running, so a
+  user-initiated load alongside a background refresh waited out the full 5s — the opposite of
+  the documented intent. Now debounces only when work is entirely ambient, with a test that
+  fails against the old logic.
+- **FIXED** `AppGraph.trapeze` is `@SingleIn(AppScope::class)`; it previously rebuilt the
+  registry per injection point.
+- **FIXED** `SummaryState.saveInProgress` is now rendered — the save button disables and shows
+  progress.
 - **Verify:** `MainActivity` uses constructor injection via Metro's `AppComponentFactory`,
   but `AndroidManifest.xml` declares no `android:appComponentFactory` (only
   `tools:ignore="Instantiatable"`). If `metrox-android`'s manifest does not merge one in,
@@ -364,21 +372,21 @@ and behaviour between builds; consumers on stable AGP may not be able to consume
 resulting module metadata. Pin published artifacts to stable releases, and keep the alpha
 on a separate CI lane if you want early signal.
 
-### 3.8 Three copies of the same guidance document
+### 3.8 Three copies of the same guidance document — **FIXED**
 
 `CLAUDE.md`, `GEMINI.md`, and `.junie/guidelines.md` are ~500-line near-duplicates and
 have already drifted — `.junie/guidelines.md` documented `./gradlew :strata:test`, a task
-that does not exist (it is `jvmTest`). Keep one canonical document and make the others
-one-line pointers. (Corrected in `f27e3b0`; consolidation still recommended.)
+that does not exist (it is `jvmTest`). `CLAUDE.md` is now the single canonical document; `GEMINI.md` and `.junie/guidelines.md`
+point at it.
 
-### 3.9 Duplicated test suites
+### 3.9 Duplicated test suites — **FIXED**
 
 `CounterStateHolderTest`, `SummaryStateHolderTest`, and all their fakes exist **twice** —
 once in `src/test` (Kotest + Molecule) and once in `src/androidTest` (JUnit4 + compose
-rule) — testing the same logic through different harnesses. Now that §1.3 makes the
-instrumented suites actually run, this is duplicated maintenance and duplicated CI time.
-Delete the instrumented StateHolder copies; keep the UI tests, which genuinely need a
-device.
+rule) — testing the same logic through different harnesses. Now that §1.3 makes the instrumented
+suites actually run, this was duplicated maintenance and duplicated CI time. The instrumented
+StateHolder copies and their fakes are deleted; the UI tests, which genuinely need a device,
+remain. The template `ExampleUnitTest`/`ExampleInstrumentedTest` are gone too.
 
 ### 3.10 Coverage gaps
 
@@ -398,7 +406,7 @@ while shipping 0.3.0. Both corrected in `f27e3b0`.
 
 ## 4. Security and privacy
 
-### 4.1 Exception detail is piped to the UI by default
+### 4.1 Exception detail is piped to the UI by default — **FIXED**
 
 ```kotlin
 public fun TrapezeMessage(t: Throwable, id: Uuid = Uuid.random()): TrapezeMessage =
@@ -411,16 +419,15 @@ exception class. Exception messages routinely carry request URLs, SQL fragments,
 paths, and occasionally credentials embedded in a URL. Making that the path of least
 resistance means real apps will ship it.
 
-Recommend: require an explicit user-facing string, keep the `Throwable` on the message for
-logging, and make the throwable-only overload opt-in and clearly marked as
-debug/diagnostic.
+The throwable-only factory is removed. `TrapezeMessage` now takes an explicit user-facing
+string plus an optional `cause` that Trapeze never renders, so the easy path is the safe one.
 
-### 4.2 Sample defaults to backing up app data
+### 4.2 Sample defaults to backing up app data — **FIXED**
 
 `android:allowBackup="true"` with a stub `data_extraction_rules.xml` means the DataStore
 file is included in cloud backup and device transfer. Harmless for a counter, but the
-sample is what people copy. Either set `allowBackup="false"` or add worked `<exclude>`
-examples.
+sample is what people copy. Both rule files now carry worked `<exclude>` entries for the
+DataStore file, demonstrating the mechanism rather than shipping commented-out stubs.
 
 ### 4.3 Publish workflow permissions — **FIXED**
 
@@ -458,30 +465,45 @@ Ranked by how likely a real app is to need them:
 
 ---
 
-## 6. Suggested PR sequence
+## 6. What shipped, and what was deliberately held back
 
-Committed on this branch:
+Committed on `claude/project-architecture-review-0aw4o5`:
 
-| # | Commit | Contents |
+| Commit | Contents |
+|---|---|
+| `db2ff58` | `api` vs `implementation` across all published modules (§1.1) |
+| `d52b175` | Result consumption in composition, root-pop leak, saveable cleanup, remember keys (§2.1, §2.2, §2.5) |
+| `f4c53f7` | Instrumented-test CI job, publish verification, workflow permissions (§1.3, §4.3) |
+| `f27e3b0` | Documentation corrections (§3.11) |
+| `506929b` | Review document; sample follows the `wrapEventSink` contract |
+| `a7417c4` | Strata re-derived: subscription lifecycle, `distinctValues`, loading-state fix, launch semantics, NOTICE (§2.9) |
+| `1fb598d` | Backstack entry identity, entry-scoped results, system back, restore truncation (§2.3, §2.4, §2.7, §1.2) |
+| *(final)* | `TrapezeMessage` API, abstract navigator members, DI scoping, backup rules, doc consolidation, duplicate test removal (§2.9, §3.8, §3.9, §4.1, §4.2) |
+
+Strata's changes are the only ones **executed** — it is pure Kotlin and builds against Maven
+Central, so its 56 tests were run locally, including a new test verified to fail against the old
+loading-state logic. Everything touching Compose is source-reviewed only (see the caveat at the
+top) and needs CI.
+
+### Held back deliberately
+
+Three items were left out rather than written blind, because each is a design change that wants
+a compiler in the loop and would be hard to review stacked on top of unverified work:
+
+| # | Scope | Why held |
 |---|---|---|
-| 1 | `db2ff58` | `api` vs `implementation` across all published modules |
-| 2 | `d52b175` | Navigation result consumption, root-pop leak, saveable cleanup, `TrapezeContent` keys |
-| 3 | `f4c53f7` | Instrumented-test CI job, publish verification, workflow permissions |
-| 4 | `f27e3b0` | Documentation corrections + changelog |
-| 5 | `—` | Sample aligned with the documented `wrapEventSink` contract |
+| 1 | **Retained scope** (§2.6) | The largest design change in the list, and it needs a new dependency (a `ViewModel`-backed store on Android, or the multiplatform lifecycle-viewmodel artifact) whose API cannot be checked here. Now unblocked by entry identity: the store hangs off `TrapezeBackStackEntry.id`, cleared when the entry is popped. |
+| 2 | **`explicitApi()` + binary-compatibility validator** (§3.1, §3.2) | `apiDump` has to be *run* to generate the `.api` files, and it cannot be run here. Adding `apiCheck` without the dumps would just make CI red. |
+| 3 | **`build-logic` convention plugins** (§3.5, §3.6) | Mechanical but wide, and it touches every build file this branch already modified. Much safer once the current changes are known-good. |
 
-Recommended follow-ups, each a self-contained PR:
+### Recommended order from here
 
-| # | Scope | Why this order |
-|---|---|---|
-| 6 | `BackHandler` + `onRootPop` wiring (§1.2) | Small, self-contained, most visible bug |
-| 7 | Backstack entry identity (§2.4) | Unblocks 8 and 9 |
-| 8 | Entry-scoped navigation results (§2.3) | Depends on 7 |
-| 9 | Retained scope (§2.6) | Depends on 7; the largest design change |
-| 10 | `explicitApi()` + binary-compatibility validator (§3.1, §3.2) | Locks in §1.1 |
-| 11 | `build-logic` convention plugins (§3.5, §3.6) | Removes the `minSdk` drift |
-| 12 | Consumer R8 rules + minified sample (§3.4) | Needs 11 |
-| 13 | Screen transition animations (§5.3) | Independent |
-| 14 | Maven Central publishing (§1.4) | Needs 10, 11; unblocks real adoption |
-
-Items 6–9 are the ones standing between this and an architecture somebody can ship on.
+1. Get this branch green in CI — expect fallout in the instrumented suites, which are running
+   for the first time.
+2. Retained scope (§2.6) — the remaining load-bearing gap.
+3. `explicitApi()` + binary-compat dumps (§3.1, §3.2) — locks in §1.1 permanently.
+4. `build-logic` convention plugins (§3.5) — removes the `minSdk` 27/28 drift.
+5. Consumer R8 rules + a minified sample (§3.4) — needs 4.
+6. Screen transitions and predictive back (§5.3) — the visible polish.
+7. Maven Central (§1.4) — needs 3 and 4; the thing that unblocks actual adoption.
+8. Deep links (§5.6) — parked at the author's request.

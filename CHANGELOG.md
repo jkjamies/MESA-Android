@@ -8,31 +8,71 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+- **System back handling.** `NavigableTrapezeContent` pops the backstack on the platform back
+  affordance while more than one screen is on the stack, and stays out of the way at the root.
+  Opt out with `handleBack = false`. Previously nothing was wired to back at all — on Android
+  the back button left the app regardless of how deep the stack was.
+- **`TrapezeBackStackEntry`** — each push occupies an entry with a stable id that survives
+  configuration changes and process death, exposed via `LocalTrapezeBackStackEntry`.
+- `NavigationResultEffect(key) { }` for reacting to a navigation result exactly once.
+- `StrataSubjectInteractor.stop()` and `isActive`; a subscription could previously be started
+  but never torn down.
+- `StrataInteractor.ambientLoadingDelay` and `defaultTimeout` are overridable per interactor.
+- `TrapezeMessage.cause` carries the originating `Throwable` for logging.
+- CI runs the instrumented test suites on an emulator (API 28 and 34). They had never been
+  executed by any workflow.
+- The publish workflow verifies the build before pushing artifacts to the registry.
+- A `NOTICE` file recording Tivi's influence on Strata's interactor model and Circuit's on
+  Trapeze's overall shape.
+
 ### Fixed
 - **Published artifacts are now usable by external consumers.** Compose, coroutines and
   `:trapeze` were declared as `implementation` in every library, so they never reached a
-  consumer's compile classpath even though their types are all over the public API. They
-  are now `api` dependencies.
+  consumer's compile classpath even though their types are all over the public API. They are
+  now `api` dependencies.
 - **Navigation results are no longer consumed during composition.** `rememberNavigationResult`
   wrote to snapshot state it had just read, which invalidated the calling scope and made the
-  result visible for a single, racy composition pass. Consumption now happens in an effect,
-  and the delivered value is latched.
+  result visible for a single, racy composition pass. Consumption now happens in an effect and
+  the delivered value is latched.
+- **Equal screens no longer share saveable UI state.** `Home → Detail → Home` keyed both `Home`
+  entries identically, so the second visit resumed the first's scroll position, text fields, and
+  any `rememberSaveable` a StateHolder owned. State is keyed by entry id.
+- **Navigation results are scoped to a backstack entry.** Keys lived in one flat map, so two
+  features both using `"result"` stole each other's data, and an unconsumed result was never
+  collected — it persisted in the map and in the saved-state `Bundle` for the lifetime of the
+  backstack. Results are addressed to an entry and discarded when that entry is popped.
+- **Backstack restore no longer silently drops entries.** A screen that failed to unparcel was
+  skipped, rewriting the user's history into something they never navigated. It now restores the
+  longest valid prefix and logs what was dropped.
+- **`StrataInteractor.inProgress` no longer delays a user's spinner.** It debounced whenever any
+  ambient work was running, so a user-initiated call alongside a background refresh waited out
+  the full 5s. It now debounces only when the work is entirely ambient.
 - `popWithResult` at the root no longer stores a result that no screen can consume.
-- `NavigableTrapezeContent` releases saved state for popped screens even when a push and a
-  pop land between two snapshot emissions (previously it only compared backstack size).
+- `NavigableTrapezeContent` releases saved state for popped entries even when a push and a pop
+  land between two snapshot emissions (previously it only compared backstack size).
 - `TrapezeContent` includes `trapeze` and `navigator` in its remember keys, and reports which
   factory is missing when a screen fails to resolve.
-
-### Added
-- `NavigationResultEffect(key) { }` for reacting to a navigation result exactly once.
-- CI now runs the instrumented test suites on an emulator (API 28 and 34). They had never
-  been executed by any workflow.
-- The publish workflow verifies the build before pushing artifacts to the registry.
+- `strataLaunch`/`strataLaunchWithResult` no longer throw `IllegalStateException` on an
+  already-cancelled scope. An event arriving as the composition is torn down is a normal
+  outcome; the returned `Job` is simply already cancelled.
 
 ### Changed
-- **Behavioral**: `rememberNavigationResult` now latches the delivered value instead of
-  returning it once and then `null`. Code following the documented
+- **Breaking:** `TrapezeMessage(Throwable)` is removed. The user-facing string must be supplied
+  explicitly and the throwable passed as `cause`. Deriving displayed text from
+  `throwable.message` made leaking request URLs, query fragments, and file paths into the UI the
+  path of least resistance.
+- **Breaking:** `TrapezeNavigator.popToRoot()` and `popTo()` are abstract. Their no-op/`false`
+  defaults meant a custom navigator silently did nothing.
+- **Breaking:** `StrataSubjectInteractor` no longer applies `distinctUntilChanged` to emitted
+  values by default; override `distinctValues` to restore it. Filtering unconditionally
+  swallowed legitimate repeat emissions.
+- **Behavioural:** `rememberNavigationResult` latches the delivered value instead of returning
+  it once and then `null`. Code following the documented
   `LaunchedEffect(result) { result?.let { … } }` pattern is unaffected.
+- `strataLaunch`/`strataLaunchWithResult` reject a `Job` passed in `context`, which would have
+  detached the coroutine from the scope.
+- `GEMINI.md` and `.junie/guidelines.md` now point at `CLAUDE.md` instead of duplicating it.
 
 ## [0.2.0] - 2026-03-01
 

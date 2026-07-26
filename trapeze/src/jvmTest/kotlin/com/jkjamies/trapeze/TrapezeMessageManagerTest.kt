@@ -18,6 +18,7 @@ package com.jkjamies.trapeze
 
 import app.cash.turbine.test
 import io.kotest.core.spec.style.BehaviorSpec
+import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 
 class TrapezeMessageManagerTest : BehaviorSpec({
@@ -150,22 +151,20 @@ class TrapezeMessageManagerTest : BehaviorSpec({
         }
     }
 
-    Given("a TrapezeMessage created from a Throwable") {
-        When("the throwable has a message") {
-            Then("the TrapezeMessage uses the throwable message") {
-                val msg = TrapezeMessage(RuntimeException("something broke"))
-                msg.message shouldBe "something broke"
+    Given("a TrapezeMessage carrying a cause") {
+        When("it is created with a user-facing message and a throwable") {
+            Then("the displayed text is the supplied message, not the exception text") {
+                val cause = RuntimeException("SQLSTATE[42000] at https://api.internal/v1/users?token=abc")
+                val msg = TrapezeMessage("Couldn't load your profile.", cause = cause)
+
+                msg.message shouldBe "Couldn't load your profile."
+                msg.cause shouldBe cause
             }
         }
 
-        When("the throwable has no message") {
-            Then("the TrapezeMessage uses a fallback") {
-                val throwable = object : Throwable() {
-                    override val message: String? = null
-                    override fun toString(): String = "CustomError"
-                }
-                val msg = TrapezeMessage(throwable)
-                msg.message shouldBe "Error occurred: CustomError"
+        When("it is created without a cause") {
+            Then("cause is null") {
+                TrapezeMessage("Saved.").cause.shouldBeNull()
             }
         }
     }
