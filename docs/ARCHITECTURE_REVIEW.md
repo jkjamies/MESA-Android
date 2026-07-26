@@ -531,3 +531,82 @@ a compiler in the loop and would be hard to review stacked on top of unverified 
 5. Screen transitions and predictive back (§5.3) — the visible polish.
 6. Maven Central (§1.4) — needs 2 and 3; the thing that unblocks actual adoption.
 7. Deep links (§5.6) — parked at the author's request.
+
+---
+
+## 7. Second review — is this worth continuing?
+
+*Added after the remediation work on `claude/project-architecture-review-0aw4o5`.*
+
+### What changed about the answer
+
+The first review's verdict was "keep it, but as a personal stack — competing head-on isn't
+winnable." That still holds on the strategy. What changed is the *engineering* answer to
+"is this a sound base to build on," and it changed in the project's favour for one specific
+reason: **every hard problem hit during remediation had a principled fix, and none of them
+required fighting the architecture.**
+
+That is the signal worth paying attention to. Entry identity dropped in without touching the
+public `TrapezeScreen` API. Result scoping fell out of entry identity almost for free. Back
+handling was a ten-line `expect/actual`. The retained scope became a single private class once
+the right primitive was found. A design that resists change makes you contort; this one didn't.
+
+The counter-signal is equally clear and worth stating plainly: **the defect density found in a
+single review pass was high**, and the bugs were not superficial. A Compose-contract violation at
+the centre of the navigation layer, a saveable-state key collision, an unbounded leak into the
+saved-state Bundle, a debounce that could defer a loading indicator forever, and published
+artifacts that could not be compiled against. Several sat in code with tests that asserted the
+opposite of what the code did, because those tests had never run.
+
+Both things are true at once: the foundation is sound, and it had not been under enough pressure
+to know that.
+
+### What the remediation actually bought
+
+| Before | After |
+|---|---|
+| Artifacts uncompilable by any consumer | `api` exports correct across all modules |
+| Back button exits the app mid-stack | Pops the backstack; host handles the root |
+| Results delivered for one racy composition pass | Consumed in an effect, latched, entry-scoped |
+| Equal screens share saved UI state | Entry identity; separate state per visit |
+| Results leak into the process-death Bundle forever | Discarded with their entry |
+| Work cancelled by rotation | Retained scope on Compose's `retain` |
+| ~900 lines of tests never executed | Emulator matrix on API 28 + 34 |
+| Exception text is the default UI copy | Explicit copy; `cause` never rendered |
+
+### Where the "own architecture" question landed
+
+Worth recording, because it recurred: the instinct to build MESA-specific machinery was wrong
+twice and right once.
+
+- **Wrong** on retained state. Compose 1.10 ships `retain`, and a hand-rolled store meant ~250
+  lines, a `ViewModel`, an extra dependency and a second concept to teach. Deleted; net −751 lines.
+- **Right** on Strata's interactors. Re-deriving them was not cosmetic — it surfaced a `debounce`
+  that restarted on every in-flight count change, so a steady trickle of background refreshes
+  deferred the loading indicator indefinitely.
+
+The rule that fell out: rewrite when it produces a better design, never to establish ownership.
+Check for a first-party primitive before building one.
+
+### Honest remaining risk
+
+The single largest risk on this branch is not any design decision — it is that **nine of the
+thirteen commits have never been compiled.** Strata is verified (58 tests, run locally). Everything
+touching Compose is source-reviewed only, because androidx is not mirrored to Maven Central and
+Google's Maven is unreachable from the review environment.
+
+An audit pass at the end of the work found two unit tests left asserting old behaviour, both of
+which would have failed CI. That is evidence the review process catches things — and equally,
+evidence that a first CI run will find more.
+
+### Verdict
+
+**Worth continuing, with the strategy from §5 of the first review unchanged.** As a personal stack
+and a portfolio artifact it is now genuinely good: the architecture holds up under pressure, the
+capability gaps that made "no ViewModels" a hole are closed, and the remaining work is hygiene
+rather than design. As a competitor to Circuit it remains a bad bet on maintainer count alone, and
+nothing in this pass changed that arithmetic.
+
+The one strategic move still worth making is publishing **Strata standalone to Maven Central**. It
+has no Compose dependency, builds and tests in isolation, fills a real gap Circuit deliberately
+leaves open, and would reach users in a weekend rather than a year.
