@@ -28,8 +28,8 @@ ordered by how directly they block that.
 | Missing capabilities | 8 (2 fixed) |
 
 **Status:** everything below is marked FIXED or NOT FIXED against the branch
-`claude/project-architecture-review-0aw4o5`. Two items are deliberately still open —
-`explicitApi()` + binary-compatibility validation, and convention plugins; see §6.
+`claude/project-architecture-review-0aw4o5`. `explicitApi()` + binary-compatibility validation
+landed after the first pass; convention plugins were attempted and reverted — see §6.
 
 The core idea is sound and the code is clean, small, and readable. What is missing is
 almost entirely at the edges: **the published artifacts were not consumable, the
@@ -377,12 +377,6 @@ already diverged: **`minSdk` is 27 in the libraries and `features/counter`, but 
 app and every `features/summary` module.** Extract a `build-logic` convention plugin
 (`mesa.android.library`, `mesa.kmp.library`, `mesa.published`) and set these once.
 
-> **Addressed.** `build-logic` now carries `mesa.kmp.library`, `mesa.kmp.android.library`,
-> `mesa.android.library` and `mesa.android.application`. Each value is declared once, and the
-> drift is resolved as a policy rather than a coincidence: **27 for the published libraries**,
-> because a library's floor is a constraint it imposes on every consumer, and **28 for the
-> sample**, because that is what the only application that consumes it runs on.
-
 ### 3.6 Publishing setup
 
 - `gradle/publishing.gradle.kts` is applied with `apply(from:)` + `afterEvaluate`, which is
@@ -518,28 +512,59 @@ Central, so its 58 tests were run locally, including three verified to fail agai
 loading-state implementation. Everything touching Compose is source-reviewed only (see the caveat at the
 top) and needs CI.
 
-### Held back deliberately, then unblocked
+### Held back deliberately
 
-Two items were held out of the first pass rather than written blind, because each wanted a
-compiler in the loop and would have been hard to review stacked on unverified work. Both landed
-once CI was green:
+Two items were left out of the first pass rather than written blind, because each is a design
+change that wants a compiler in the loop and would be hard to review stacked on unverified work.
+Once CI was green, both were attempted. One landed; one hit a real blocker and was reverted.
 
-| # | Scope | Why held | Outcome |
-|---|---|---|---|
-| 1 | **`explicitApi()` + binary-compatibility validator** (§3.1, §3.2) | The dumps have to be *generated* by a machine that can resolve the Android toolchain, and adding the check without them would only make CI red. | Landed. Explicit API mode on all four published modules; ABI recorded in `{module}/api/` and checked by `checkKotlinAbi` on every build. Bootstrapped by a temporary CI step that wrote and printed the dumps. |
-| 2 | **`build-logic` convention plugins** (§3.5) | Mechanical but wide, and it touches every build file this branch already modified. | Landed. `mesa.kmp.library`, `mesa.kmp.android.library`, `mesa.android.library`, `mesa.android.application`. The `minSdk` 27/28 drift is gone: 27 is the published libraries' floor, 28 is the sample's. |
+| # | Scope | Outcome |
+|---|---|---|
+| 1 | **`explicitApi()` + binary-compatibility validator** (§3.1, §3.2) | **Landed.** Explicit API mode on all four published modules; the ABI recorded under `{module}/api/` and checked by `checkKotlinAbi` on every build and before every publish. Bootstrapped by a temporary CI step that generated the dumps and printed them, since they have to be produced by a machine that can resolve the Android toolchain. |
+| 2 | **`build-logic` convention plugins** (§3.5, §3.6) | **Attempted and reverted** — see below. |
 
-§3.6's other points stand: `gradle/publishing.gradle.kts` is still an `apply(from:)` script, `mesa-bom`
-still reads sibling `gradle.properties` outside Gradle's input tracking, and there is still no
-Dokka or signing. Those belong with the Maven Central work, not with this refactor.
+### Why `build-logic` did not land
+
+Written and pushed as `8aa5489`, reverted after three red CI runs. The KMP half was fine and was
+verified locally against a standalone project: the conventions resolve through the included
+build, `explicitApi()` rejects a declaration with no visibility modifier, `checkKotlinAbi`
+registers, and publishing still produces the per-target publications.
+
+The Android half is blocked by an interaction between two things this repository already has:
+
+1. To generate type-safe accessors for a **precompiled script plugin**, Gradle applies that
+   script's `plugins { }` block to a synthetic probe project. The probe belongs to the
+   `build-logic` build and reads neither the root `gradle.properties` nor `build-logic`'s own —
+   both were tried.
+2. The root `gradle.properties` sets `android.builtInKotlin=false` and `android.newDsl=false`,
+   which AGP 9 requires for `com.android.library` to coexist with the Kotlin Multiplatform
+   plugin. In the probe those default back on, and AGP then rejects
+   `org.jetbrains.kotlin.android` outright: *"no longer required for Kotlin support since AGP
+   9.0."* The main build is unaffected — only accessor generation breaks, which is why the error
+   reads as a plugin incompatibility rather than a missing property.
+
+The fix is to write the conventions as `Plugin<Project>` **classes** rather than precompiled
+scripts. Classes are never probed, so the flags stop mattering; the cost is configuring AGP and
+KGP through typed APIs (`extensions.configure<LibraryExtension>`,
+`KotlinMultiplatformExtension`) instead of the `android { }` / `kotlin { }` accessors. That is
+the shape `nowinandroid` uses, and for the same reason.
+
+It was not attempted here because **AGP cannot be resolved from the authoring environment** —
+`dl.google.com` returns 403 — so every iteration costs a full CI round on an unverifiable guess.
+It should be done by someone who can run the build, or after AGP 9 stabilises KMP support and
+the two compatibility flags can be dropped, at which point the precompiled-script form works
+unchanged.
+
+The `minSdk` 27/28 drift in §3.5 therefore still stands.
 
 ### Recommended order from here
 
-1. Consumer R8 rules + a minified sample (§3.4).
-2. Screen transitions and predictive back (§5.3) — the visible polish.
-3. Maven Central (§1.4) — the thing that unblocks actual adoption; wants Dokka and signing,
+1. `build-logic` convention plugins (§3.5), as classes — carries the `minSdk` fix with it.
+2. Consumer R8 rules + a minified sample (§3.4) — needs 1.
+3. Screen transitions and predictive back (§5.3) — the visible polish.
+4. Maven Central (§1.4) — the thing that unblocks actual adoption; wants Dokka and signing,
    which is also where the rest of §3.6 gets cleaned up.
-4. Deep links (§5.6) — parked at the author's request.
+5. Deep links (§5.6) — parked at the author's request.
 
 ---
 

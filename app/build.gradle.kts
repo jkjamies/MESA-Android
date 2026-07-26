@@ -15,15 +15,19 @@
  */
 
 plugins {
-    id("mesa.android.application")
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.metro)
     alias(libs.plugins.kotlin.compose)
 }
 
 android {
     namespace = "com.jkjamies.mesa.counter"
+    compileSdk = 36
     defaultConfig {
         applicationId = "com.jkjamies.mesa"
+        minSdk = 28
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0"
 
@@ -38,6 +42,10 @@ android {
                 "proguard-rules.pro"
             )
         }
+    }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     buildFeatures {
         compose = true

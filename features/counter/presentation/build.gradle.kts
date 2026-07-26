@@ -15,7 +15,8 @@
  */
 
 plugins {
-    id("mesa.android.library")
+    alias(libs.plugins.android.library)
+    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.parcelize)
     alias(libs.plugins.metro)
@@ -23,9 +24,15 @@ plugins {
 
 android {
     namespace = "com.jkjamies.mesa.features.counter.presentation"
+    compileSdk = 36
 
     defaultConfig {
+        minSdk = 27
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     buildFeatures {
         compose = true

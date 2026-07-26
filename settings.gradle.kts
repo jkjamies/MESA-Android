@@ -15,10 +15,6 @@
  */
 
 pluginManagement {
-    // Convention plugins. Everything shared between module build files — target sets, SDK
-    // levels, the Java toolchain, the API guarantees — is declared once in there.
-    includeBuild("build-logic")
-
     repositories {
         google {
             content {

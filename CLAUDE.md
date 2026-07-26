@@ -592,24 +592,6 @@ To verify publishing locally (publishes to `~/.m2/repository`):
 | `{module}/gradle.properties` | Per-module coordinates: group, artifactId, version, name, description |
 | `{module}/api/**` | Recorded public ABI — the compatibility promise, diffed on every build |
 
----
-
-## Build Configuration
-
-Shared build setup lives in `build-logic/`, an included build of convention plugins. A module's
-own `build.gradle.kts` declares only what is genuinely its own: its dependencies, its Android
-namespace, and any extra targets.
-
-| Convention | Applied by | Sets |
-|------------|-----------|------|
-| `mesa.kmp.library` | `:strata` | Toolchain, target set, `explicitApi()`, ABI validation, coordinates, publishing |
-| `mesa.kmp.android.library` | `:trapeze`, `:trapeze-navigation`, `:trapeze-test` | The above, plus the Android target, Compose, and `minSdk = 27` |
-| `mesa.android.library` | Sample feature and core modules | `compileSdk = 36`, `minSdk = 28`, Java 17 |
-| `mesa.android.application` | `:app` | The above, plus `targetSdk = 36` |
-
-`minSdk` differs on purpose. **27 for the published libraries** — a library's floor is a
-constraint it imposes on every consumer, so it moves only when something requires it to. **28 for
-the sample**, matching the only application that consumes it. Do not "unify" them.
 
 ---
 
