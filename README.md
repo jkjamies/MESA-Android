@@ -435,9 +435,11 @@ subscription down. Equal parameters are conflated, so re-triggering from a recom
 not resubscribe. Emitted *values* are delivered as-is — override `distinctValues` to `true` to
 filter consecutive duplicates.
 
-`StrataInteractor.inProgress` turns on immediately for user-initiated work and delays purely
-ambient work by `ambientLoadingDelay` (default 5s), so short background refreshes never flash a
-spinner. Both that and `defaultTimeout` are overridable per interactor.
+`StrataInteractor.inProgress` turns on immediately for user-initiated work and holds purely
+ambient work back by `ambientLoadingDelay` (default 5s), so short background refreshes never
+flash a spinner. The delay is measured from the moment loading became ambient, so overlapping
+background calls cannot keep deferring it. Both that and `defaultTimeout` are overridable per
+interactor.
 
 ### Launch Utilities
 

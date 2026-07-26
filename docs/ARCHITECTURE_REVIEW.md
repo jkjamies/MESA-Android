@@ -291,10 +291,12 @@ remains worth doing.
 - **FIXED** `StrataSubjectInteractor.flow` applied `distinctUntilChanged()` to emitted values,
   swallowing legitimate repeat emissions. Now opt-in via `distinctValues`, and `stop()`/
   `isActive` were added — a subscription previously could not be torn down.
-- **FIXED** `StrataInteractor.inProgress` debounced whenever ambient work was running, so a
-  user-initiated load alongside a background refresh waited out the full 5s — the opposite of
-  the documented intent. Now debounces only when work is entirely ambient, with a test that
-  fails against the old logic.
+- **FIXED** `StrataInteractor.inProgress` was rebuilt. The `debounce` restarted its timer on
+  every change to the in-flight count, so a second background refresh starting 4s into the 5s
+  window pushed the indicator to 9s, and a steady trickle deferred it indefinitely; it also
+  delayed a user-initiated call's spinner whenever ambient work happened to be running. Loading
+  is now projected to Idle/User/Ambient before switching, anchoring the delay to the transition
+  into ambient. Three tests, all verified to fail against the old logic.
 - **FIXED** `AppGraph.trapeze` is `@SingleIn(AppScope::class)`; it previously rebuilt the
   registry per injection point.
 - **FIXED** `SummaryState.saveInProgress` is now rendered — the save button disables and shows
@@ -476,13 +478,14 @@ Committed on `claude/project-architecture-review-0aw4o5`:
 | `f4c53f7` | Instrumented-test CI job, publish verification, workflow permissions (§1.3, §4.3) |
 | `f27e3b0` | Documentation corrections (§3.11) |
 | `506929b` | Review document; sample follows the `wrapEventSink` contract |
-| `a7417c4` | Strata re-derived: subscription lifecycle, `distinctValues`, loading-state fix, launch semantics, NOTICE (§2.9) |
+| `a7417c4` | Strata: subscription lifecycle, `distinctValues`, launch semantics (§2.9) |
 | `1fb598d` | Backstack entry identity, entry-scoped results, system back, restore truncation (§2.3, §2.4, §2.7, §1.2) |
-| *(final)* | `TrapezeMessage` API, abstract navigator members, DI scoping, backup rules, doc consolidation, duplicate test removal (§2.9, §3.8, §3.9, §4.1, §4.2) |
+| `78f663d` | `TrapezeMessage` API, abstract navigator members, DI scoping, backup rules, doc consolidation, duplicate test removal (§2.9, §3.8, §3.9, §4.1, §4.2) |
+| *(final)* | `StrataInteractor` loading model re-derived around the ambient transition (§2.9) |
 
 Strata's changes are the only ones **executed** — it is pure Kotlin and builds against Maven
-Central, so its 56 tests were run locally, including a new test verified to fail against the old
-loading-state logic. Everything touching Compose is source-reviewed only (see the caveat at the
+Central, so its 58 tests were run locally, including three verified to fail against the previous
+loading-state implementation. Everything touching Compose is source-reviewed only (see the caveat at the
 top) and needs CI.
 
 ### Held back deliberately

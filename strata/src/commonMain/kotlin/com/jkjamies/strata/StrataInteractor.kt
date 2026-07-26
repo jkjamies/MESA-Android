@@ -16,12 +16,15 @@
 
 package com.jkjamies.strata
 
-import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withTimeout
@@ -56,23 +59,36 @@ public abstract class StrataInteractor<in P, R> {
     /**
      * Emits `true` while work is running.
      *
-     * Work flagged as user-initiated is reported immediately. Purely ambient work is delayed
-     * by [ambientLoadingDelay] so short background refreshes never flash a spinner. Once any
-     * user-initiated call is in flight the indicator turns on right away, even if ambient work
-     * started first.
+     * Work the user asked for is reported immediately. Work that is entirely ambient is held
+     * back for [ambientLoadingDelay] so short background refreshes never flash a spinner. If a
+     * user-initiated call starts while ambient work is pending, the indicator turns on at once.
+     *
+     * The delay is measured from the moment loading *became* ambient, not from the last change
+     * to the number of in-flight calls. Overlapping background work therefore cannot keep
+     * pushing the indicator further out: three staggered refreshes still surface after one
+     * [ambientLoadingDelay], and a steady trickle of them surfaces rather than never appearing.
      */
     // `by lazy` so an `ambientLoadingDelay` override is visible: reading an open member from a
     // constructor initializer would see the base-class default.
-    @OptIn(FlowPreview::class)
+    @OptIn(ExperimentalCoroutinesApi::class)
     public val inProgress: Flow<Boolean> by lazy {
-        val delay = ambientLoadingDelay
+        val ambientDelay = ambientLoadingDelay
         loadingState
-            .debounce { state ->
-                // Only defer when the work is *entirely* ambient. Debouncing whenever any
-                // ambient work happened to be running would delay the user's own spinner.
-                if (state.userCount == 0 && state.ambientCount > 0) delay else Duration.ZERO
+            .map { state -> state.activity }
+            // Collapsing to the three states that matter *before* switching is what anchors the
+            // delay: going from one ambient call to two is not a change here, so the pending
+            // timer below is left alone instead of being restarted.
+            .distinctUntilChanged()
+            .flatMapLatest { activity ->
+                when (activity) {
+                    Activity.Idle -> flowOf(false)
+                    Activity.User -> flowOf(true)
+                    Activity.Ambient -> flow {
+                        delay(ambientDelay)
+                        emit(true)
+                    }
+                }
             }
-            .map { (it.userCount + it.ambientCount) > 0 }
             .distinctUntilChanged()
     }
 
@@ -88,10 +104,12 @@ public abstract class StrataInteractor<in P, R> {
 
     private fun removeLoader(fromUser: Boolean) {
         loadingState.update {
+            // Clamped: an unbalanced release would otherwise drive a count negative and wedge
+            // the interactor into never reporting idle again.
             if (fromUser) {
-                it.copy(userCount = it.userCount - 1)
+                it.copy(userCount = (it.userCount - 1).coerceAtLeast(0))
             } else {
-                it.copy(ambientCount = it.ambientCount - 1)
+                it.copy(ambientCount = (it.ambientCount - 1).coerceAtLeast(0))
             }
         }
     }
@@ -139,7 +157,19 @@ public abstract class StrataInteractor<in P, R> {
         public val DefaultTimeout: Duration = 5.minutes
     }
 
-    private data class State(val userCount: Int = 0, val ambientCount: Int = 0)
+    /** What the interactor is busy with, as far as a loading indicator is concerned. */
+    private enum class Activity { Idle, User, Ambient }
+
+    private data class State(val userCount: Int = 0, val ambientCount: Int = 0) {
+        val activity: Activity
+            get() = when {
+                // User-initiated work wins: if the user is waiting on something, say so, even
+                // when a background refresh happens to be running alongside it.
+                userCount > 0 -> Activity.User
+                ambientCount > 0 -> Activity.Ambient
+                else -> Activity.Idle
+            }
+    }
 }
 
 /**

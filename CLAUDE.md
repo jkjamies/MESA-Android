@@ -279,9 +279,10 @@ or consumers of the published artifact cannot compile against them.
 to tear the subscription down. Equal params are conflated. Emitted *values* are not
 de-duplicated by default — override `distinctValues` to opt in.
 
-`StrataInteractor` reports `inProgress` immediately for user-initiated work and delays purely
-ambient work by `ambientLoadingDelay` (default 5s). Override `ambientLoadingDelay` and
-`defaultTimeout` per interactor.
+`StrataInteractor` reports `inProgress` immediately for user-initiated work and holds purely
+ambient work back by `ambientLoadingDelay` (default 5s), measured from the moment loading became
+ambient — overlapping background calls cannot keep pushing the indicator further out. Override
+`ambientLoadingDelay` and `defaultTimeout` per interactor.
 
 ### Launch Utilities
 

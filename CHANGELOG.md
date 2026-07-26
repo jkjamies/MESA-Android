@@ -23,8 +23,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - CI runs the instrumented test suites on an emulator (API 28 and 34). They had never been
   executed by any workflow.
 - The publish workflow verifies the build before pushing artifacts to the registry.
-- A `NOTICE` file recording Tivi's influence on Strata's interactor model and Circuit's on
-  Trapeze's overall shape.
+- A `NOTICE` file carrying the project's copyright, the conventional home for any third-party
+  notices a future dependency requires.
 
 ### Fixed
 - **Published artifacts are now usable by external consumers.** Compose, coroutines and
@@ -45,9 +45,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Backstack restore no longer silently drops entries.** A screen that failed to unparcel was
   skipped, rewriting the user's history into something they never navigated. It now restores the
   longest valid prefix and logs what was dropped.
-- **`StrataInteractor.inProgress` no longer delays a user's spinner.** It debounced whenever any
-  ambient work was running, so a user-initiated call alongside a background refresh waited out
-  the full 5s. It now debounces only when the work is entirely ambient.
+- **`StrataInteractor.inProgress` is rebuilt around when loading *became* ambient.** The old
+  debounce restarted its timer on every change to the in-flight count, so a second background
+  refresh starting 4s into the 5s window pushed the indicator out to 9s — and a steady trickle of
+  overlapping refreshes deferred it indefinitely. It also debounced whenever any ambient work was
+  running, delaying a user-initiated call's spinner by the full 5s. Loading is now projected to
+  Idle/User/Ambient before switching, so the delay is anchored to the transition into ambient and
+  user-initiated work reports immediately.
 - `popWithResult` at the root no longer stores a result that no screen can consume.
 - `NavigableTrapezeContent` releases saved state for popped entries even when a push and a pop
   land between two snapshot emissions (previously it only compared backstack size).

@@ -188,6 +188,63 @@ class StrataInteractorTest : BehaviorSpec({
         }
     }
 
+    Given("an interactor running overlapping ambient work") {
+        When("a second ambient call starts while the first is still pending") {
+            Then("the indicator still appears one delay after loading became ambient") {
+                val interactor = object : StrataInteractor<Unit, Unit>() {
+                    override suspend fun doWork(params: Unit) {
+                        delay(30.seconds)
+                    }
+                }
+
+                interactor.inProgress.test {
+                    awaitItem() shouldBe false
+
+                    val first = launch { interactor(Unit, userInitiated = false) }
+                    // Start a second ambient call partway through the 5s window. A design that
+                    // debounced on every change to the in-flight count would restart the timer
+                    // here and push the indicator out to t=9s.
+                    delay(4.seconds)
+                    expectNoEvents()
+                    val second = launch { interactor(Unit, userInitiated = false) }
+
+                    // t=5s: one full delay after loading became ambient.
+                    delay(1.seconds + 100.milliseconds)
+                    expectMostRecentItem() shouldBe true
+
+                    first.cancelAndJoin()
+                    second.cancelAndJoin()
+                    awaitItem() shouldBe false
+                }
+            }
+        }
+
+        When("ambient calls arrive as a steady trickle") {
+            Then("the indicator still surfaces instead of being deferred forever") {
+                val interactor = object : StrataInteractor<Unit, Unit>() {
+                    override suspend fun doWork(params: Unit) {
+                        delay(3.seconds)
+                    }
+                }
+
+                interactor.inProgress.test {
+                    awaitItem() shouldBe false
+
+                    // Each call outlives the next one's start, so ambient work is continuously
+                    // active while the in-flight count keeps changing.
+                    val jobs = (0 until 6).map { index ->
+                        if (index > 0) delay(2.seconds)
+                        launch { interactor(Unit, userInitiated = false) }
+                    }
+
+                    expectMostRecentItem() shouldBe true
+                    jobs.forEach { it.cancelAndJoin() }
+                    awaitItem() shouldBe false
+                }
+            }
+        }
+    }
+
     Given("an interactor overriding the ambient loading delay") {
         When("ambient work runs for longer than the override") {
             Then("inProgress reports it using the overridden delay") {
