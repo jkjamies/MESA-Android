@@ -93,6 +93,19 @@ public class Trapeze private constructor(builder: Builder) {
         /**
          * Creates a [TrapezeUi] for the given [screen], or null if this factory
          * does not handle the given screen type.
+         *
+         * **Return a reference to a `@Composable` function, not a composable lambda.**
+         *
+         * ```kotlin
+         * override fun create(screen: TrapezeScreen): TrapezeUi<*>? =
+         *     if (screen is FooScreen) ::FooUi else null          // reference — correct
+         * ```
+         *
+         * [TrapezeContent] recovers the concrete type by casting to `TrapezeUi<TrapezeState>`,
+         * and Kotlin emits a real `CHECKCAST` for the underlying function type. A function
+         * reference satisfies it; a composable lambda compiles to `ComposableLambdaImpl` and
+         * does not, so returning one fails at render time with a `ClassCastException` naming
+         * `Function4` — which says nothing about the actual mistake.
          */
         public fun create(screen: TrapezeScreen): TrapezeUi<*>?
     }

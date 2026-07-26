@@ -73,6 +73,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   land between two snapshot emissions (previously it only compared backstack size).
 - `TrapezeContent` includes `trapeze` and `navigator` in its remember keys, and reports which
   factory is missing when a screen fails to resolve.
+- Documented that `Trapeze.UiFactory.create` must return a `@Composable` *function reference*
+  (`::FooUi`), not a composable lambda. `TrapezeContent` casts the resolved UI back to its
+  concrete type and Kotlin emits a real `CHECKCAST`; a `ComposableLambdaImpl` does not satisfy it,
+  so a lambda failed at render time with a `ClassCastException` about `Function4` that gave no
+  hint at the cause.
 - `strataLaunch`/`strataLaunchWithResult` no longer throw `IllegalStateException` on an
   already-cancelled scope. An event arriving as the composition is torn down is a normal
   outcome; the returned `Job` is simply already cancelled.

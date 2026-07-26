@@ -126,6 +126,12 @@ class FooUiFactory @Inject constructor() : Trapeze.UiFactory {
 }
 ```
 
+> **Return `::FooUi`, a reference to a `@Composable` function — not a composable lambda.**
+> `TrapezeContent` casts the resolved UI back to its concrete type, and Kotlin emits a real
+> `CHECKCAST` for the function type. A function reference satisfies it; a composable lambda
+> compiles to `ComposableLambdaImpl` and does not, failing at render time with a
+> `ClassCastException` about `Function4` that says nothing about the actual mistake.
+
 ### Assisted Inject for StateHolders
 Use `@AssistedInject` for runtime dependencies (extracted screen args, navigator, interop), regular injection for graph dependencies (use cases). The screen type parameter `T` preserves compile-time coupling, but the screen instance is never stored:
 
