@@ -17,8 +17,10 @@ name: CI
 on:
   push:
     branches: [main]
+  # Deliberately unfiltered. With `branches: [main]` a pull request targeting anything else got
+  # no checks at all — so a stacked PR, whose whole point is to be verified before its parent
+  # merges, was the one case that went unverified.
   pull_request:
-    branches: [main]
 
 permissions:
   contents: read
