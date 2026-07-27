@@ -162,7 +162,7 @@ class FooStateHolder @AssistedInject constructor(
 ### Components
 | Component | Purpose |
 |-----------|---------|
-| `NavigableTrapezeContent` | Main entry point - renders current screen from backstack |
+| `NavigableTrapezeContent` | Main entry point - renders current screen from backstack, animating between them |
 | `TrapezeBackStack` | Saveable navigation stack (Parcelable-backed on Android, in-memory on other platforms) |
 | `rememberSaveableBackStack(root)` | Creates saveable backstack with root screen |
 | `rememberTrapezeNavigator(backStack)` | Creates navigator backed by backstack |
@@ -184,6 +184,38 @@ TrapezeCompositionLocals(trapeze) {
     NavigableTrapezeContent(navigator, backStack)
 }
 ```
+
+### Screen Transitions
+
+`NavigableTrapezeContent` animates between screens with `TrapezeTransitions.SlideHorizontally`
+by default. Pass `transition` to change it:
+
+```kotlin
+NavigableTrapezeContent(navigator, backStack, transition = TrapezeTransitions.Fade)
+
+// or write your own — the receiver is Compose's own AnimatedContentTransitionScope
+NavigableTrapezeContent(navigator, backStack) { direction ->
+    if (direction == TrapezeNavigationDirection.Forward) {
+        slideIntoContainer(SlideDirection.Up) togetherWith fadeOut()
+    } else {
+        fadeIn() togetherWith slideOutOfContainer(SlideDirection.Down)
+    }
+}
+```
+
+`TrapezeTransitions.None` renders changes instantly — reach for it in screenshot suites, where an
+in-flight animation is a source of flakiness rather than the thing under test.
+
+`direction` is **derived**, not tracked: the outgoing entry is still on the stack exactly when the
+move was forward, and gone exactly when it was back. That holds for a single `pop` and for the
+several entries `popTo`/`popToRoot` remove at once.
+
+During a transition **two screens are composed at once**, each seeing its own
+`LocalTrapezeBackStackEntry`. That matters — results are addressed by entry, so an outgoing screen
+handed the incoming entry could consume results meant for its successor.
+
+> `modifier` now applies to the navigation container rather than to each screen, since two are
+> composed during a transition. A screen sizes itself.
 
 ### Back Handling
 

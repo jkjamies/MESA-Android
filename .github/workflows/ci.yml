@@ -47,6 +47,19 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
 
+      # TEMPORARY — this branch changes `trapeze-navigation`'s public API, and the reference ABI
+      # dumps have to be re-recorded by a machine that can resolve the Android toolchain, which
+      # the authoring environment cannot. Writes and prints them so they can be committed;
+      # removed in the following commit.
+      - name: Re-record reference ABI dumps
+        run: |
+          ./gradlew updateKotlinAbi
+          for f in $(find . -path '*/api/*.api' -o -path '*/api/*.klib.api' | sort); do
+            echo "===== BEGIN $f"
+            cat "$f"
+            echo "===== END $f"
+          done
+
       # `build` depends on `check`, which already runs every JVM/KMP test task
       # (`jvmTest`, `testDebugUnitTest`, ...) plus Android Lint.
       - name: Build and run JVM tests
