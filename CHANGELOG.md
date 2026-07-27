@@ -27,6 +27,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **`TrapezeBackStackEntry`** — each push occupies an entry with a stable id that survives
   configuration changes and process death, exposed via `LocalTrapezeBackStackEntry`.
 - `NavigationResultEffect(key) { }` for reacting to a navigation result exactly once.
+- **Screen transitions.** `NavigableTrapezeContent` animates between screens, defaulting to
+  `TrapezeTransitions.SlideHorizontally` and taking a `transition` written against Compose's own
+  `AnimatedContentTransitionScope`. `TrapezeTransitions.Fade` and `.None` ship alongside it. The
+  direction handed to a transition is derived from whether the outgoing entry is still on the
+  stack, so a `popTo` removing several entries is still one move backward.
 - `StrataSubjectInteractor.stop()` and `isActive`; a subscription could previously be started
   but never torn down.
 - `StrataInteractor.ambientLoadingDelay` and `defaultTimeout` are overridable per interactor.
@@ -103,6 +108,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `LaunchedEffect(result) { result?.let { … } }` pattern is unaffected.
 - `strataLaunch`/`strataLaunchWithResult` reject a `Job` passed in `context`, which would have
   detached the coroutine from the scope.
+- **Behavioural:** `NavigableTrapezeContent`'s `modifier` now applies to the navigation container
+  rather than to each screen. Two screens are composed during a transition, so a per-screen
+  modifier no longer has a single place to go.
 - `GEMINI.md` and `.junie/guidelines.md` now point at `CLAUDE.md` instead of duplicating it.
 - `trapeze-test` moves to 0.3.0, aligning it with the other modules. It sat at 0.2.0 while the
   library it is built against changed, and the publish workflow skips versions that already

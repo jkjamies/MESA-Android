@@ -62,9 +62,12 @@ kotlin {
             // `api` because these types appear in this module's public API:
             //   - :trapeze supplies `TrapezeNavigator`, `TrapezeScreen`, `TrapezeNavigationResult`.
             //   - compose.runtime/ui back the `@Composable` entry points and `Modifier` params.
+            //   - compose.animation supplies `AnimatedContentTransitionScope` and
+            //     `ContentTransform`, which `TrapezeTransitionSpec` is written in terms of.
             api(project(":trapeze"))
             api(compose.runtime)
             api(compose.ui)
+            api(compose.animation)
         }
         androidMain.dependencies {
             // Supplies the BackHandler actual. Internal to this module, so `implementation`.

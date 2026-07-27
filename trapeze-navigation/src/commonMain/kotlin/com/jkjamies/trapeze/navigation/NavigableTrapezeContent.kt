@@ -16,6 +16,7 @@
 
 package com.jkjamies.trapeze.navigation
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -37,11 +38,15 @@ import com.jkjamies.trapeze.TrapezeNavigator
  * At the root it is left alone, so the host (an Activity, say) handles it as usual. Set
  * [handleBack] to `false` to take over back handling yourself.
  *
+ * Screens animate between one another using [transition], which is told which way the stack
+ * moved. Pass [TrapezeTransitions.None] to render changes instantly.
+ *
  * @param navigator The navigator for handling navigation events.
  * @param backStack The backstack containing screens to render. The root is the start destination.
  * @param modifier Modifier to apply to the content.
  * @param trapeze The [Trapeze] instance to resolve factories from. Defaults to [LocalTrapeze].
  * @param handleBack Whether to intercept the platform back affordance to pop the backstack.
+ * @param transition How one screen gives way to the next.
  */
 @Composable
 public fun NavigableTrapezeContent(
@@ -49,7 +54,8 @@ public fun NavigableTrapezeContent(
     backStack: TrapezeBackStack,
     modifier: Modifier = Modifier,
     trapeze: Trapeze = LocalTrapeze.current,
-    handleBack: Boolean = true
+    handleBack: Boolean = true,
+    transition: TrapezeTransitionSpec = TrapezeTransitions.SlideHorizontally,
 ) {
     val saveableStateHolder = rememberSaveableStateHolder()
     val currentEntry = backStack.currentEntry
@@ -77,17 +83,45 @@ public fun NavigableTrapezeContent(
     CompositionLocalProvider(
         LocalTrapezeNavigator provides navigator,
         LocalTrapezeBackStack provides backStack,
-        LocalTrapezeBackStackEntry provides currentEntry
     ) {
-        // Keyed on the entry id, not the screen: two visits to an equal screen are distinct
-        // positions in the stack and must not share saved UI state.
-        saveableStateHolder.SaveableStateProvider(key = currentEntry.id) {
-            TrapezeContent(
-                screen = currentEntry.screen,
-                modifier = modifier,
-                trapeze = trapeze,
-                navigator = navigator
-            )
+        AnimatedContent(
+            targetState = currentEntry,
+            modifier = modifier,
+            transitionSpec = {
+                // Direction is *derived*, not tracked: the outgoing entry is still on the stack
+                // exactly when we moved forward onto something new, and gone exactly when we
+                // came back to something older. That holds for a single `pop` and for the
+                // several entries `popTo` and `popToRoot` remove at once, and it needs no
+                // remembered history — so nothing here mutates state during composition.
+                val movedBack = backStack.entries.none { it.id == initialState.id }
+                transition(
+                    if (movedBack) {
+                        TrapezeNavigationDirection.Backward
+                    } else {
+                        TrapezeNavigationDirection.Forward
+                    }
+                )
+            },
+            // Entries already compare by id, but stating it keeps the animation keyed on the
+            // visit rather than on anything a screen's own equality might imply.
+            contentKey = { entry -> entry.id },
+            label = "TrapezeScreen",
+        ) { entry ->
+            // Provided *inside* the animation, per rendered entry. During a transition two
+            // entries are composed at once, and the outgoing screen must keep seeing its own —
+            // `rememberNavigationResult` addresses results by entry, so handing the incoming
+            // entry to the outgoing screen would let it consume results meant for its successor.
+            CompositionLocalProvider(LocalTrapezeBackStackEntry provides entry) {
+                // Keyed on the entry id, not the screen: two visits to an equal screen are
+                // distinct positions in the stack and must not share saved UI state.
+                saveableStateHolder.SaveableStateProvider(key = entry.id) {
+                    TrapezeContent(
+                        screen = entry.screen,
+                        trapeze = trapeze,
+                        navigator = navigator,
+                    )
+                }
+            }
         }
     }
 }
