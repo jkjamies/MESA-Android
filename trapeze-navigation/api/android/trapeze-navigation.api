@@ -1,5 +1,5 @@
 public final class com/jkjamies/trapeze/navigation/NavigableTrapezeContentKt {
-	public static final fun NavigableTrapezeContent (Lcom/jkjamies/trapeze/TrapezeNavigator;Lcom/jkjamies/trapeze/navigation/TrapezeBackStack;Landroidx/compose/ui/Modifier;Lcom/jkjamies/trapeze/Trapeze;ZLandroidx/compose/runtime/Composer;II)V
+	public static final fun NavigableTrapezeContent (Lcom/jkjamies/trapeze/TrapezeNavigator;Lcom/jkjamies/trapeze/navigation/TrapezeBackStack;Landroidx/compose/ui/Modifier;Lcom/jkjamies/trapeze/Trapeze;ZLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
 }
 
 public final class com/jkjamies/trapeze/navigation/RememberNavigationResultKt {
@@ -34,10 +34,26 @@ public final class com/jkjamies/trapeze/navigation/TrapezeBackStack_androidKt {
 	public static final fun saver (Lcom/jkjamies/trapeze/navigation/TrapezeBackStack$Companion;)Landroidx/compose/runtime/saveable/Saver;
 }
 
+public final class com/jkjamies/trapeze/navigation/TrapezeNavigationDirection : java/lang/Enum {
+	public static final field Backward Lcom/jkjamies/trapeze/navigation/TrapezeNavigationDirection;
+	public static final field Forward Lcom/jkjamies/trapeze/navigation/TrapezeNavigationDirection;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/jkjamies/trapeze/navigation/TrapezeNavigationDirection;
+	public static fun values ()[Lcom/jkjamies/trapeze/navigation/TrapezeNavigationDirection;
+}
+
 public final class com/jkjamies/trapeze/navigation/TrapezeNavigatorKt {
 	public static final fun getLocalTrapezeBackStack ()Landroidx/compose/runtime/ProvidableCompositionLocal;
 	public static final fun getLocalTrapezeBackStackEntry ()Landroidx/compose/runtime/ProvidableCompositionLocal;
 	public static final fun getLocalTrapezeNavigator ()Landroidx/compose/runtime/ProvidableCompositionLocal;
 	public static final fun rememberTrapezeNavigator (Lcom/jkjamies/trapeze/navigation/TrapezeBackStack;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;II)Lcom/jkjamies/trapeze/TrapezeNavigator;
+}
+
+public final class com/jkjamies/trapeze/navigation/TrapezeTransitions {
+	public static final field $stable I
+	public static final field INSTANCE Lcom/jkjamies/trapeze/navigation/TrapezeTransitions;
+	public final fun getFade ()Lkotlin/jvm/functions/Function2;
+	public final fun getNone ()Lkotlin/jvm/functions/Function2;
+	public final fun getSlideHorizontally ()Lkotlin/jvm/functions/Function2;
 }
 
