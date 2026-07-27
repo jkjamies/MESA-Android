@@ -14,20 +14,14 @@
  * limitations under the License.
  */
 
-package com.jkjamies.mesa
+package com.jkjamies.trapeze.navigation
 
-import org.junit.Test
-
-import org.junit.Assert.*
+import androidx.compose.runtime.Composable
 
 /**
- * Example local unit test, which will execute on the development machine (host).
- *
- * See [testing documentation](http://d.android.com/tools/testing).
+ * No-op: this platform has no system-level back affordance for Trapeze to intercept.
+ * Drive the backstack from the host application instead.
  */
-class ExampleUnitTest {
-    @Test
-    fun addition_isCorrect() {
-        assertEquals(4, 2 + 2)
-    }
+@Composable
+internal actual fun TrapezeBackHandler(enabled: Boolean, onBack: () -> Unit) {
 }

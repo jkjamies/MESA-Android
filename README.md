@@ -25,7 +25,7 @@ Platform-specific concerns like `Parcelable` are handled via `expect/actual` dec
 | Library | Artifact | Purpose | Key Components |
 |---------|----------|---------|----------------|
 | **Trapeze** | `com.jkjamies:trapeze` | Core architecture | `TrapezeStateHolder`, `TrapezeState`, `TrapezeScreen`, `TrapezeEvent`, `TrapezeContent`, `Trapeze`, `TrapezeCompositionLocals`, `TrapezeMessage`, `TrapezeMessageManager`, `TrapezeNavigationResult` |
-| **Trapeze Navigation** | `com.jkjamies:trapeze-navigation` | Navigation layer | `NavigableTrapezeContent`, `TrapezeBackStack`, `TrapezeNavigator`, `LocalTrapezeNavigator`, `LocalTrapezeBackStack`, `rememberNavigationResult` |
+| **Trapeze Navigation** | `com.jkjamies:trapeze-navigation` | Navigation layer | `NavigableTrapezeContent`, `TrapezeBackStack`, `TrapezeNavigator`, `LocalTrapezeNavigator`, `LocalTrapezeBackStack`, `LocalTrapezeBackStackEntry`, `rememberNavigationResult`, `NavigationResultEffect` |
 | **Strata** | `com.jkjamies:strata` | Business logic | `StrataInteractor`, `StrataSubjectInteractor`, `StrataResult`, `strataLaunch` |
 | **Trapeze Test** | `com.jkjamies:trapeze-test` | Test utilities | `TrapezeStateHolder.test`, `FakeTrapezeNavigator`, `TestEventSink`, `TrapezeReceiveTurbine`, `NavigationEvent` |
 | **MESA BOM** | `com.jkjamies:mesa-bom` | Bill of Materials | Aligns versions of all MESA libraries |
@@ -132,7 +132,7 @@ flowchart TB
 **Using the BOM** (recommended):
 ```kotlin
 dependencies {
-    implementation(platform("com.jkjamies:mesa-bom:0.2.0"))
+    implementation(platform("com.jkjamies:mesa-bom:0.3.0"))
     implementation("com.jkjamies:trapeze")              // version from BOM
     implementation("com.jkjamies:trapeze-navigation")   // version from BOM
     implementation("com.jkjamies:strata")               // version from BOM
@@ -294,6 +294,12 @@ class CounterUiFactory @Inject constructor() : Trapeze.UiFactory {
 }
 ```
 
+> **Return `::FooUi`, a reference to a `@Composable` function — not a composable lambda.**
+> `TrapezeContent` casts the resolved UI back to its concrete type, and Kotlin emits a real
+> `CHECKCAST` for the function type. A function reference satisfies it; a composable lambda
+> compiles to `ComposableLambdaImpl` and does not, failing at render time with a
+> `ClassCastException` about `Function4` that says nothing about the actual mistake.
+
 That's it! The factories are automatically discovered via Metro's aggregation and registered with the `Trapeze` instance.
 
 ---
@@ -311,6 +317,54 @@ interface TrapezeNavigator {
     fun popTo(screen: TrapezeScreen): Boolean
 }
 ```
+
+### Back Handling
+
+`NavigableTrapezeContent` intercepts the platform back affordance while more than one screen is
+on the stack and pops the backstack. At the root it stays out of the way, so the host Activity
+finishes as usual. Opt out with `handleBack = false` if you want to drive back yourself.
+
+On targets with no system back affordance this is a no-op and the host drives the backstack.
+
+### Retained State and Scopes
+
+Compose ships this. Use it directly — MESA does not wrap it.
+
+`retain { }` (artifact `androidx.compose.runtime:runtime-retain`, Compose 1.10+) sits between
+`remember` and `rememberSaveable`: it survives recomposition *and* Android configuration changes,
+and is retired when the content permanently leaves the composition. No wiring is required.
+
+```kotlin
+@Composable
+override fun produceState(): FooState {
+    val player = retain { ExoPlayer.Builder(appContext).build() }   // survives rotation
+    // ...
+}
+```
+
+Rules worth repeating from the Compose docs: retained values live in memory and do **not** survive
+process death (pair with `rememberSaveable` when you need both), and you must never retain a
+`Context`, `View`, `Activity`, `Lifecycle`, or anything holding a reference to one.
+
+To release resources when a retained object is retired, have it implement `RetainObserver` and
+clean up in `onRetired()`.
+
+MESA does add one thing on top: `rememberRetainedCoroutineScope()`, a `CoroutineScope` held by
+`retain` and cancelled from `RetainObserver.onRetired()`. It is the default scope behind
+`wrapEventSink`, so a save started from an event sink survives a rotation and is cancelled when
+the screen is permanently gone. Pass an explicit scope to `wrapEventSink` to opt out.
+
+The scope inherits the composition's dispatcher and drops only its `Job`, so work stays on the
+same thread — and under the headless test runtime stays on the test scheduler.
+
+### Screen Identity
+
+Screens are values: navigating to `HomeScreen` twice gives you two *equal* screens. Each push
+occupies a `TrapezeBackStackEntry` with its own generated id, so the two visits keep separate
+saveable UI state and separate navigation results rather than silently sharing them. The id
+survives configuration changes and process death.
+
+`LocalTrapezeBackStackEntry` exposes the entry currently being rendered.
 
 ### Navigation Result Passing
 Return data from Screen B to Screen A when popping:
@@ -330,7 +384,20 @@ LaunchedEffect(editResult) {
 }
 ```
 
-Results are single-consumption and survive configuration changes/process death on Android.
+Or, to react to a result exactly once rather than read it as state:
+
+```kotlin
+NavigationResultEffect("edit_result") { result ->
+    (result as? EditResult)?.let { name = it.name }
+}
+```
+
+Each result is taken off the backstack exactly once. `rememberNavigationResult` then latches
+the delivered value until the screen leaves the composition, so it is safe to read across
+recompositions. Results survive configuration changes and process death on Android.
+
+Calling `popWithResult` while already at the root drops the result — there is no screen left
+to consume it, and retaining it would leak for the lifetime of the backstack.
 
 ### Navigation from StateHolder
 ```kotlin
@@ -400,6 +467,17 @@ class ObserveNote @Inject constructor(
 }
 ```
 
+A subject interactor starts idle and emits nothing until `invoke(params)`; `stop()` tears the
+subscription down. Equal parameters are conflated, so re-triggering from a recomposition will
+not resubscribe. Emitted *values* are delivered as-is — override `distinctValues` to `true` to
+filter consecutive duplicates.
+
+`StrataInteractor.inProgress` turns on immediately for user-initiated work and holds purely
+ambient work back by `ambientLoadingDelay` (default 5s), so short background refreshes never
+flash a spinner. The delay is measured from the moment loading became ambient, so overlapping
+background calls cannot keep deferring it. Both that and `defaultTimeout` are overridable per
+interactor.
+
 ### Launch Utilities
 
 `strataLaunch` runs on `Dispatchers.Default` by default (override via `context` parameter):
@@ -423,10 +501,14 @@ val result = deferred.await()
 
 | Extension | Description |
 |-----------|-------------|
+| `onSuccess { }` | Side-effect on success, returns original result |
+| `onFailure { }` | Side-effect on failure, returns original result |
 | `getOrNull()` | Returns value or null on failure |
 | `getOrDefault(default)` | Returns value or a provided default on failure |
 | `getOrElse { error -> }` | Returns value or computes fallback from the error |
 | `map { }` | Transforms success value, passes failure through |
+| `flatMap { }` | Chains another `StrataResult`-returning step, passes failure through |
+| `recover { error -> }` | Replaces a failure by running a fallback that returns a `StrataResult` |
 | `fold(onSuccess, onFailure)` | Produces a single value for both outcomes |
 
 ### Usage in StateHolder
@@ -454,10 +536,13 @@ class NoteStateHolder @AssistedInject constructor(
                         val result = saveNote.value(event.params)
                         // map + getOrDefault: safely extract a value with fallback
                         val savedId = result.map { event.params.id }.getOrDefault("")
-                        // fold: produce a message for both outcomes
+                        // fold: produce a message for both outcomes. The failure branch
+                        // carries the exception as `cause` for logging rather than showing it.
                         val message = result.fold(
-                            onSuccess = { "Saved $savedId successfully!" },
-                            onFailure = { error -> "Save failed: ${error.message}" }
+                            onSuccess = { TrapezeMessage("Saved $savedId successfully!") },
+                            onFailure = { error ->
+                                TrapezeMessage("Couldn't save your note.", cause = error)
+                            }
                         )
                     }
                 }
@@ -517,9 +602,14 @@ features/foo/
 ```
 
 ### Dependency Rules
-- `presentation` → `api`, `domain`
-- `domain` → `api`, `data`
+- `presentation` → `api` (use case abstractions only; implementations are bound at the app graph)
+- `data` → `domain`
+- `domain` → `api`
 - `api` → no internal dependencies
+
+Declare a dependency with `api(...)` whenever its types appear in the module's own public
+API — as a supertype, constructor parameter, or return type. `implementation(...)` keeps
+them off the consumer's compile classpath.
 
 ---
 
@@ -554,18 +644,38 @@ Use `TrapezeMessage` and `TrapezeMessageManager` to handle one-off events (snack
 val messageManager = remember { TrapezeMessageManager() }
 val message by messageManager.message.collectAsState(initial = null)
 
-// Emit a message
-messageManager.emitMessage(TrapezeMessage(Throwable("Something went wrong")))
+val eventSink = wrapEventSink<FooEvent> { event ->
+    when (event) {
+        FooEvent.Save -> strataLaunch {
+            saveUseCase(params).onFailure { error ->
+                // The text is copy written for the user. The failure rides along as `cause`,
+                // which is carried for logging and crash reporting and is never rendered.
+                messageManager.emitMessage(
+                    TrapezeMessage("Couldn't save your changes.", cause = error)
+                )
+            }
+        }
 
-// Clear all messages
-messageManager.clearAll()
+        // Closes the loop with the UI below, which sends back the id of the message it drew.
+        is FooEvent.DismissMessage -> messageManager.clearMessage(event.id)
+    }
+}
+
+return FooState(trapezeMessage = message, eventSink = eventSink)
 ```
+
+`clearAll()` drops the whole queue at once — for resetting a screen, not for dismissing the
+message the user just tapped.
+
+> **Do not derive the displayed text from `throwable.message`.** Exception text routinely
+> carries request URLs, query fragments, and file paths. `TrapezeMessage` deliberately offers
+> no throwable-only factory.
 
 **UI:**
 ```kotlin
 state.trapezeMessage?.let { msg ->
     Snackbar(
-        action = { Button(onClick = { state.eventSink(ClearError(msg.id)) }) { Text("Dismiss") } }
+        action = { Button(onClick = { state.eventSink(FooEvent.DismissMessage(msg.id)) }) { Text("Dismiss") } }
     ) { Text(msg.message) }
 }
 ```

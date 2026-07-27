@@ -1,0 +1,50 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64, iosX64, macosArm64, macosX64, wasmJs]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <com.jkjamies:trapeze-navigation>
+final class com.jkjamies.trapeze.navigation/TrapezeBackStack { // com.jkjamies.trapeze.navigation/TrapezeBackStack|null[0]
+    final val current // com.jkjamies.trapeze.navigation/TrapezeBackStack.current|{}current[0]
+        final fun <get-current>(): com.jkjamies.trapeze/TrapezeScreen // com.jkjamies.trapeze.navigation/TrapezeBackStack.current.<get-current>|<get-current>(){}[0]
+    final val currentEntry // com.jkjamies.trapeze.navigation/TrapezeBackStack.currentEntry|{}currentEntry[0]
+        final fun <get-currentEntry>(): com.jkjamies.trapeze.navigation/TrapezeBackStackEntry // com.jkjamies.trapeze.navigation/TrapezeBackStack.currentEntry.<get-currentEntry>|<get-currentEntry>(){}[0]
+    final val entries // com.jkjamies.trapeze.navigation/TrapezeBackStack.entries|{}entries[0]
+        final fun <get-entries>(): kotlin.collections/List<com.jkjamies.trapeze.navigation/TrapezeBackStackEntry> // com.jkjamies.trapeze.navigation/TrapezeBackStack.entries.<get-entries>|<get-entries>(){}[0]
+    final val root // com.jkjamies.trapeze.navigation/TrapezeBackStack.root|{}root[0]
+        final fun <get-root>(): com.jkjamies.trapeze/TrapezeScreen // com.jkjamies.trapeze.navigation/TrapezeBackStack.root.<get-root>|<get-root>(){}[0]
+    final val size // com.jkjamies.trapeze.navigation/TrapezeBackStack.size|{}size[0]
+        final fun <get-size>(): kotlin/Int // com.jkjamies.trapeze.navigation/TrapezeBackStack.size.<get-size>|<get-size>(){}[0]
+
+    final object Companion // com.jkjamies.trapeze.navigation/TrapezeBackStack.Companion|null[0]
+}
+
+final class com.jkjamies.trapeze.navigation/TrapezeBackStackEntry { // com.jkjamies.trapeze.navigation/TrapezeBackStackEntry|null[0]
+    final val id // com.jkjamies.trapeze.navigation/TrapezeBackStackEntry.id|{}id[0]
+        final fun <get-id>(): kotlin/String // com.jkjamies.trapeze.navigation/TrapezeBackStackEntry.id.<get-id>|<get-id>(){}[0]
+    final val screen // com.jkjamies.trapeze.navigation/TrapezeBackStackEntry.screen|{}screen[0]
+        final fun <get-screen>(): com.jkjamies.trapeze/TrapezeScreen // com.jkjamies.trapeze.navigation/TrapezeBackStackEntry.screen.<get-screen>|<get-screen>(){}[0]
+
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.jkjamies.trapeze.navigation/TrapezeBackStackEntry.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.jkjamies.trapeze.navigation/TrapezeBackStackEntry.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.jkjamies.trapeze.navigation/TrapezeBackStackEntry.toString|toString(){}[0]
+}
+
+final val com.jkjamies.trapeze.navigation/LocalTrapezeBackStack // com.jkjamies.trapeze.navigation/LocalTrapezeBackStack|{}LocalTrapezeBackStack[0]
+    final fun <get-LocalTrapezeBackStack>(): androidx.compose.runtime/ProvidableCompositionLocal<com.jkjamies.trapeze.navigation/TrapezeBackStack> // com.jkjamies.trapeze.navigation/LocalTrapezeBackStack.<get-LocalTrapezeBackStack>|<get-LocalTrapezeBackStack>(){}[0]
+final val com.jkjamies.trapeze.navigation/LocalTrapezeBackStackEntry // com.jkjamies.trapeze.navigation/LocalTrapezeBackStackEntry|{}LocalTrapezeBackStackEntry[0]
+    final fun <get-LocalTrapezeBackStackEntry>(): androidx.compose.runtime/ProvidableCompositionLocal<com.jkjamies.trapeze.navigation/TrapezeBackStackEntry> // com.jkjamies.trapeze.navigation/LocalTrapezeBackStackEntry.<get-LocalTrapezeBackStackEntry>|<get-LocalTrapezeBackStackEntry>(){}[0]
+final val com.jkjamies.trapeze.navigation/LocalTrapezeNavigator // com.jkjamies.trapeze.navigation/LocalTrapezeNavigator|{}LocalTrapezeNavigator[0]
+    final fun <get-LocalTrapezeNavigator>(): androidx.compose.runtime/ProvidableCompositionLocal<com.jkjamies.trapeze/TrapezeNavigator> // com.jkjamies.trapeze.navigation/LocalTrapezeNavigator.<get-LocalTrapezeNavigator>|<get-LocalTrapezeNavigator>(){}[0]
+final val com.jkjamies.trapeze.navigation/com_jkjamies_trapeze_navigation_TrapezeBackStack$stableprop // com.jkjamies.trapeze.navigation/com_jkjamies_trapeze_navigation_TrapezeBackStack$stableprop|#static{}com_jkjamies_trapeze_navigation_TrapezeBackStack$stableprop[0]
+final val com.jkjamies.trapeze.navigation/com_jkjamies_trapeze_navigation_TrapezeBackStackEntry$stableprop // com.jkjamies.trapeze.navigation/com_jkjamies_trapeze_navigation_TrapezeBackStackEntry$stableprop|#static{}com_jkjamies_trapeze_navigation_TrapezeBackStackEntry$stableprop[0]
+
+final fun com.jkjamies.trapeze.navigation/NavigableTrapezeContent(com.jkjamies.trapeze/TrapezeNavigator, com.jkjamies.trapeze.navigation/TrapezeBackStack, androidx.compose.ui/Modifier?, com.jkjamies.trapeze/Trapeze?, kotlin/Boolean, androidx.compose.runtime/Composer?, kotlin/Int, kotlin/Int) // com.jkjamies.trapeze.navigation/NavigableTrapezeContent|NavigableTrapezeContent(com.jkjamies.trapeze.TrapezeNavigator;com.jkjamies.trapeze.navigation.TrapezeBackStack;androidx.compose.ui.Modifier?;com.jkjamies.trapeze.Trapeze?;kotlin.Boolean;androidx.compose.runtime.Composer?;kotlin.Int;kotlin.Int){}[0]
+final fun com.jkjamies.trapeze.navigation/NavigationResultEffect(kotlin/String, com.jkjamies.trapeze.navigation/TrapezeBackStack?, com.jkjamies.trapeze.navigation/TrapezeBackStackEntry?, kotlin/Function1<com.jkjamies.trapeze/TrapezeNavigationResult, kotlin/Unit>, androidx.compose.runtime/Composer?, kotlin/Int, kotlin/Int) // com.jkjamies.trapeze.navigation/NavigationResultEffect|NavigationResultEffect(kotlin.String;com.jkjamies.trapeze.navigation.TrapezeBackStack?;com.jkjamies.trapeze.navigation.TrapezeBackStackEntry?;kotlin.Function1<com.jkjamies.trapeze.TrapezeNavigationResult,kotlin.Unit>;androidx.compose.runtime.Composer?;kotlin.Int;kotlin.Int){}[0]
+final fun com.jkjamies.trapeze.navigation/com_jkjamies_trapeze_navigation_TrapezeBackStack$stableprop_getter(): kotlin/Int // com.jkjamies.trapeze.navigation/com_jkjamies_trapeze_navigation_TrapezeBackStack$stableprop_getter|com_jkjamies_trapeze_navigation_TrapezeBackStack$stableprop_getter(){}[0]
+final fun com.jkjamies.trapeze.navigation/com_jkjamies_trapeze_navigation_TrapezeBackStackEntry$stableprop_getter(): kotlin/Int // com.jkjamies.trapeze.navigation/com_jkjamies_trapeze_navigation_TrapezeBackStackEntry$stableprop_getter|com_jkjamies_trapeze_navigation_TrapezeBackStackEntry$stableprop_getter(){}[0]
+final fun com.jkjamies.trapeze.navigation/rememberNavigationResult(kotlin/String, com.jkjamies.trapeze.navigation/TrapezeBackStack?, com.jkjamies.trapeze.navigation/TrapezeBackStackEntry?, androidx.compose.runtime/Composer?, kotlin/Int, kotlin/Int): com.jkjamies.trapeze/TrapezeNavigationResult? // com.jkjamies.trapeze.navigation/rememberNavigationResult|rememberNavigationResult(kotlin.String;com.jkjamies.trapeze.navigation.TrapezeBackStack?;com.jkjamies.trapeze.navigation.TrapezeBackStackEntry?;androidx.compose.runtime.Composer?;kotlin.Int;kotlin.Int){}[0]
+final fun com.jkjamies.trapeze.navigation/rememberSaveableBackStack(com.jkjamies.trapeze/TrapezeScreen, androidx.compose.runtime/Composer?, kotlin/Int): com.jkjamies.trapeze.navigation/TrapezeBackStack // com.jkjamies.trapeze.navigation/rememberSaveableBackStack|rememberSaveableBackStack(com.jkjamies.trapeze.TrapezeScreen;androidx.compose.runtime.Composer?;kotlin.Int){}[0]
+final fun com.jkjamies.trapeze.navigation/rememberTrapezeNavigator(com.jkjamies.trapeze.navigation/TrapezeBackStack, kotlin/Function0<kotlin/Unit>?, androidx.compose.runtime/Composer?, kotlin/Int, kotlin/Int): com.jkjamies.trapeze/TrapezeNavigator // com.jkjamies.trapeze.navigation/rememberTrapezeNavigator|rememberTrapezeNavigator(com.jkjamies.trapeze.navigation.TrapezeBackStack;kotlin.Function0<kotlin.Unit>?;androidx.compose.runtime.Composer?;kotlin.Int;kotlin.Int){}[0]

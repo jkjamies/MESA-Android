@@ -29,6 +29,8 @@ import io.kotest.matchers.types.shouldBeInstanceOf
 
 class CounterStateHolderTest : BehaviorSpec({
 
+    coroutineTestScope = true
+
     Given("a CounterStateHolder with initial count") {
         When("produceState is called") {
             Then("initial count matches the screen") {
@@ -127,7 +129,11 @@ class CounterStateHolderTest : BehaviorSpec({
 
                     initial.eventSink(CounterEvent.ThrowError)
                     val errorState = awaitItem()
-                    errorState.trapezeMessage.shouldNotBeNull().message shouldBe "Simulated Failure"
+                    val message = errorState.trapezeMessage.shouldNotBeNull()
+                    // The displayed text is written for the user; the exception rides along as
+                    // `cause` and is never what the UI renders.
+                    message.message shouldBe "Something went wrong. Please try again."
+                    message.cause.shouldNotBeNull().message shouldBe "Simulated Failure"
                 }
             }
         }

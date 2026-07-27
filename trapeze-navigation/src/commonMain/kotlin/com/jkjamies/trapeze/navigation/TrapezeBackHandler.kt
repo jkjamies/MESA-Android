@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package com.jkjamies.mesa.features.summary.presentation.fakes
+package com.jkjamies.trapeze.navigation
 
-import com.jkjamies.mesa.features.summary.api.SaveSummaryValue
+import androidx.compose.runtime.Composable
 
-class FakeSaveSummaryValue(private val shouldFail: Boolean = false) : SaveSummaryValue() {
-    val savedValues = mutableListOf<Int>()
-
-    override suspend fun doWork(params: Int) {
-        if (shouldFail) throw IllegalStateException("Save failed for testing")
-        savedValues.add(params)
-    }
-}
+/**
+ * Intercepts the platform's back gesture while [enabled], invoking [onBack].
+ *
+ * On Android this is the system back button and back gesture. On platforms with no such
+ * concept this is a no-op, and the host application is responsible for driving the backstack.
+ */
+@Composable
+internal expect fun TrapezeBackHandler(enabled: Boolean, onBack: () -> Unit)

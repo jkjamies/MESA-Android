@@ -73,12 +73,16 @@ class SummaryStateHolder constructor(
                         val result = saveSummaryValue.value.invoke(finalCount)
                         // Demonstrate map: transform Success<Unit> into Success<Int> carrying the saved count
                         val savedCount = result.map { finalCount }.getOrDefault(0)
-                        // Demonstrate fold: produce a user-facing message for both outcomes
+                        // Demonstrate fold: produce a user-facing message for both outcomes.
+                        // The failure branch deliberately does not surface `error.message` —
+                        // that text is for the log, not the screen.
                         val message = result.fold(
-                            onSuccess = { "Saved $savedCount successfully!" },
-                            onFailure = { error -> "Save failed: ${error.message ?: "Unknown error"}" }
+                            onSuccess = { TrapezeMessage("Saved $savedCount successfully!") },
+                            onFailure = { error ->
+                                TrapezeMessage("Couldn't save the value.", cause = error)
+                            }
                         )
-                        messageManager.emitMessage(TrapezeMessage(message))
+                        messageManager.emitMessage(message)
                     }
                 }
                 is SummaryEvent.ClearMessage -> {

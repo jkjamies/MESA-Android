@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-package com.jkjamies.mesa.features.counter.presentation.fakes
+package com.jkjamies.trapeze.navigation
 
-import com.jkjamies.mesa.core.presentation.AppInterop
-import com.jkjamies.mesa.core.presentation.AppInteropEvent
+import androidx.compose.runtime.Composable
 
-class FakeAppInterop : AppInterop {
-    val events = mutableListOf<AppInteropEvent>()
-
-    override fun send(event: AppInteropEvent) {
-        events.add(event)
-    }
+/**
+ * No-op: this platform has no system-level back affordance for Trapeze to intercept.
+ * Drive the backstack from the host application instead.
+ */
+@Composable
+internal actual fun TrapezeBackHandler(enabled: Boolean, onBack: () -> Unit) {
 }

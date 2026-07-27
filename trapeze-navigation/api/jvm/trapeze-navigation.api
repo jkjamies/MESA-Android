@@ -1,0 +1,42 @@
+public final class com/jkjamies/trapeze/navigation/NavigableTrapezeContentKt {
+	public static final fun NavigableTrapezeContent (Lcom/jkjamies/trapeze/TrapezeNavigator;Lcom/jkjamies/trapeze/navigation/TrapezeBackStack;Landroidx/compose/ui/Modifier;Lcom/jkjamies/trapeze/Trapeze;ZLandroidx/compose/runtime/Composer;II)V
+}
+
+public final class com/jkjamies/trapeze/navigation/RememberNavigationResultKt {
+	public static final fun NavigationResultEffect (Ljava/lang/String;Lcom/jkjamies/trapeze/navigation/TrapezeBackStack;Lcom/jkjamies/trapeze/navigation/TrapezeBackStackEntry;Lkotlin/jvm/functions/Function1;Landroidx/compose/runtime/Composer;II)V
+	public static final fun rememberNavigationResult (Ljava/lang/String;Lcom/jkjamies/trapeze/navigation/TrapezeBackStack;Lcom/jkjamies/trapeze/navigation/TrapezeBackStackEntry;Landroidx/compose/runtime/Composer;II)Lcom/jkjamies/trapeze/TrapezeNavigationResult;
+}
+
+public final class com/jkjamies/trapeze/navigation/TrapezeBackStack {
+	public static final field $stable I
+	public static final field Companion Lcom/jkjamies/trapeze/navigation/TrapezeBackStack$Companion;
+	public final fun getCurrent ()Lcom/jkjamies/trapeze/TrapezeScreen;
+	public final fun getCurrentEntry ()Lcom/jkjamies/trapeze/navigation/TrapezeBackStackEntry;
+	public final fun getEntries ()Ljava/util/List;
+	public final fun getRoot ()Lcom/jkjamies/trapeze/TrapezeScreen;
+	public final fun getSize ()I
+}
+
+public final class com/jkjamies/trapeze/navigation/TrapezeBackStack$Companion {
+}
+
+public final class com/jkjamies/trapeze/navigation/TrapezeBackStackEntry {
+	public static final field $stable I
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getId ()Ljava/lang/String;
+	public final fun getScreen ()Lcom/jkjamies/trapeze/TrapezeScreen;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/jkjamies/trapeze/navigation/TrapezeBackStack_jvmKt {
+	public static final fun rememberSaveableBackStack (Lcom/jkjamies/trapeze/TrapezeScreen;Landroidx/compose/runtime/Composer;I)Lcom/jkjamies/trapeze/navigation/TrapezeBackStack;
+}
+
+public final class com/jkjamies/trapeze/navigation/TrapezeNavigatorKt {
+	public static final fun getLocalTrapezeBackStack ()Landroidx/compose/runtime/ProvidableCompositionLocal;
+	public static final fun getLocalTrapezeBackStackEntry ()Landroidx/compose/runtime/ProvidableCompositionLocal;
+	public static final fun getLocalTrapezeNavigator ()Landroidx/compose/runtime/ProvidableCompositionLocal;
+	public static final fun rememberTrapezeNavigator (Lcom/jkjamies/trapeze/navigation/TrapezeBackStack;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;II)Lcom/jkjamies/trapeze/TrapezeNavigator;
+}
+

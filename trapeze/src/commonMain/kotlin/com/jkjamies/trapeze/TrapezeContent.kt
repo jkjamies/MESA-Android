@@ -38,12 +38,20 @@ public fun TrapezeContent(
     trapeze: Trapeze = LocalTrapeze.current,
     navigator: TrapezeNavigator? = null
 ) {
-    // Navigator is intentionally excluded from the remember key — navigators are stable
-    // instances tied to the backstack, so they never change for a given composition.
-    val stateHolder = remember(screen) { trapeze.stateHolder(screen, navigator) }
-    val ui = remember(screen) { trapeze.ui(screen) }
+    val stateHolder = remember(screen, trapeze, navigator) { trapeze.stateHolder(screen, navigator) }
+    val ui = remember(screen, trapeze) { trapeze.ui(screen) }
     if (stateHolder == null || ui == null) {
-        trapezeLogWarning("TrapezeContent", "No factory found for screen: ${screen::class.qualifiedName ?: screen::class.simpleName ?: "Unknown"}")
+        val name = screen::class.qualifiedName ?: screen::class.simpleName ?: "Unknown"
+        val missing = when {
+            stateHolder == null && ui == null -> "StateHolderFactory and UiFactory"
+            stateHolder == null -> "StateHolderFactory"
+            else -> "UiFactory"
+        }
+        trapezeLogWarning(
+            "TrapezeContent",
+            "No $missing registered for screen: $name. Nothing will be rendered. " +
+                "Check that the feature's factories are contributed to the Trapeze registry."
+        )
         return
     }
     @Suppress("UNCHECKED_CAST")

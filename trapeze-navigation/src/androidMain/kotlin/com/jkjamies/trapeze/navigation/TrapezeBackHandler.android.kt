@@ -14,14 +14,11 @@
  * limitations under the License.
  */
 
-package com.jkjamies.mesa.features.summary.presentation.fakes
+package com.jkjamies.trapeze.navigation
 
-import com.jkjamies.mesa.features.summary.api.ObserveLastSavedValue
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
+import androidx.compose.runtime.Composable
 
-class FakeObserveLastSavedValue : ObserveLastSavedValue() {
-    val valueFlow = MutableStateFlow<Int?>(null)
-
-    override fun createObservable(params: Unit): Flow<Int?> = valueFlow
+@Composable
+internal actual fun TrapezeBackHandler(enabled: Boolean, onBack: () -> Unit) {
+    androidx.activity.compose.BackHandler(enabled = enabled, onBack = onBack)
 }

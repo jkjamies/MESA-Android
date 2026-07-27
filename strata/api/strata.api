@@ -1,0 +1,118 @@
+public abstract class com/jkjamies/strata/StrataException : java/lang/Exception {
+	public fun <init> (Ljava/lang/String;Ljava/lang/Throwable;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Throwable;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+}
+
+public final class com/jkjamies/strata/StrataExecutionException : com/jkjamies/strata/StrataException {
+	public fun <init> (Ljava/lang/Throwable;)V
+}
+
+public abstract class com/jkjamies/strata/StrataInteractor {
+	public static final field Companion Lcom/jkjamies/strata/StrataInteractor$Companion;
+	public fun <init> ()V
+	protected abstract fun doWork (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	protected fun getAmbientLoadingDelay-UwyO8pc ()J
+	protected fun getDefaultTimeout-UwyO8pc ()J
+	public final fun getInProgress ()Lkotlinx/coroutines/flow/Flow;
+	public final fun invoke-dWUq8MI (Ljava/lang/Object;JZLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun invoke-dWUq8MI$default (Lcom/jkjamies/strata/StrataInteractor;Ljava/lang/Object;JZLkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
+public final class com/jkjamies/strata/StrataInteractor$Companion {
+	public final fun getDefaultTimeout-UwyO8pc ()J
+}
+
+public final class com/jkjamies/strata/StrataInteractorKt {
+	public static final fun invoke (Lcom/jkjamies/strata/StrataInteractor;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun invoke-8Mi8wO0 (Lcom/jkjamies/strata/StrataInteractor;JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/jkjamies/strata/StrataLaunchKt {
+	public static final fun strataLaunch (Lkotlinx/coroutines/CoroutineScope;Lkotlin/coroutines/CoroutineContext;Lkotlinx/coroutines/CoroutineStart;Lkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/Job;
+	public static synthetic fun strataLaunch$default (Lkotlinx/coroutines/CoroutineScope;Lkotlin/coroutines/CoroutineContext;Lkotlinx/coroutines/CoroutineStart;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lkotlinx/coroutines/Job;
+	public static final fun strataLaunchWithResult (Lkotlinx/coroutines/CoroutineScope;Lkotlin/coroutines/CoroutineContext;Lkotlinx/coroutines/CoroutineStart;Lkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/Deferred;
+	public static synthetic fun strataLaunchWithResult$default (Lkotlinx/coroutines/CoroutineScope;Lkotlin/coroutines/CoroutineContext;Lkotlinx/coroutines/CoroutineStart;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lkotlinx/coroutines/Deferred;
+}
+
+public abstract interface class com/jkjamies/strata/StrataResult {
+	public fun flatMap (Lkotlin/jvm/functions/Function1;)Lcom/jkjamies/strata/StrataResult;
+	public fun fold (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)Ljava/lang/Object;
+	public fun getOrNull ()Ljava/lang/Object;
+	public fun map (Lkotlin/jvm/functions/Function1;)Lcom/jkjamies/strata/StrataResult;
+	public fun onFailure (Lkotlin/jvm/functions/Function1;)Lcom/jkjamies/strata/StrataResult;
+	public fun onSuccess (Lkotlin/jvm/functions/Function1;)Lcom/jkjamies/strata/StrataResult;
+}
+
+public final class com/jkjamies/strata/StrataResult$DefaultImpls {
+	public static fun flatMap (Lcom/jkjamies/strata/StrataResult;Lkotlin/jvm/functions/Function1;)Lcom/jkjamies/strata/StrataResult;
+	public static fun fold (Lcom/jkjamies/strata/StrataResult;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)Ljava/lang/Object;
+	public static fun getOrNull (Lcom/jkjamies/strata/StrataResult;)Ljava/lang/Object;
+	public static fun map (Lcom/jkjamies/strata/StrataResult;Lkotlin/jvm/functions/Function1;)Lcom/jkjamies/strata/StrataResult;
+	public static fun onFailure (Lcom/jkjamies/strata/StrataResult;Lkotlin/jvm/functions/Function1;)Lcom/jkjamies/strata/StrataResult;
+	public static fun onSuccess (Lcom/jkjamies/strata/StrataResult;Lkotlin/jvm/functions/Function1;)Lcom/jkjamies/strata/StrataResult;
+}
+
+public final class com/jkjamies/strata/StrataResult$Failure : com/jkjamies/strata/StrataResult {
+	public fun <init> (Lcom/jkjamies/strata/StrataException;)V
+	public final fun component1 ()Lcom/jkjamies/strata/StrataException;
+	public final fun copy (Lcom/jkjamies/strata/StrataException;)Lcom/jkjamies/strata/StrataResult$Failure;
+	public static synthetic fun copy$default (Lcom/jkjamies/strata/StrataResult$Failure;Lcom/jkjamies/strata/StrataException;ILjava/lang/Object;)Lcom/jkjamies/strata/StrataResult$Failure;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun flatMap (Lkotlin/jvm/functions/Function1;)Lcom/jkjamies/strata/StrataResult;
+	public fun fold (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)Ljava/lang/Object;
+	public final fun getError ()Lcom/jkjamies/strata/StrataException;
+	public synthetic fun getOrNull ()Ljava/lang/Object;
+	public fun getOrNull ()Ljava/lang/Void;
+	public fun hashCode ()I
+	public fun map (Lkotlin/jvm/functions/Function1;)Lcom/jkjamies/strata/StrataResult;
+	public fun onFailure (Lkotlin/jvm/functions/Function1;)Lcom/jkjamies/strata/StrataResult;
+	public fun onSuccess (Lkotlin/jvm/functions/Function1;)Lcom/jkjamies/strata/StrataResult;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/jkjamies/strata/StrataResult$Success : com/jkjamies/strata/StrataResult {
+	public fun <init> (Ljava/lang/Object;)V
+	public final fun component1 ()Ljava/lang/Object;
+	public final fun copy (Ljava/lang/Object;)Lcom/jkjamies/strata/StrataResult$Success;
+	public static synthetic fun copy$default (Lcom/jkjamies/strata/StrataResult$Success;Ljava/lang/Object;ILjava/lang/Object;)Lcom/jkjamies/strata/StrataResult$Success;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun flatMap (Lkotlin/jvm/functions/Function1;)Lcom/jkjamies/strata/StrataResult;
+	public fun fold (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)Ljava/lang/Object;
+	public final fun getData ()Ljava/lang/Object;
+	public fun getOrNull ()Ljava/lang/Object;
+	public fun hashCode ()I
+	public fun map (Lkotlin/jvm/functions/Function1;)Lcom/jkjamies/strata/StrataResult;
+	public fun onFailure (Lkotlin/jvm/functions/Function1;)Lcom/jkjamies/strata/StrataResult;
+	public fun onSuccess (Lkotlin/jvm/functions/Function1;)Lcom/jkjamies/strata/StrataResult;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/jkjamies/strata/StrataResultKt {
+	public static final fun getOrDefault (Lcom/jkjamies/strata/StrataResult;Ljava/lang/Object;)Ljava/lang/Object;
+	public static final fun getOrElse (Lcom/jkjamies/strata/StrataResult;Lkotlin/jvm/functions/Function1;)Ljava/lang/Object;
+	public static final fun recover (Lcom/jkjamies/strata/StrataResult;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/jkjamies/strata/StrataRunCatchingKt {
+	public static final fun strataRunCatching (Lkotlin/jvm/functions/Function0;)Lcom/jkjamies/strata/StrataResult;
+}
+
+public abstract class com/jkjamies/strata/StrataSubjectInteractor {
+	public fun <init> ()V
+	protected abstract fun createObservable (Ljava/lang/Object;)Lkotlinx/coroutines/flow/Flow;
+	protected fun getDistinctValues ()Z
+	public final fun getFlow ()Lkotlinx/coroutines/flow/Flow;
+	public final fun invoke (Ljava/lang/Object;)V
+	public final fun isActive ()Z
+	public final fun stop ()V
+}
+
+public final class com/jkjamies/strata/StrataTimeoutException : com/jkjamies/strata/StrataException {
+	public synthetic fun <init> (JLjava/lang/Throwable;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getDuration-UwyO8pc ()J
+}
+
+public abstract interface class com/jkjamies/strata/StrataUserInitiatedParams {
+	public abstract fun isUserInitiated ()Z
+}
+

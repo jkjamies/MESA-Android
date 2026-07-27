@@ -30,6 +30,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       - name: Read BOM version
         id: versions
@@ -66,20 +68,37 @@ jobs:
     runs-on: ubuntu-latest
 
     permissions:
-      contents: write
+      contents: read
       packages: write
 
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       - name: Set up JDK 17
         uses: actions/setup-java@v5
         with:
           java-version: '17'
-          distribution: 'temurin'
+          distribution: 'corretto'
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
+        with:
+          # This job publishes immutable artifacts. Reading a cache another workflow wrote
+          # would put untrusted content on the release path.
+          cache-disabled: true
+
+      # A release can be cut from any commit, including one CI never saw green.
+      # Verify before anything is pushed to the registry — artifacts are immutable
+      # once published.
+      - name: Verify
+        run: ./gradlew build
+
+      # An artifact whose ABI has drifted from the recorded dumps is exactly the artifact that
+      # must not become immutable: consumers compile against what the dumps describe.
+      - name: Check published API surface
+        run: ./gradlew checkKotlinAbi
 
       - name: Check and Publish Trapeze
         run: |

@@ -16,8 +16,8 @@
 
 package com.jkjamies.trapeze
 
-interface TrapezeInterop {
-    fun send(event: TrapezeInteropEvent)
+public interface TrapezeInterop {
+    public fun send(event: TrapezeInteropEvent)
 }
 
-interface TrapezeInteropEvent
+public interface TrapezeInteropEvent

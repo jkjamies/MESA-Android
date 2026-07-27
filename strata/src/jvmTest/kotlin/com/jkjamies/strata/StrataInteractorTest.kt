@@ -28,6 +28,8 @@ import kotlin.time.Duration.Companion.seconds
 
 class StrataInteractorTest : BehaviorSpec({
 
+    coroutineTestScope = true
+
     Given("an interactor that succeeds") {
         val interactor = object : StrataInteractor<String, Int>() {
             override suspend fun doWork(params: String): Int = params.length
@@ -153,6 +155,139 @@ class StrataInteractorTest : BehaviorSpec({
         }
     }
 
+    Given("an interactor already running ambient work") {
+        When("a user-initiated call starts while the ambient call is in flight") {
+            Then("inProgress turns true immediately instead of waiting out the ambient delay") {
+                val interactor = object : StrataInteractor<Unit, Unit>() {
+                    override suspend fun doWork(params: Unit) {
+                        // Far longer than the 5s ambient delay, so a debounce that keyed off
+                        // "any ambient work is running" would hold the indicator back.
+                        delay(60.seconds)
+                    }
+                }
+
+                interactor.inProgress.test {
+                    awaitItem() shouldBe false
+
+                    val ambient = launch { interactor(Unit, userInitiated = false) }
+                    // Still inside the ambient delay window — nothing shown yet.
+                    delay(100.milliseconds)
+                    expectNoEvents()
+
+                    val user = launch { interactor(Unit, userInitiated = true) }
+                    // Advance far less than the ambient delay. The indicator must already be
+                    // on; a debounce keyed off "any ambient work" would still be waiting.
+                    delay(50.milliseconds)
+                    expectMostRecentItem() shouldBe true
+
+                    ambient.cancelAndJoin()
+                    user.cancelAndJoin()
+                    awaitItem() shouldBe false
+                }
+            }
+        }
+    }
+
+    Given("an interactor running overlapping ambient work") {
+        When("a second ambient call starts while the first is still pending") {
+            Then("the indicator still appears one delay after loading became ambient") {
+                val interactor = object : StrataInteractor<Unit, Unit>() {
+                    override suspend fun doWork(params: Unit) {
+                        delay(30.seconds)
+                    }
+                }
+
+                interactor.inProgress.test {
+                    awaitItem() shouldBe false
+
+                    val first = launch { interactor(Unit, userInitiated = false) }
+                    // Start a second ambient call partway through the 5s window. A design that
+                    // debounced on every change to the in-flight count would restart the timer
+                    // here and push the indicator out to t=9s.
+                    delay(4.seconds)
+                    expectNoEvents()
+                    val second = launch { interactor(Unit, userInitiated = false) }
+
+                    // t=5s: one full delay after loading became ambient.
+                    delay(1.seconds + 100.milliseconds)
+                    expectMostRecentItem() shouldBe true
+
+                    first.cancelAndJoin()
+                    second.cancelAndJoin()
+                    awaitItem() shouldBe false
+                }
+            }
+        }
+
+        When("ambient calls arrive as a steady trickle") {
+            Then("the indicator still surfaces instead of being deferred forever") {
+                val interactor = object : StrataInteractor<Unit, Unit>() {
+                    override suspend fun doWork(params: Unit) {
+                        delay(3.seconds)
+                    }
+                }
+
+                interactor.inProgress.test {
+                    awaitItem() shouldBe false
+
+                    // Each call outlives the next one's start, so ambient work is continuously
+                    // active while the in-flight count keeps changing.
+                    val jobs = (0 until 6).map { index ->
+                        if (index > 0) delay(2.seconds)
+                        launch { interactor(Unit, userInitiated = false) }
+                    }
+
+                    expectMostRecentItem() shouldBe true
+                    jobs.forEach { it.cancelAndJoin() }
+                    awaitItem() shouldBe false
+                }
+            }
+        }
+    }
+
+    Given("an interactor overriding the ambient loading delay") {
+        When("ambient work runs for longer than the override") {
+            Then("inProgress reports it using the overridden delay") {
+                val interactor = object : StrataInteractor<Unit, Unit>() {
+                    override val ambientLoadingDelay = 50.milliseconds
+                    override suspend fun doWork(params: Unit) {
+                        delay(500.milliseconds)
+                    }
+                }
+
+                interactor.inProgress.test {
+                    awaitItem() shouldBe false
+                    val job = launch { interactor(Unit, userInitiated = false) }
+                    awaitItem() shouldBe true
+                    job.join()
+                    awaitItem() shouldBe false
+                }
+            }
+        }
+    }
+
+    Given("an interactor overriding the default timeout") {
+        When("work exceeds the overridden timeout") {
+            Then("it fails with StrataTimeoutException without the caller passing a timeout") {
+                val interactor = object : StrataInteractor<Unit, Unit>() {
+                    override val defaultTimeout = 50.milliseconds
+                    override suspend fun doWork(params: Unit) {
+                        delay(10.seconds)
+                    }
+                }
+
+                val result = interactor(Unit)
+
+                result.shouldBeInstanceOf<StrataResult.Failure>()
+                // Assert the duration, not just the type: under virtual time a five-minute
+                // timeout produces the same exception, so the type alone proves nothing about
+                // whether the override was honoured.
+                val error = result.error.shouldBeInstanceOf<StrataTimeoutException>()
+                error.duration shouldBe 50.milliseconds
+            }
+        }
+    }
+
     Given("the Unit params extension") {
         val interactor = object : StrataInteractor<Unit, String>() {
             override suspend fun doWork(params: Unit): String = "done"
@@ -163,6 +298,27 @@ class StrataInteractorTest : BehaviorSpec({
                 val result = interactor()
                 result.shouldBeInstanceOf<StrataResult.Success<String>>()
                 result.data shouldBe "done"
+            }
+        }
+    }
+
+    Given("a parameterless interactor overriding defaultTimeout") {
+        val interactor = object : StrataInteractor<Unit, Unit>() {
+            override val defaultTimeout = 50.milliseconds
+            override suspend fun doWork(params: Unit) {
+                delay(10.seconds)
+            }
+        }
+
+        When("invoked through the no-parameter extension") {
+            Then("the subclass timeout applies rather than the library default") {
+                // The extension must not hard-code DefaultTimeout: doing so would silently give
+                // this interactor 5 minutes instead of the 50ms it asked for.
+                val result = interactor()
+
+                result.shouldBeInstanceOf<StrataResult.Failure>()
+                val error = result.error.shouldBeInstanceOf<StrataTimeoutException>()
+                error.duration shouldBe 50.milliseconds
             }
         }
     }

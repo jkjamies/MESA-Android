@@ -1,0 +1,102 @@
+public final class com/jkjamies/trapeze/RetainedCoroutineScopeKt {
+	public static final fun rememberRetainedCoroutineScope (Landroidx/compose/runtime/Composer;I)Lkotlinx/coroutines/CoroutineScope;
+}
+
+public final class com/jkjamies/trapeze/Trapeze {
+	public static final field $stable I
+	public synthetic fun <init> (Lcom/jkjamies/trapeze/Trapeze$Builder;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+}
+
+public final class com/jkjamies/trapeze/Trapeze$Builder {
+	public static final field $stable I
+	public fun <init> ()V
+	public final fun addStateHolderFactory (Lcom/jkjamies/trapeze/Trapeze$StateHolderFactory;)Lcom/jkjamies/trapeze/Trapeze$Builder;
+	public final fun addUiFactory (Lcom/jkjamies/trapeze/Trapeze$UiFactory;)Lcom/jkjamies/trapeze/Trapeze$Builder;
+	public final fun build ()Lcom/jkjamies/trapeze/Trapeze;
+}
+
+public abstract interface class com/jkjamies/trapeze/Trapeze$StateHolderFactory {
+	public abstract fun create (Lcom/jkjamies/trapeze/TrapezeScreen;Lcom/jkjamies/trapeze/TrapezeNavigator;)Lcom/jkjamies/trapeze/TrapezeStateHolder;
+}
+
+public abstract interface class com/jkjamies/trapeze/Trapeze$UiFactory {
+	public abstract fun create (Lcom/jkjamies/trapeze/TrapezeScreen;)Lkotlin/jvm/functions/Function4;
+}
+
+public final class com/jkjamies/trapeze/TrapezeCompositionLocalsKt {
+	public static final fun TrapezeCompositionLocals (Lcom/jkjamies/trapeze/Trapeze;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;I)V
+	public static final fun getLocalTrapeze ()Landroidx/compose/runtime/ProvidableCompositionLocal;
+}
+
+public final class com/jkjamies/trapeze/TrapezeContentKt {
+	public static final fun TrapezeContent (Lcom/jkjamies/trapeze/TrapezeScreen;Landroidx/compose/ui/Modifier;Lcom/jkjamies/trapeze/Trapeze;Lcom/jkjamies/trapeze/TrapezeNavigator;Landroidx/compose/runtime/Composer;II)V
+}
+
+public abstract interface class com/jkjamies/trapeze/TrapezeEvent {
+}
+
+public abstract interface class com/jkjamies/trapeze/TrapezeInterop {
+	public abstract fun send (Lcom/jkjamies/trapeze/TrapezeInteropEvent;)V
+}
+
+public abstract interface class com/jkjamies/trapeze/TrapezeInteropEvent {
+}
+
+public final class com/jkjamies/trapeze/TrapezeLog_jvmKt {
+	public static final fun trapezeLogWarning (Ljava/lang/String;Ljava/lang/String;)V
+}
+
+public final class com/jkjamies/trapeze/TrapezeMessage {
+	public static final field $stable I
+	public fun <init> (Ljava/lang/String;Ljava/lang/Throwable;Lkotlin/uuid/Uuid;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Throwable;Lkotlin/uuid/Uuid;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/Throwable;
+	public final fun component3 ()Lkotlin/uuid/Uuid;
+	public final fun copy (Ljava/lang/String;Ljava/lang/Throwable;Lkotlin/uuid/Uuid;)Lcom/jkjamies/trapeze/TrapezeMessage;
+	public static synthetic fun copy$default (Lcom/jkjamies/trapeze/TrapezeMessage;Ljava/lang/String;Ljava/lang/Throwable;Lkotlin/uuid/Uuid;ILjava/lang/Object;)Lcom/jkjamies/trapeze/TrapezeMessage;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCause ()Ljava/lang/Throwable;
+	public final fun getId ()Lkotlin/uuid/Uuid;
+	public final fun getMessage ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/jkjamies/trapeze/TrapezeMessageManager {
+	public static final field $stable I
+	public static final field MAX_QUEUE_SIZE I
+	public fun <init> ()V
+	public final fun clearAll ()V
+	public final fun clearMessage (Lkotlin/uuid/Uuid;)V
+	public final fun emitMessage (Lcom/jkjamies/trapeze/TrapezeMessage;)V
+	public final fun getMessage ()Lkotlinx/coroutines/flow/Flow;
+}
+
+public abstract interface class com/jkjamies/trapeze/TrapezeNavigationResult {
+}
+
+public abstract interface class com/jkjamies/trapeze/TrapezeNavigator {
+	public abstract fun navigate (Lcom/jkjamies/trapeze/TrapezeScreen;)V
+	public abstract fun pop ()V
+	public abstract fun popTo (Lcom/jkjamies/trapeze/TrapezeScreen;)Z
+	public abstract fun popToRoot ()V
+	public abstract fun popWithResult (Ljava/lang/String;Lcom/jkjamies/trapeze/TrapezeNavigationResult;)V
+}
+
+public abstract interface class com/jkjamies/trapeze/TrapezeScreen {
+}
+
+public abstract interface class com/jkjamies/trapeze/TrapezeState {
+}
+
+public abstract class com/jkjamies/trapeze/TrapezeStateHolder {
+	public static final field $stable I
+	public fun <init> ()V
+	public abstract fun produceState (Landroidx/compose/runtime/Composer;I)Lcom/jkjamies/trapeze/TrapezeState;
+}
+
+public final class com/jkjamies/trapeze/WrapEventSinkKt {
+	public static final fun wrapEventSink (Lkotlin/jvm/functions/Function2;Lkotlinx/coroutines/CoroutineScope;Landroidx/compose/runtime/Composer;II)Lkotlin/jvm/functions/Function1;
+}
+

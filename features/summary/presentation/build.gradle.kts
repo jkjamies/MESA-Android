@@ -48,10 +48,12 @@ android {
 }
 
 dependencies {
-    implementation(project(":trapeze"))
+    // `api`: the factories implement `Trapeze.StateHolderFactory` / `Trapeze.UiFactory`
+    // and the StateHolder constructor takes a `TrapezeNavigator`.
+    api(project(":trapeze"))
+    api(project(":features:summary:api"))
     implementation(project(":trapeze-navigation"))
     implementation(project(":core:presentation"))
-    api(project(":features:summary:api"))
     implementation(project(":strata"))
     implementation(libs.androidx.core.ktx)
     implementation(platform(libs.androidx.compose.bom))

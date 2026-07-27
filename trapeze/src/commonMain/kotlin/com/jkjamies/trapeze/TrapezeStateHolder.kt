@@ -26,8 +26,10 @@ import kotlinx.coroutines.CoroutineScope
  * immutable [TrapezeState] that the UI renders. There is no initial state; instead,
  * [produceState] is called inside the composition to build and emit state reactively.
  *
- * Use [wrapEventSink] inside [produceState] to create a coroutine-safe event callback
- * that silently drops events when the composition's [CoroutineScope] is no longer active.
+ * Use [wrapEventSink] inside [produceState] to create a coroutine-safe event callback. It
+ * launches from [rememberRetainedCoroutineScope], so work started by an event survives an
+ * Android configuration change and is cancelled once the screen is permanently gone; events
+ * arriving after that are dropped rather than crashing.
  *
  * @param T The [TrapezeScreen] type this holder is associated with (compile-time coupling only).
  * @param S The [TrapezeState] type this holder produces.

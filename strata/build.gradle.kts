@@ -14,7 +14,10 @@
  * limitations under the License.
  */
 
-@file:OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
+@file:OptIn(
+    org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class,
+    org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation::class,
+)
 
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
@@ -25,6 +28,19 @@ version = property("publishingVersion") as String
 
 kotlin {
     jvmToolchain(17)
+
+    // Every declaration this module publishes must say `public` (or `internal`) out loud and
+    // name its return type. Without it, a `public` that was never meant to be public is one
+    // omitted keyword away, and in a library that is a compatibility promise made by accident.
+    explicitApi()
+
+    // The reference dumps in `api/` are the record of that promise. `checkKotlinAbi` fails the
+    // build when the compiled ABI drifts from them; `./gradlew updateKotlinAbi` re-records it,
+    // which makes every breaking change show up as a reviewable diff rather than a surprise in
+    // a consumer's build. Experimental only in the sense that the Gradle DSL may still move.
+    abiValidation {
+        enabled.set(true)
+    }
 
     jvm()
     iosArm64()
@@ -40,7 +56,9 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            implementation(libs.kotlinx.coroutines.core)
+            // `api` because `Flow`, `Job` and `Deferred` appear in Strata's public API
+            // (`StrataSubjectInteractor.flow`, `StrataInteractor.inProgress`, `strataLaunch`).
+            api(libs.kotlinx.coroutines.core)
         }
         jvmTest.dependencies {
             implementation(libs.kotlinx.coroutines.test)

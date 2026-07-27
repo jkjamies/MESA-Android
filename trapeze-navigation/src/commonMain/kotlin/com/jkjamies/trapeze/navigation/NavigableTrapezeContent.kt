@@ -33,45 +33,57 @@ import com.jkjamies.trapeze.TrapezeNavigator
  * This is the primary entry point for navigation with a backstack.
  * For rendering a single screen without navigation, use [TrapezeContent].
  *
+ * While more than one screen is on the stack, the platform back affordance pops the backstack.
+ * At the root it is left alone, so the host (an Activity, say) handles it as usual. Set
+ * [handleBack] to `false` to take over back handling yourself.
+ *
  * @param navigator The navigator for handling navigation events.
  * @param backStack The backstack containing screens to render. The root is the start destination.
  * @param modifier Modifier to apply to the content.
  * @param trapeze The [Trapeze] instance to resolve factories from. Defaults to [LocalTrapeze].
+ * @param handleBack Whether to intercept the platform back affordance to pop the backstack.
  */
 @Composable
 public fun NavigableTrapezeContent(
     navigator: TrapezeNavigator,
     backStack: TrapezeBackStack,
     modifier: Modifier = Modifier,
-    trapeze: Trapeze = LocalTrapeze.current
+    trapeze: Trapeze = LocalTrapeze.current,
+    handleBack: Boolean = true
 ) {
     val saveableStateHolder = rememberSaveableStateHolder()
-    val currentScreen = backStack.current
+    val currentEntry = backStack.currentEntry
 
-    // Clean up saved state for screens that have been popped from the backstack
-    LaunchedEffect(Unit) {
-        var previousScreens = backStack.asList()
-        snapshotFlow { backStack.asList() }
-            .collect { currentScreens ->
-                if (currentScreens.size < previousScreens.size) {
-                    val currentSet = currentScreens.toSet()
-                    previousScreens.forEach { screen ->
-                        if (screen !in currentSet) {
-                            saveableStateHolder.removeState(screen)
-                        }
-                    }
+    TrapezeBackHandler(enabled = handleBack && backStack.size > 1) {
+        navigator.pop()
+    }
+
+    // Clean up saved state for entries that have been removed from the backstack.
+    // Keyed on `backStack` so swapping backstacks restarts tracking, and driven by set
+    // difference rather than size: a push and a pop between two snapshot emissions leaves
+    // the size unchanged while still removing an entry.
+    LaunchedEffect(backStack, saveableStateHolder) {
+        var previousIds = backStack.entries.mapTo(mutableSetOf()) { it.id }
+        snapshotFlow { backStack.entries }
+            .collect { entries ->
+                val currentIds = entries.mapTo(mutableSetOf()) { it.id }
+                previousIds.forEach { id ->
+                    if (id !in currentIds) saveableStateHolder.removeState(id)
                 }
-                previousScreens = currentScreens
+                previousIds = currentIds
             }
     }
 
     CompositionLocalProvider(
         LocalTrapezeNavigator provides navigator,
-        LocalTrapezeBackStack provides backStack
+        LocalTrapezeBackStack provides backStack,
+        LocalTrapezeBackStackEntry provides currentEntry
     ) {
-        saveableStateHolder.SaveableStateProvider(key = currentScreen) {
+        // Keyed on the entry id, not the screen: two visits to an equal screen are distinct
+        // positions in the stack and must not share saved UI state.
+        saveableStateHolder.SaveableStateProvider(key = currentEntry.id) {
             TrapezeContent(
-                screen = currentScreen,
+                screen = currentEntry.screen,
                 modifier = modifier,
                 trapeze = trapeze,
                 navigator = navigator

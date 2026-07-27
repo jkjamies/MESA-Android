@@ -37,7 +37,8 @@ android {
 }
 
 dependencies {
-    implementation(project(":trapeze"))
+    // `api`: `AppInterop` extends `TrapezeInterop` in this module's public API.
+    api(project(":trapeze"))
     implementation(libs.androidx.core.ktx)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)

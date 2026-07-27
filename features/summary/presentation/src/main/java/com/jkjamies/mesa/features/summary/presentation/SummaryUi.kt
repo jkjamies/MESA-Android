@@ -22,7 +22,11 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -56,10 +60,13 @@ fun SummaryUi(modifier: Modifier = Modifier, state: SummaryState) {
                 Text(
                     text = message.message,
                     style = MaterialTheme.typography.bodyLarge,
-                    color = if (message.message.startsWith("Save failed"))
+                    // A message carrying a cause is a failure. Sniffing the display text for
+                    // a prefix would break the moment the copy is reworded or translated.
+                    color = if (message.cause != null) {
                         MaterialTheme.colorScheme.error
-                    else
+                    } else {
                         MaterialTheme.colorScheme.primary
+                    }
                 )
                 Button(onClick = { state.eventSink(SummaryEvent.ClearMessage(message.id)) }) {
                     Text("Dismiss")
@@ -70,8 +77,19 @@ fun SummaryUi(modifier: Modifier = Modifier, state: SummaryState) {
                 Text("Back")
             }
             Spacer(modifier = Modifier.height(16.dp))
-            Button(onClick = { state.eventSink(SummaryEvent.SaveValue) }) {
-                Text("Save Value")
+            Button(
+                onClick = { state.eventSink(SummaryEvent.SaveValue) },
+                enabled = !state.saveInProgress
+            ) {
+                if (state.saveInProgress) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        strokeWidth = 2.dp,
+                        color = LocalContentColor.current
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                }
+                Text(if (state.saveInProgress) "Saving…" else "Save Value")
             }
             Spacer(modifier = Modifier.height(16.dp))
             Button(onClick = { state.eventSink(SummaryEvent.PrintValue) }) {

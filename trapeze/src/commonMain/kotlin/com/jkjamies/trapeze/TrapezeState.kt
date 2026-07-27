@@ -16,4 +16,4 @@
 
 package com.jkjamies.trapeze
 
-interface TrapezeState
+public interface TrapezeState
