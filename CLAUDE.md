@@ -58,9 +58,15 @@ A Pure-Compose driven architectural library implementing the **MESA framework** 
 |-----------|------|-------------------|
 | **Screen** | Routing key / destination identifier (pure key, not passed into StateHolder) | Implements `TrapezeScreen` (`Parcelable` on Android via `expect/actual`, plain interface on other platforms) |
 | **State** | Immutable display data + event sink | Implements `TrapezeState`, contains `eventSink: (E) -> Unit` |
-| **Event** | User interactions | Implements `TrapezeEvent`, typically `sealed interface` |
+| **Event** | User interactions | A feature's own event type is a `sealed interface` implementing `TrapezeEvent` |
 | **StateHolder** | Logic layer producing State | Extends `TrapezeStateHolder<S, T, E>` |
 | **UI** | Stateless Composable | Signature: `@Composable (Modifier, State) -> Unit` |
+
+> **The sealed requirement is on a feature's event type, not on `TrapezeEvent` itself.**
+> `CounterEvent`, `SummaryEvent` and friends are sealed so a `when` over them is exhaustive.
+> `TrapezeEvent` is the framework marker those types implement, and it is deliberately a plain
+> `public interface`: sealing it would confine every event type in every app to the `:trapeze`
+> module and make the framework unusable.
 
 ### Data Flow
 ```mermaid
@@ -485,17 +491,28 @@ Use `TrapezeMessage` and `TrapezeMessageManager` to handle one-off events (snack
 val messageManager = remember { TrapezeMessageManager() }
 val message by messageManager.message.collectAsState(initial = null)
 
-// Emit a message. `message` is user-facing copy; attach the failure as `cause` for logging.
-messageManager.emitMessage(
-    TrapezeMessage("Couldn't save your changes.", cause = error)
-)
+val eventSink = wrapEventSink<FooEvent> { event ->
+    when (event) {
+        FooEvent.Save -> strataLaunch {
+            saveUseCase(params).onFailure { error ->
+                // The text is copy written for the user. The failure rides along as `cause`,
+                // which is carried for logging and never rendered.
+                messageManager.emitMessage(
+                    TrapezeMessage("Couldn't save your changes.", cause = error)
+                )
+            }
+        }
 
-// Dismiss one message by id — this is what the UI's dismiss action calls back into.
-messageManager.clearMessage(msg.id)
+        // Closes the loop with the UI below, which sends back the id of the message it drew.
+        is FooEvent.DismissMessage -> messageManager.clearMessage(event.id)
+    }
+}
 
-// Clear all messages
-messageManager.clearAll()
+return FooState(trapezeMessage = message, eventSink = eventSink)
 ```
+
+`clearAll()` drops the whole queue at once — for resetting a screen, not for dismissing the
+message the user just tapped.
 
 **Never derive the displayed text from `throwable.message`.** Exception text routinely carries
 URLs, query fragments, and file paths. `TrapezeMessage` has no throwable-only factory for
@@ -505,7 +522,7 @@ exactly this reason — `cause` is carried for logs and is never rendered.
 ```kotlin
 state.trapezeMessage?.let { msg ->
     Snackbar(
-        action = { Button(onClick = { state.eventSink(ClearError(msg.id)) }) { Text("Dismiss") } }
+        action = { Button(onClick = { state.eventSink(FooEvent.DismissMessage(msg.id)) }) { Text("Dismiss") } }
     ) { Text(msg.message) }
 }
 ```

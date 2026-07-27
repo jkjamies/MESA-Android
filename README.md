@@ -644,18 +644,28 @@ Use `TrapezeMessage` and `TrapezeMessageManager` to handle one-off events (snack
 val messageManager = remember { TrapezeMessageManager() }
 val message by messageManager.message.collectAsState(initial = null)
 
-// `message` is copy written for the user. Attach the failure as `cause` — it is carried for
-// logging and crash reporting, and is never rendered by Trapeze.
-messageManager.emitMessage(
-    TrapezeMessage("Couldn't save your changes.", cause = error)
-)
+val eventSink = wrapEventSink<FooEvent> { event ->
+    when (event) {
+        FooEvent.Save -> strataLaunch {
+            saveUseCase(params).onFailure { error ->
+                // The text is copy written for the user. The failure rides along as `cause`,
+                // which is carried for logging and crash reporting and is never rendered.
+                messageManager.emitMessage(
+                    TrapezeMessage("Couldn't save your changes.", cause = error)
+                )
+            }
+        }
 
-// Dismiss one message by id — this is what the UI's dismiss action calls back into.
-messageManager.clearMessage(msg.id)
+        // Closes the loop with the UI below, which sends back the id of the message it drew.
+        is FooEvent.DismissMessage -> messageManager.clearMessage(event.id)
+    }
+}
 
-// Clear all messages
-messageManager.clearAll()
+return FooState(trapezeMessage = message, eventSink = eventSink)
 ```
+
+`clearAll()` drops the whole queue at once — for resetting a screen, not for dismissing the
+message the user just tapped.
 
 > **Do not derive the displayed text from `throwable.message`.** Exception text routinely
 > carries request URLs, query fragments, and file paths. `TrapezeMessage` deliberately offers
@@ -665,7 +675,7 @@ messageManager.clearAll()
 ```kotlin
 state.trapezeMessage?.let { msg ->
     Snackbar(
-        action = { Button(onClick = { state.eventSink(ClearError(msg.id)) }) { Text("Dismiss") } }
+        action = { Button(onClick = { state.eventSink(FooEvent.DismissMessage(msg.id)) }) { Text("Dismiss") } }
     ) { Text(msg.message) }
 }
 ```
