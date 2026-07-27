@@ -38,6 +38,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   directly for retained *values* — MESA does not wrap it.
 - CI runs the instrumented test suites on an emulator (API 28 and 34). They had never been
   executed by any workflow.
+- **Consumer R8 rules, and a sample that is actually minified.** `trapeze/consumer-rules.pro` was
+  a zero-byte file and every module shipped `isMinifyEnabled = false`, so no minified build had
+  ever been produced. `TrapezeScreen` and `TrapezeNavigationResult` are `Parcelable` and the
+  backstack saver restores them through `Bundle.getParcelable`, which resolves `CREATOR` by name
+  — R8 sees no reference and removes it, so a consumer's release build lost its backstack on
+  process-death restore. The keep rule now ships with `:trapeze`, and the sample app's release
+  variant enables R8 so CI reads those rules on every build.
 - The publish workflow verifies the build before pushing artifacts to the registry.
 - A `NOTICE` file carrying the project's copyright, the conventional home for any third-party
   notices a future dependency requires.

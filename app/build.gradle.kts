@@ -32,7 +32,12 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            // On, so R8 actually runs. The sample is the only application in this repository,
+            // which makes it the only place the libraries' consumer rules are ever exercised —
+            // with this off, `trapeze/consumer-rules.pro` was a file nothing had ever read, and
+            // a missing keep rule would have surfaced first in someone else's release build.
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

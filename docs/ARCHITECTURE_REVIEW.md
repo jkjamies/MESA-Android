@@ -370,6 +370,17 @@ A consumer shipping a minified release build — the normal case — will hit
 `BadParcelableException` on process-death restore. This should be a consumer rule, and the
 sample app should enable minification so CI exercises it.
 
+> **Addressed.** `trapeze/consumer-rules.pro` carries the `CREATOR` keep rule, with the
+> reflective path it exists for spelled out; `trapeze-navigation` and `trapeze-test` document why
+> theirs are deliberately empty. The sample app now builds its release variant with
+> `isMinifyEnabled = true` and `isShrinkResources = true`, so R8 runs on every CI build and the
+> consumer rules are read rather than merely shipped.
+>
+> This proves the R8 *configuration* is sound and a minified build is producible. It does not
+> execute the minified app — the instrumented suites run against `debug`. Closing that last gap
+> means giving the release variant a signing config and running
+> `connectedReleaseAndroidTest`, which is the natural follow-up.
+
 ### 3.5 Build configuration is copy-pasted and has drifted
 
 Every module hand-repeats `compileSdk = 36`, `minSdk`, and the Java 17 block. They have
