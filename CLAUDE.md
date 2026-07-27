@@ -357,6 +357,8 @@ val result = deferred.await()
 | `getOrDefault(default)` | Returns value or a provided default on failure |
 | `getOrElse { error -> }` | Returns value or computes fallback from the error |
 | `map { }` | Transforms success value, passes failure through |
+| `flatMap { }` | Chains another `StrataResult`-returning step, passes failure through |
+| `recover { error -> }` | Replaces a failure by running a fallback that returns a `StrataResult` |
 | `fold(onSuccess, onFailure)` | Produces a single value for both outcomes |
 
 ```kotlin
@@ -487,6 +489,9 @@ val message by messageManager.message.collectAsState(initial = null)
 messageManager.emitMessage(
     TrapezeMessage("Couldn't save your changes.", cause = error)
 )
+
+// Dismiss one message by id — this is what the UI's dismiss action calls back into.
+messageManager.clearMessage(msg.id)
 
 // Clear all messages
 messageManager.clearAll()
